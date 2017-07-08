@@ -1,9 +1,38 @@
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*~
+*.orig
+nohup*
+*.swp
+*.swo
+
+# ROS Build directories #
+#########################
+build
+devel
+
+# gscam #
+#########
+rover/src/gscam
+bin/
+build/
+lib/
+msg_gen/
+srv_gen/
+hector_mapping/src/hector_mapping/
+hector_nav_msgs/src/hector_nav_msgs/
+
+#kdevelop#
+##########
+*.kdev44444444444444444444444444444444444444444444/.*
+.kdev*
+
+#python scripts
+*.pyc
