@@ -25,13 +25,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ros/xmlrpc_manager.h"
-#include "ros/network.h"
-#include "ros/param.h"
+#include "xmlrpc_manager.h"
+#include "network.h"
+#include "param.h"
+#include "common.h"
+#include "file_log.h"
+#include "io.h"
 #include "ros/assert.h"
-#include "ros/common.h"
-#include "ros/file_log.h"
-#include "ros/io.h"
 
 using namespace XmlRpc;
 
@@ -176,7 +176,7 @@ void XMLRPCManager::shutdown()
   // Wait for the clients that are in use to finish and remove themselves from clients_
   for (int wait_count = 0; !clients_.empty() && wait_count < 10; wait_count++)
   {
-    ROSCPP_LOG_DEBUG("waiting for xmlrpc connection to finish...");
+    ROS_CAN_NODES_LOG_DEBUG("waiting for xmlrpc connection to finish...");
     ros::WallDuration(0.01).sleep();
   }
 
@@ -210,33 +210,33 @@ bool XMLRPCManager::validateXmlrpcResponse(const std::string& method, XmlRpcValu
 {
   if (response.getType() != XmlRpcValue::TypeArray)
   {
-    ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return an array",
+    ROS_CAN_NODES_LOG_DEBUG("XML-RPC call [%s] didn't return an array",
         method.c_str());
     return false;
   }
   if (response.size() != 2 && response.size() != 3)
   {
-    ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a 2 or 3-element array",
+    ROS_CAN_NODES_LOG_DEBUG("XML-RPC call [%s] didn't return a 2 or 3-element array",
         method.c_str());
     return false;
   }
   if (response[0].getType() != XmlRpcValue::TypeInt)
   {
-    ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a int as the 1st element",
+    ROS_CAN_NODES_LOG_DEBUG("XML-RPC call [%s] didn't return a int as the 1st element",
         method.c_str());
     return false;
   }
   int status_code = response[0];
   if (response[1].getType() != XmlRpcValue::TypeString)
   {
-    ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a string as the 2nd element",
+    ROS_CAN_NODES_LOG_DEBUG("XML-RPC call [%s] didn't return a string as the 2nd element",
         method.c_str());
     return false;
   }
   std::string status_string = response[1];
   if (status_code != 1)
   {
-    ROSCPP_LOG_DEBUG("XML-RPC call [%s] returned an error (%d): [%s]",
+    ROS_CAN_NODES_LOG_DEBUG("XML-RPC call [%s] returned an error (%d): [%s]",
         method.c_str(), status_code, status_string.c_str());
     return false;
   }
