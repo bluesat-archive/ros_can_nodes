@@ -37,7 +37,6 @@ using namespace XmlRpc;
 
 namespace ros
 {
-
 namespace xmlrpc
 {
 XmlRpc::XmlRpcValue responseStr(int code, const std::string& msg, const std::string& response)
