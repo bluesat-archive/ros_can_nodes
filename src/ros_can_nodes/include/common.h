@@ -25,18 +25,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCPP_COMMON_H
-#define ROSCPP_COMMON_H
+#ifndef ROS_CAN_NODES_COMMON_H
+#define ROS_CAN_NODES_COMMON_H
 
 #include <stdint.h>
 #include <assert.h>
 #include <stddef.h>
 #include <string>
 
+#include "forwards.h"
 #include "ros/assert.h"
-#include "ros/forwards.h"
 #include "ros/serialized_message.h"
-
 #include <boost/shared_array.hpp>
 
 #define ROS_VERSION_MAJOR @roscpp_VERSION_MAJOR@
@@ -54,12 +53,12 @@
 
 #ifdef ROS_BUILD_SHARED_LIBS // ros is being built around shared libraries
   #ifdef roscpp_EXPORTS // we are building a shared lib/dll
-    #define ROSCPP_DECL ROS_HELPER_EXPORT
+    #define ROS_CAN_NODES_DECL ROS_HELPER_EXPORT
   #else // we are using shared lib/dll
-    #define ROSCPP_DECL ROS_HELPER_IMPORT
+    #define ROS_CAN_NODES_DECL ROS_HELPER_IMPORT
   #endif
 #else // ros is being built around static libraries
-  #define ROSCPP_DECL
+  #define ROS_CAN_NODES_DECL
 #endif
 
 namespace ros

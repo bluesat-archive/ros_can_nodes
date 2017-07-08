@@ -25,28 +25,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCPP_FILE_LOG_H
-#define ROSCPP_FILE_LOG_H
+#ifndef ROS_CAN_NODES_FILE_LOG_H
+#define ROS_CAN_NODES_FILE_LOG_H
 
 #include "forwards.h"
 #include <ros/console.h>
 #include "common.h"
 
-#define ROSCPP_LOG_DEBUG(...) ROS_DEBUG_NAMED("roscpp_internal", __VA_ARGS__)
-#define ROSCPP_CONN_LOG_DEBUG(...) ROS_DEBUG_NAMED("roscpp_internal.connections", __VA_ARGS__)
+#define ROS_CAN_NODES_LOG_DEBUG(...) ROS_DEBUG_NAMED("ros_can_nodes_internal", __VA_ARGS__)
+#define ROS_CAN_NODES_CONN_LOG_DEBUG(...) ROS_DEBUG_NAMED("ros_can_nodes_internal.connections", __VA_ARGS__)
 
 namespace ros
 {
-
 /**
  * \brief internal
  */
 namespace file_log
 {
   // 20110418 TDS: this appears to be used only by rosout.
-  ROSCPP_DECL const std::string& getLogDirectory();
+  ROS_CAN_NODES_DECL const std::string& getLogDirectory();
 }
 
 }
 
-#endif // ROSCPP_FILE_LOG_H
+#endif // ROS_CAN_NODES_FILE_LOG_H

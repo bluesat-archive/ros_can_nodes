@@ -24,13 +24,21 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME}_libs
   src/libs/xmlrpc_manager.cpp
+  src/libs/io.cpp
+  src/libs/network.cpp
+  src/libs/common.cpp
   )
 
 add_executable(ros_can_nodes src/main.cpp)
-add_dependencies(ros_can_nodes ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(ros_can_nodes ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME}_libs
+  ${catkin_LIBRARIES}
+  )
 
 target_link_libraries(ros_can_nodes
   ${catkin_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${PROJECT_NAME}_libs
   )
 

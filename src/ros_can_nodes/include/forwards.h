@@ -25,8 +25,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCPP_FORWARDS_H
-#define ROSCPP_FORWARDS_H
+#ifndef ROS_CAN_NODES_FORWARDS_H
+#define ROS_CAN_NODES_FORWARDS_H
 
 #include <string>
 #include <vector>
@@ -39,9 +39,9 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/function.hpp>
 
+#include "exceptions.h"
 #include <ros/time.h>
 #include <ros/macros.h>
-#include "exceptions.h"
 #include "ros/datatypes.h"
 
 namespace ros
