@@ -35,11 +35,11 @@
 #include <boost/thread/thread.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include "common.h"
-#include "xmlrpcpp/XmlRpc.h"
+#define ROSCPP_DECL
+//#include "common.h"
+#include "XmlRpc.h"
 
 #include <ros/time.h>
-
 
 namespace ros
 {
