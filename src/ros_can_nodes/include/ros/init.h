@@ -39,181 +39,191 @@
 #include "ros/spinner.h"
 #include "common.h"
 
+#include "ros/names.h"
+#include "ros/xmlrpc_manager.h"
+#include "ros/poll_manager.h"
+#include "ros/connection_manager.h"
+#include "ros/topic_manager.h"
+#include "ros/service_manager.h"
+#include "ros/network.h"
+#include "ros/file_log.h"
+#include "ros/callback_queue.h"
+#include "ros/param.h"
+#include "ros/rosout_appender.h"
+#include "ros/subscribe_options.h"
+#include "ros/transport/transport_tcp.h"
+#include "ros/internal_timer_manager.h"
+#include "XmlRpcSocket.h"
+
+#include "roscpp/GetLoggers.h"
+#include "roscpp/SetLoggerLevel.h"
+#include "roscpp/Empty.h"
+
+#include <ros/console.h>
+#include <ros/time.h>
+#include <rosgraph_msgs/Clock.h>
+
+#include <algorithm>
+
+#include <signal.h>
+
+#include <cstdlib>
+
 namespace ros
 {
 
-namespace init_options
-{
-/**
- * \brief Flags for ROS initialization
- */
-enum InitOption
-{
-  /**
-   * Don't install a SIGINT handler.  You should install your own SIGINT handler in this
-   * case, to ensure that the node gets shutdown correctly when it exits.
-   */
-  NoSigintHandler = 1 << 0,
-  /** \brief Anonymize the node name.  Adds a random number to the end of your node's name, to make it unique.
-   */
-  AnonymousName = 1 << 1,
-  /**
-   * \brief Don't broadcast rosconsole output to the /rosout topic
-   */
-  NoRosout = 1 << 2,
-};
-}
-typedef init_options::InitOption InitOption;
+    namespace init_options
+    {
+        /**
+         * \brief Flags for ROS initialization
+         */
+        enum InitOption
+        {
+            /**
+             * Don't install a SIGINT handler.  You should install your own SIGINT handler in this
+             * case, to ensure that the node gets shutdown correctly when it exits.
+             */
+            NoSigintHandler = 1 << 0,
+            /** \brief Anonymize the node name.  Adds a random number to the end of your node's name, to make it unique.
+            */
+            AnonymousName = 1 << 1,
+            /**
+             * \brief Don't broadcast rosconsole output to the /rosout topic
+             */
+            NoRosout = 1 << 2,
+        };
+    }
 
-/** @brief ROS initialization function.
- *
- * This function will parse any ROS arguments (e.g., topic name
- * remappings), and will consume them (i.e., argc and argv may be modified
- * as a result of this call).
- *
- * Use this version if you are using the NodeHandle API
- *
- * \param argc
- * \param argv
- * \param name Name of this node.  The name must be a base name, ie. it cannot contain namespaces.
- * \param options [optional] Options to start the node with (a set of bit flags from \ref ros::init_options)
- * \throws InvalidNodeNameException If the name passed in is not a valid "base" name
- *
- */
-ROSCPP_DECL void init(int &argc, char **argv, const std::string& name, uint32_t options = 0);
+    class ROSCPP_DECL Node {
+        private:
+            CallbackQueuePtr g_global_queue;
+            ROSOutAppender* g_rosout_appender;
+            CallbackQueuePtr g_internal_callback_queue;
 
-/**
- * \brief alternate ROS initialization function.
- *
- * \param remappings A map<string, string> where each one constitutes a name remapping, or one of the special remappings like __name, __master, __ns, etc.
- * \param name Name of this node.  The name must be a base name, ie. it cannot contain namespaces.
- * \param options [optional] Options to start the node with (a set of bit flags from \ref ros::init_options)
- * \throws InvalidNodeNameException If the name passed in is not a valid "base" name
- */
-ROSCPP_DECL void init(const M_string& remappings, const std::string& name, uint32_t options = 0);
+            bool g_initialized;
+            bool g_started;
+            bool g_atexit_registered;
+            bool g_ok;
+            uint32_t g_init_options;
+            bool g_shutdown_requested;
+            volatile bool g_shutting_down;
+            boost::recursive_mutex g_shutting_down_mutex;
+            boost::thread g_internal_queue_thread;
+            boost::mutex g_start_mutex;
 
-/**
- * \brief alternate ROS initialization function.
- *
- * \param remappings A vector<pair<string, string> > where each one constitutes a name remapping, or one of the special remappings like __name, __master, __ns, etc.
- * \param name Name of this node.  The name must be a base name, ie. it cannot contain namespaces.
- * \param options [optional] Options to start the node with (a set of bit flags from \ref ros::init_options)
- * \throws InvalidNodeNameException If the name passed in is not a valid "base" name
- */
-ROSCPP_DECL void init(const VP_string& remapping_args, const std::string& name, uint32_t options = 0);
+            std::string name_;
+            std::string namespace_;
 
-/**
- * \brief Returns whether or not ros::init() has been called
- */
-ROSCPP_DECL bool isInitialized();
-/**
- * \brief Returns whether or not ros::shutdown() has been (or is being) called
- */
-ROSCPP_DECL bool isShuttingDown();
+        public:
+            /**
+             * \brief Returns the name of the current node.
+             */
+            ROSCPP_DECL const std::string& getName();
+            /**
+             * \brief Returns the namespace of the current node.
+             */
+            ROSCPP_DECL const std::string& getNamespace();
 
-/** \brief Enter simple event loop
- *
- * This method enters a loop, processing callbacks.  This method should only be used
- * if the NodeHandle API is being used.
- *
- * This method is mostly useful when your node does all of its work in
- * subscription callbacks.  It will not process any callbacks that have been assigned to
- * custom queues.
- *
- */
-ROSCPP_DECL void spin();
+            /** @brief Get the list of topics advertised by this node
+             *
+             * @param[out] topics The advertised topics
+             */
+            ROSCPP_DECL void getAdvertisedTopics(V_string& topics);
 
-/** \brief Enter simple event loop
- *
- * This method enters a loop, processing callbacks.  This method should only be used
- * if the NodeHandle API is being used.
- *
- * This method is mostly useful when your node does all of its work in
- * subscription callbacks.  It will not process any callbacks that have been assigned to
- * custom queues.
- *
- * \param spinner a spinner to use to call callbacks.  Two default implementations are available,
- * SingleThreadedSpinner and MultiThreadedSpinner
- */
-ROSCPP_DECL void spin(Spinner& spinner);
-/**
- * \brief Process a single round of callbacks.
- *
- * This method is useful if you have your own loop running and would like to process
- * any callbacks that are available.  This is equivalent to calling callAvailable() on the
- * global CallbackQueue.  It will not process any callbacks that have been assigned to
- * custom queues.
- */
-ROSCPP_DECL void spinOnce();
+            /** @brief Get the list of topics subscribed to by this node
+             *
+             * @param[out] The subscribed topics
+             */
+            ROSCPP_DECL void getSubscribedTopics(V_string& topics);
+            /**
+             * \brief Returns whether or not ros::shutdown() has been (or is being) called
+             */
+            bool isShuttingDown();
 
-/**
- * \brief Wait for this node to be shutdown, whether through Ctrl-C, ros::shutdown(), or similar.
- */
-ROSCPP_DECL void waitForShutdown();
+            /** \brief Enter simple event loop
+             *
+             * This method enters a loop, processing callbacks.  This method should only be used
+             * if the NodeHandle API is being used.
+             *
+             * This method is mostly useful when your node does all of its work in
+             * subscription callbacks.  It will not process any callbacks that have been assigned to
+             * custom queues.
+             *
+             */
+            void spin();
 
-/** \brief Check whether it's time to exit.
- *
- * ok() becomes false once ros::shutdown() has been called and is finished
- *
- * \return true if we're still OK, false if it's time to exit
- */
-ROSCPP_DECL bool ok();
-/**
- * \brief Disconnects everything and unregisters from the master.  It is generally not
- * necessary to call this function, as the node will automatically shutdown when all
- * NodeHandles destruct.  However, if you want to break out of a spin() loop explicitly,
- * this function allows that.
- */
-ROSCPP_DECL void shutdown();
+            /** \brief Enter simple event loop
+             *
+             * This method enters a loop, processing callbacks.  This method should only be used
+             * if the NodeHandle API is being used.
+             *
+             * This method is mostly useful when your node does all of its work in
+             * subscription callbacks.  It will not process any callbacks that have been assigned to
+             * custom queues.
+             *
+             * \param spinner a spinner to use to call callbacks.  Two default implementations are available,
+             * SingleThreadedSpinner and MultiThreadedSpinner
+             */
+            void spin(Spinner& spinner);
+            /**
+             * \brief Process a single round of callbacks.
+             *
+             * This method is useful if you have your own loop running and would like to process
+             * any callbacks that are available.  This is equivalent to calling callAvailable() on the
+             * global CallbackQueue.  It will not process any callbacks that have been assigned to
+             * custom queues.
+             */
+            void spinOnce();
 
-/**
- * \brief Request that the node shut itself down from within a ROS thread
- *
- * This method signals a ROS thread to call shutdown().
- */
-ROSCPP_DECL void requestShutdown();
+            /**
+             * \brief Wait for this node to be shutdown, whether through Ctrl-C, ros::shutdown(), or similar.
+             */
+            void waitForShutdown();
 
-/**
- * \brief Actually starts the internals of the node (spins up threads, starts the network polling and xmlrpc loops,
- * connects to internal subscriptions like /clock, starts internal service servers, etc.).
- *
- * Usually unnecessary to call manually, as it is automatically called by the creation of the first NodeHandle if
- * the node has not already been started.  If you would like to prevent the automatic shutdown caused by the last
- * NodeHandle going out of scope, call this before any NodeHandle has been created (e.g. immediately after init())
- */
-ROSCPP_DECL void start();
-/**
- * \brief Returns whether or not the node has been started through ros::start()
- */
-ROSCPP_DECL bool isStarted();
+            /** \brief Check whether it's time to exit.
+             *
+             * ok() becomes false once ros::shutdown() has been called and is finished
+             *
+             * \return true if we're still OK, false if it's time to exit
+             */
+            bool ok();
+            /**
+             * \brief Disconnects everything and unregisters from the master.  It is generally not
+             * necessary to call this function, as the node will automatically shutdown when all
+             * NodeHandles destruct.  However, if you want to break out of a spin() loop explicitly,
+             * this function allows that.
+             */
+            void shutdown();
 
-/**
- * \brief Returns a pointer to the global default callback queue.
- *
- * This is the queue that all callbacks get added to unless a different one is specified, either in the NodeHandle
- * or in the individual NodeHandle::subscribe()/NodeHandle::advertise()/etc. functions.
- */
-ROSCPP_DECL CallbackQueue* getGlobalCallbackQueue();
+            /**
+             * \brief Request that the node shut itself down from within a ROS thread
+             *
+             * This method signals a ROS thread to call shutdown().
+             */
+            void requestShutdown();
 
-/**
- * \brief searches the command line arguments for the given arg parameter. In case this argument is not found
- * an empty string is returned.
- *
- * \param argc the number of command-line arguments
- * \param argv the command-line arguments
- * \param arg argument to search for
- */
-ROSCPP_DECL std::string getROSArg(int argc, const char* const* argv, const std::string& arg);
+            /**
+             * \brief Actually starts the internals of the node (spins up threads, starts the network polling and xmlrpc loops,
+             * connects to internal subscriptions like /clock, starts internal service servers, etc.).
+             *
+             * Usually unnecessary to call manually, as it is automatically called by the creation of the first NodeHandle if
+             * the node has not already been started.  If you would like to prevent the automatic shutdown caused by the last
+             * NodeHandle going out of scope, call this before any NodeHandle has been created (e.g. immediately after init())
+             */
+            void start();
+            /**
+             * \brief Returns whether or not the node has been started through ros::start()
+             */
+            bool isStarted();
 
-/**
- * \brief returns a vector of program arguments that do not include any ROS remapping arguments.  Useful if you need
- * to parse your arguments to determine your node name
- *
- * \param argc the number of command-line arguments
- * \param argv the command-line arguments
- * \param [out] args_out Output args, stripped of any ROS args
- */
-ROSCPP_DECL void removeROSArgs(int argc, const char* const* argv, V_string& args_out);
+            /**
+             * \brief Returns a pointer to the global default callback queue.
+             *
+             * This is the queue that all callbacks get added to unless a different one is specified, either in the NodeHandle
+             * or in the individual NodeHandle::subscribe()/NodeHandle::advertise()/etc. functions.
+             */
+            CallbackQueue* getGlobalCallbackQueue();
+    };
 
 }
 
