@@ -32,11 +32,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ros/init.h"
+#include "ros/Node.h"
 #include "ros/names.h"
 #include "ros/xmlrpc_manager.h"
 #include "ros/poll_manager.h"
-#include "ros/connection_manager.h"
 #include "ros/topic_manager.h"
 #include "ros/service_manager.h"
 #include "ros/network.h"
@@ -92,28 +91,19 @@ namespace ros
         }
     }
 
-    const Node::std::string& getName() const
+    const std::string& Node::getName() const
     {
         return name_;
     }
 
-    const Node::std::string& getNamespace() const
+    const std::string& Node::getNamespace() const
     {
         return namespace_;
     }
+
     void Node::requestShutdown()
     {
         g_shutdown_requested = true;
-    }
-
-    void Node::atexitCallback()
-    {
-        if (ok() && !isShuttingDown())
-        {
-            ROSCPP_LOG_DEBUG("shutting down due to exit() or end of main() without cleanup of all NodeHandles");
-            g_started = false; // don't shutdown singletons, because they are already destroyed
-            shutdown();
-        }
     }
 
     void Node::shutdownCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
@@ -135,7 +125,7 @@ namespace ros
     bool Node::getLoggers(roscpp::GetLoggers::Request&, roscpp::GetLoggers::Response& resp)
     {
         std::map<std::string, ros::console::levels::Level> loggers;
-        bool success = ::ros::console::get_loggers(loggers);
+        bool success = ros::console::get_loggers(loggers);
         if (success)
         {
             for (std::map<std::string, ros::console::levels::Level>::const_iterator it = loggers.begin(); it != loggers.end(); it++)
@@ -199,7 +189,7 @@ namespace ros
             return false;
         }
 
-        bool success = ::ros::console::set_logger_level(req.logger, level);
+        bool success = ros::console::set_logger_level(req.logger, level);
         if (success)
         {
             console::notifyLoggerLevelsChanged();
@@ -208,7 +198,7 @@ namespace ros
         return success;
     }
 
-    bool Node:closeAllConnections(roscpp::Empty::Request&, roscpp::Empty::Response&)
+    bool Node::closeAllConnections(roscpp::Empty::Request&, roscpp::Empty::Response&)
     {
         ROSCPP_LOG_DEBUG("close_all_connections service called, closing connections");
         ConnectionManager::instance()->clear(Connection::TransportDisconnect);
@@ -233,7 +223,7 @@ namespace ros
     void Node::basicSigintHandler(int sig)
     {
         (void)sig;
-        ros::requestShutdown();
+        requestShutdown();
     }
 
     void Node::internalCallbackQueueThreadFunc()
@@ -256,7 +246,6 @@ namespace ros
     void Node::start(const std::string& name)
     {
         g_started = false;
-        g_atexit_registered = false;
         g_ok = false;
         g_init_options = 0;
         g_shutdown_requested = false;
@@ -433,11 +422,6 @@ end:
 
     void init(const M_string& remappings, const std::string& name, uint32_t options)
     {
-        if (!g_atexit_registered)
-        {
-            g_atexit_registered = true;
-            atexit(atexitCallback);
-        }
 
         if (!g_global_queue)
         {

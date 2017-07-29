@@ -72,28 +72,6 @@
 namespace ros
 {
 
-    namespace init_options
-    {
-        /**
-         * \brief Flags for ROS initialization
-         */
-        enum InitOption
-        {
-            /**
-             * Don't install a SIGINT handler.  You should install your own SIGINT handler in this
-             * case, to ensure that the node gets shutdown correctly when it exits.
-             */
-            NoSigintHandler = 1 << 0,
-            /** \brief Anonymize the node name.  Adds a random number to the end of your node's name, to make it unique.
-            */
-            AnonymousName = 1 << 1,
-            /**
-             * \brief Don't broadcast rosconsole output to the /rosout topic
-             */
-            NoRosout = 1 << 2,
-        };
-    }
-
     class ROSCPP_DECL Node {
         private:
             CallbackQueuePtr g_global_queue;
@@ -118,11 +96,11 @@ namespace ros
             /**
              * \brief Returns the name of the current node.
              */
-            ROSCPP_DECL const std::string& getName();
+            ROSCPP_DECL const std::string& getName() const;
             /**
              * \brief Returns the namespace of the current node.
              */
-            ROSCPP_DECL const std::string& getNamespace();
+            ROSCPP_DECL const std::string& getNamespace() const;
 
             /** @brief Get the list of topics advertised by this node
              *
@@ -135,11 +113,33 @@ namespace ros
              * @param[out] The subscribed topics
              */
             ROSCPP_DECL void getSubscribedTopics(V_string& topics);
+
+            void checkForShutdown();
             /**
              * \brief Returns whether or not ros::shutdown() has been (or is being) called
              */
             bool isShuttingDown();
 
+
+            bool getLoggers(roscpp::GetLoggers::Request&, roscpp::GetLoggers::Response& resp);
+
+
+            bool setLoggerLevel(roscpp::SetLoggerLevel::Request& req, roscpp::SetLoggerLevel::Response&);
+
+            bool closeAllConnections(roscpp::Empty::Request&, roscpp::Empty::Response&);
+
+            void clockCallback(const rosgraph_msgs::Clock::ConstPtr& msg);
+
+            CallbackQueuePtr getInternalCallbackQueue();
+
+            void basicSigintHandler(int sig);
+
+            void internalCallbackQueueThreadFunc();
+
+            void start(const std::string& name);
+
+
+            void shutdownCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);
             /** \brief Enter simple event loop
              *
              * This method enters a loop, processing callbacks.  This method should only be used
