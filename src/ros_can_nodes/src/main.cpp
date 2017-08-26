@@ -1,5 +1,6 @@
 #include"main.h"
 #include"xmlrpc_manager.h"
+#include"network.h"
 
 RosCanNode::RosCanNode() {
     xmlrpcManager.reset(new roscan::XMLRPCManager);
@@ -11,6 +12,9 @@ RosCanNode::~RosCanNode() {
 }
 
 int main() {
+
+    roscan::network::init();
+
     RosCanNode *node = new RosCanNode();
     std::cout << node->xmlrpcManager->getServerURI() << std::endl;
 

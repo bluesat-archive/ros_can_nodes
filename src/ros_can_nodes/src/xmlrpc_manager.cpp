@@ -26,7 +26,7 @@
  */
 
 #include "xmlrpc_manager.h"
-//#include "ros/network.h"
+#include "network.h"
 #include "ros/param.h"
 #include "ros/assert.h"
 #include "ros/common.h"
@@ -123,6 +123,7 @@ namespace roscan
 
     void XMLRPCManager::start()
     {
+
         if (g_uri.empty())
         {
             char *master_uri_env = NULL;
@@ -153,13 +154,13 @@ namespace roscan
 
         // TODO: fix network init
         // Split URI into
-        //if (!network::splitURI(g_uri, g_host, g_port))
-        //{
-        //    ROS_FATAL( "Couldn't parse the master URI [%s] into a host:port pair.", g_uri.c_str());
-        //    ROS_BREAK();
-        //}
-        g_host = "127.0.0.1";
-        g_port = 11311;
+        if (!network::splitURI(g_uri, g_host, g_port))
+        {
+            ROS_FATAL( "Couldn't parse the master URI [%s] into a host:port pair.", g_uri.c_str());
+            ROS_BREAK();
+        }
+        //g_host = "127.0.0.1";
+        //g_port = 11311;
 
 
         shutting_down_ = false;
@@ -174,8 +175,8 @@ namespace roscan
 
         std::stringstream ss;
         // TODO: modify network so we can init() it so this works
-        //ss << "http://" << network::getHost() << ":" << port_ << "/";
-        ss << "http://localhost:" << port_ << "/";
+        ss << "http://" << network::getHost() << ":" << port_ << "/";
+        //ss << "http://localhost:" << port_ << "/";
         uri_ = ss.str();
 
         server_thread_ = boost::thread(boost::bind(&XMLRPCManager::serverThreadFunc, this));
