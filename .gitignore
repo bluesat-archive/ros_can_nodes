@@ -39,3 +39,5 @@ hector_nav_msgs/src/hector_nav_msgs/
 
 #tags
 src/*/tags
+
+src/ros_can_nodes_old

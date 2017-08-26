@@ -1,32 +1,19 @@
-#include "ros/xmlrpc_manager.h"
-#include <iostream>
+#include"main.h"
+#include"xmlrpc_manager.h"
 
-using namespace std;
+RosCanNode::RosCanNode() {
+    ros::XMLRPCManagerPtr s(new ros::XMLRPCManager);
+    xmlrpcManager = s;
+    xmlrpcManager->start();
+}
 
-namespace ros {
-
-    void myTest() {
-        XMLRPCManagerPtr srvr1(new XMLRPCManager);
-        XMLRPCManagerPtr srvr2(new XMLRPCManager);
-        XMLRPCManagerPtr srvr3(new XMLRPCManager);
-        srvr1->start();
-        srvr2->start();
-        srvr3->start();
-        cout << srvr1->getServerURI() << endl;
-        cout << srvr2->getServerURI() << endl;
-        cout << srvr3->getServerURI() << endl;
-        cout << srvr1->getServerURI() << endl;
-        srvr1->shutdown();
-        cout << srvr2->getServerURI() << endl;
-        srvr2->shutdown();
-        cout << srvr3->getServerURI() << endl;
-        srvr3->shutdown();
-    }
-
+RosCanNode::~RosCanNode() {
+    xmlrpcManager->shutdown();
 }
 
 int main() {
-    ros::myTest();
+    RosCanNode *node = new RosCanNode();
+    std::cout << node->xmlrpcManager->getServerURI() << std::endl;
+    delete node;
     return 0;
 }
-

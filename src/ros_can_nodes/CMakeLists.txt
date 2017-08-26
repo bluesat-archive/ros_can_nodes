@@ -1,130 +1,175 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ros_can_nodes)
 
-if(NOT WIN32)
-  set_directory_properties(PROPERTIES COMPILE_OPTIONS "-std=c++11;-Wall;-Wextra")
-endif()
+set_directory_properties(PROPERTIES COMPILE_OPTIONS "-std=c++11;-Wall;-Wextra")
 
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cpp_common message_generation rosconsole roscpp_serialization roscpp_traits rosgraph_msgs rostime std_msgs xmlrpcpp
+  roscpp
+  std_msgs
+  xmlrpcpp
 )
 
-catkin_package_xml()
-# split version in parts and pass to extra file
-string(REPLACE "." ";" ros_can_nodes_VERSION_LIST "${ros_can_nodes_VERSION}")
-list(LENGTH ros_can_nodes_VERSION_LIST _count)
-if(NOT _count EQUAL 3)
-  message(FATAL_ERROR "ros_can_nodes version '${ros_can_nodes_VERSION}' does not match 'MAJOR.MINOR.PATCH' pattern")
-endif()
-list(GET ros_can_nodes_VERSION_LIST 0 ros_can_nodes_VERSION_MAJOR)
-list(GET ros_can_nodes_VERSION_LIST 1 ros_can_nodes_VERSION_MINOR)
-list(GET ros_can_nodes_VERSION_LIST 2 ros_can_nodes_VERSION_PATCH)
+## System dependencies are found with CMake's conventions
+find_package(Boost REQUIRED COMPONENTS system)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/ros/common.h.in ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_INCLUDE_DESTINATION}/ros/common.h)
 
-find_package(Boost REQUIRED COMPONENTS signals filesystem system)
+## Uncomment this if the package has a setup.py. This macro ensures
+## modules and global scripts declared therein get installed
+## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
+# catkin_python_setup()
 
-include_directories(include ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_INCLUDE_DESTINATION}/ros ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+################################################
+## Declare ROS messages, services and actions ##
+################################################
 
-add_message_files(
-  DIRECTORY msg
-  FILES Logger.msg
-)
+## To declare and build messages, services or actions from within this
+## package, follow these steps:
+## * Let MSG_DEP_SET be the set of packages whose message types you use in
+##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
+## * In the file package.xml:
+##   * add a build_depend tag for "message_generation"
+##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
+##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
+##     but can be declared for certainty nonetheless:
+##     * add a run_depend tag for "message_runtime"
+## * In this file (CMakeLists.txt):
+##   * add "message_generation" and every package in MSG_DEP_SET to
+##     find_package(catkin REQUIRED COMPONENTS ...)
+##   * add "message_runtime" and every package in MSG_DEP_SET to
+##     catkin_package(CATKIN_DEPENDS ...)
+##   * uncomment the add_*_files sections below as needed
+##     and list every .msg/.srv/.action file to be processed
+##   * uncomment the generate_messages entry below
+##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
-add_service_files(
-  DIRECTORY srv
-  FILES Empty.srv GetLoggers.srv SetLoggerLevel.srv
-)
+## Generate messages in the 'msg' folder
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
-generate_messages()
+## Generate services in the 'srv' folder
+# add_service_files(
+#   FILES
+#   Service1.srv
+#   Service2.srv
+# )
 
-set(PTHREAD_LIB "")
-find_package(Threads)
-if(CMAKE_THREAD_LIBS_INIT)
-  string(LENGTH ${CMAKE_THREAD_LIBS_INIT} _length)
-  if(_length GREATER 2)
-    string(SUBSTRING ${CMAKE_THREAD_LIBS_INIT} 0 2 _prefix)
-    if(${_prefix} STREQUAL "-l")
-      math(EXPR _rest_len "${_length} - 2")
-      string(SUBSTRING ${CMAKE_THREAD_LIBS_INIT} 2 ${_rest_len} PTHREAD_LIB)
-    endif()
-  endif()
-endif()
+## Generate actions in the 'action' folder
+# add_action_files(
+#   FILES
+#   Action1.action
+#   Action2.action
+# )
 
+## Generate added messages and services with any dependencies listed here
+# generate_messages(
+#   DEPENDENCIES
+#   std_msgs
+# )
+
+
+###################################
+## catkin specific configuration ##
+###################################
+## The catkin_package macro generates cmake config files for your package
+## Declare things to be passed to dependent projects
+## INCLUDE_DIRS: uncomment this if you package contains header files
+## LIBRARIES: libraries you create in this project that dependent projects also need
+## CATKIN_DEPENDS: catkin_packages dependent projects also need
+## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include ${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_INCLUDE_DESTINATION}/ros
-  LIBRARIES ${PROJECT_NAME}_lib ${PTHREAD_LIB}
-  CATKIN_DEPENDS cpp_common message_runtime rosconsole roscpp_serialization roscpp_traits rosgraph_msgs rostime std_msgs xmlrpcpp
-  DEPENDS Boost
+    INCLUDE_DIRS include
+    #LIBRARIES ros_can_nodes
+    CATKIN_DEPENDS roscpp std_msgs xmlrpcpp
+    DEPENDS Boost
 )
 
-include(CheckIncludeFiles)
-include(CheckFunctionExists)
+###########
+## Build ##
+###########
 
-# Not everybody has <ifaddrs.h> (e.g., embedded arm-linux)
-CHECK_INCLUDE_FILES(ifaddrs.h HAVE_IFADDRS_H)
-# Not everybody has trunc (e.g., Windows, embedded arm-linux)
-CHECK_FUNCTION_EXISTS(trunc HAVE_TRUNC)
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+# include_directories(include)
+include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+)
 
-# Output test results to config.h
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/libros/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+## Declare a C++ library
+# add_library(ros_can_nodes
+#   src/${PROJECT_NAME}/ros_can_nodes.cpp
+# )
 
-add_library(${PROJECT_NAME}_lib
-  src/libros/master.cpp
-  src/libros/network.cpp
-  src/libros/subscriber.cpp
-  src/libros/common.cpp
-  src/libros/publisher_link.cpp
-  src/libros/connection.cpp
-  src/libros/single_subscriber_publisher.cpp
-  src/libros/param.cpp
-  src/libros/wall_timer.cpp
-  src/libros/xmlrpc_manager.cpp
-  src/libros/publisher.cpp
-  src/libros/timer.cpp
-  src/libros/io.cpp
-  src/libros/names.cpp
-  src/libros/topic.cpp
-  src/libros/topic_manager.cpp
-  src/libros/poll_manager.cpp
-  src/libros/publication.cpp
-  src/libros/statistics.cpp
-  src/libros/intraprocess_subscriber_link.cpp
-  src/libros/intraprocess_publisher_link.cpp
-  src/libros/callback_queue.cpp
-  src/libros/node_handle.cpp
-  src/libros/connection_manager.cpp
-  src/libros/file_log.cpp
-  src/libros/transport/transport.cpp
-  src/libros/transport/transport_udp.cpp
-  src/libros/transport/transport_tcp.cpp
-  src/libros/subscriber_link.cpp
-  src/libros/transport_publisher_link.cpp
-  src/libros/transport_subscriber_link.cpp
-  src/libros/rosout_appender.cpp
-  src/libros/Node.cpp
-  src/libros/subscription.cpp
-  src/libros/subscription_queue.cpp
-  src/libros/spinner.cpp
-  src/libros/internal_timer_manager.cpp
-  src/libros/message_deserializer.cpp
-  src/libros/poll_set.cpp
-  )
+## Add cmake target dependencies of the library
+## as an example, code may need to be generated before libraries
+## either from message generation or dynamic reconfigure
+# add_dependencies(ros_can_nodes ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(${PROJECT_NAME}_lib ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Declare a C++ executable
+add_executable(ros_can_nodes 
+    src/main.cpp
+    src/xmlrpc_manager.cpp
+    )
 
-target_link_libraries(${PROJECT_NAME}_lib
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  )
+## Add cmake target dependencies of the executable
+## same as for the library above
+#add_dependencies(ros_can_nodes ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(ros_can_nodes src/main.cpp)
-add_dependencies(ros_can_nodes ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+## Specify libraries to link a library or executable target against
 target_link_libraries(ros_can_nodes
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${PROJECT_NAME}_lib
-  )
+    ${catkin_LIBRARIES}
+)
 
+#############
+## Install ##
+#############
+
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+
+## Mark executable scripts (Python etc.) for installation
+## in contrast to setup.py, you can choose the destination
+# install(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark executables and/or libraries for installation
+#install(TARGETS ros_can_nodes ros_can_nodes
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#)
+
+## Mark cpp header files for installation
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
+
+#############
+## Testing ##
+#############
+
+## Add gtest based cpp test target and link libraries
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_ros_can_nodes.cpp)
+# if(TARGET ${PROJECT_NAME}-test)
+#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+# endif()
+
+## Add folders to be run by python nosetests
+# catkin_add_nosetests(test)
