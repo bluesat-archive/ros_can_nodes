@@ -4,5 +4,5 @@ class RosCanNode {
     public:
         RosCanNode();
         ~RosCanNode();
-        ros::XMLRPCManagerPtr xmlrpcManager;
+        roscan::XMLRPCManagerPtr xmlrpcManager;
 };
