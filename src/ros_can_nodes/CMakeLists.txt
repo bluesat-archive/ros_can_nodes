@@ -115,6 +115,9 @@ include_directories(
 add_executable(ros_can_nodes 
     src/main.cpp
     src/xmlrpc_manager.cpp
+    src/network.cpp
+    src/poll_manager.cpp
+    src/connection_manager.cpp
     )
 
 ## Add cmake target dependencies of the executable

@@ -1,19 +1,33 @@
-#include"main.h"
-#include"xmlrpc_manager.h"
+#include"RosCanNode.h"
 #include"network.h"
 
-RosCanNode::RosCanNode() {
-    xmlrpcManager.reset(new roscan::XMLRPCManager);
-    xmlrpcManager->start();
+namespace roscan
+{
+    RosCanNode::RosCanNode() {
+        xmlrpcManager.reset(new XMLRPCManager);
+        xmlrpcManager->start();
+
+        pollManager.reset(new PollManager);
+        pollManager->start();
+
+        connectionManager.reset(new ConnectionManager);
+        connectionManager->start(*this);
+
+        //topicManager.reset(new TopicManager);
+        //topicManager->start(*this);
+
+    }
+
+    RosCanNode::~RosCanNode() {
+        xmlrpcManager->shutdown();
+    }
 }
 
-RosCanNode::~RosCanNode() {
-    xmlrpcManager->shutdown();
-}
+using namespace roscan;
 
 int main() {
 
-    roscan::network::init();
+    network::init();
 
     RosCanNode *node = new RosCanNode();
     std::cout << node->xmlrpcManager->getServerURI() << std::endl;
