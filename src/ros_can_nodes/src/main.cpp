@@ -1,9 +1,12 @@
 #include"RosCanNode.h"
 #include"network.h"
+#include<boost/make_shared.hpp>
 
 namespace roscan
 {
-    RosCanNode::RosCanNode() {
+    RosCanNode::RosCanNode(std::string name) {
+        name_ = name;
+
         xmlrpcManager.reset(new XMLRPCManager);
         xmlrpcManager->start();
 
@@ -13,8 +16,9 @@ namespace roscan
         connectionManager.reset(new ConnectionManager);
         connectionManager->start(*this);
 
-        //topicManager.reset(new TopicManager);
-        //topicManager->start(*this);
+        RosCanNodePtr nodeptr = boost::make_shared<RosCanNode>(*this);
+        topicManager.reset(new TopicManager);
+        topicManager->start(nodeptr);
 
     }
 
@@ -29,7 +33,7 @@ int main() {
 
     network::init();
 
-    RosCanNode *node = new RosCanNode();
+    RosCanNode *node = new RosCanNode("bob");
     std::cout << node->xmlrpcManager->getServerURI() << std::endl;
 
     // mini shell for testing lel
