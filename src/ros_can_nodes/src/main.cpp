@@ -1,6 +1,8 @@
-#include"RosCanNode.h"
-#include"network.h"
-#include<boost/make_shared.hpp>
+#include "RosCanNode.h"
+#include "network.h"
+#include <boost/make_shared.hpp>
+//#include "ros/ros.h"
+#include <unistd.h>
 
 namespace roscan
 {
@@ -31,21 +33,58 @@ namespace roscan
         std::cout << "  Starting xmlrpc manager\n";
         xmlrpcManager->start();
 
+        collection_ = new NodeBackingCollection;
+        callback_queue_ = new ros::CallbackQueue;
     }
 
     RosCanNode::~RosCanNode() {
         xmlrpcManager->shutdown();
     }
+
+    void RosCanNode::subChatterCallback(const boost::shared_ptr<std_msgs::String const>& msg) {
+        std::cout << "received " << msg->data << std::endl;
+    }
+
+    Subscriber RosCanNode::subscribe(ros::SubscribeOptions& ops) {
+
+        if (ops.callback_queue == 0) {
+            if (callback_queue_) {
+                ops.callback_queue = callback_queue_;
+            } else {
+                std::cout << "argh no callback queue\n";
+                return Subscriber();
+            }
+        }
+
+        if (topicManager->subscribe(ops)) {
+            Subscriber sub(ops.topic, boost::make_shared<RosCanNode>(*this), ops.helper);
+
+            {
+                boost::mutex::scoped_lock lock(collection_->mutex_);
+                collection_->subs_.push_back(sub);
+            }
+
+            return sub;
+        }
+
+        return Subscriber();
+    }
+
+    void RosCanNode::spinOnce() {
+        ((ros::CallbackQueue*)callback_queue_)->callAvailable(ros::WallDuration());
+    }
 }
 
 using namespace roscan;
 
+// main has to be in the global namespace lol
 int main() {
 
     network::init();
 
     std::cout << "Creating new node\n";
-    RosCanNode *node = new RosCanNode("bob");
+    RosCanNodePtr node;
+    node.reset(new RosCanNode("bob"));
     std::cout << node->xmlrpcManager->getServerURI() << std::endl;
 
     // mini shell for testing lel
@@ -71,8 +110,18 @@ int main() {
                 std::cout << "getAllNodes() failed!" << std::endl;
             }
         }
+        if (s == "subscribe") {
+            ros::SubscribeOptions ops;
+            ops.template init<std_msgs::String>("/chatter", 1, boost::bind(&roscan::RosCanNode::subChatterCallback, node, _1));
+            ops.transport_hints = ros::TransportHints();
+            node->subscribe(ops);
+            while(1) {
+                // spin on callbacks
+                node->spinOnce();
+                sleep(1);
+            }
+        }
     }
 
-    delete node;
     return 0;
 }
