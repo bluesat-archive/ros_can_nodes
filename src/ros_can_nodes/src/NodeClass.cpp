@@ -1,5 +1,3 @@
-#include <ctime>
-#include <iostream>
 #include "NodeClass.hpp"
 
 //array of nodes
@@ -81,7 +79,7 @@ int Node::unregisterSubscriber(std::string topic) {
     return 0;
 }
 
-int advertiseTopic(std::string topic, std::string topic_type) {
+int Node::advertiseTopic(std::string topic, std::string topic_type) {
 
     //TODO: call ROS master registerPublisher(caller_id, topic, topic_type, caller_api) with callerId as first parameter
     std::cout << "Advertising topic" << '\n';
@@ -90,7 +88,7 @@ int advertiseTopic(std::string topic, std::string topic_type) {
     return 0;
 }
 
-int unregisterPublisher(std::string topic) {
+int Node::unregisterPublisher(std::string topic) {
 
     //TODO: call ROS master unregisterSubscriber() with callerId as first parameter
     std::cout << "Unregistering publisher" << '\n';
@@ -99,7 +97,7 @@ int unregisterPublisher(std::string topic) {
     return 0;
 }
 
-int setParam(std::string key) {
+int Node::setParam(std::string key) {
 
     //TODO: call ROS master setParam(caller_id, key, value) with callerId as first parameter
     std::cout << "Setting parameter" << '\n';
@@ -109,7 +107,7 @@ int setParam(std::string key) {
 
 }
 
-int deleteParam(std::string key) {
+int Node::deleteParam(std::string key) {
 
     //TODO: call ROS master deleteParam(caller_id, key) with callerId as first parameter
     std::cout << "Deleting parameter" << '\n';
@@ -119,7 +117,7 @@ int deleteParam(std::string key) {
 
 }
 
-int advertiseService(std::string service) {
+int Node::advertiseService(std::string service) {
 
     //TODO: call ROS master registerService(caller_id, service, service_api, caller_api) with callerId as first parameter
     std::cout << "Registering service" << '\n';
@@ -128,7 +126,7 @@ int advertiseService(std::string service) {
     return 0;
 }
 
-int unregisterService(std::string service) {
+int Node::unregisterService(std::string service) {
 
     //TODO: call ROS master unregisterService(caller_id, service, service_api) with callerId as first parameter
     std::cout << "Unregistering service" << '\n';
@@ -138,7 +136,7 @@ int unregisterService(std::string service) {
 
 }
 
-int searchParam(std::string key) {
+int Node::searchParam(std::string key) {
 
     //TODO: call ROS master searchParam(caller_id, key) with callerId as first parameter
     std::cout << "Searching for parameter key" << '\n';
@@ -147,7 +145,7 @@ int searchParam(std::string key) {
     return 0;
 }
 
-int subscribeParam(std::string key) {
+int Node::subscribeParam(std::string key) {
 
     //TODO: call ROS master subscribeParam(caller_id, caller_api, key) with callerId as first parameter
     std::cout << "Subscribing to parameter key" << '\n';
@@ -156,7 +154,7 @@ int subscribeParam(std::string key) {
     return 0;
 }
 
-int unsubscribeParam(std::string key) {
+int Node::unsubscribeParam(std::string key) {
 
     //TODO: call ROS master unsubscribeParam(caller_id, caller_api, key) with callerId as first parameter
     std::cout << "Unsubscribing to parameter key" << '\n';
@@ -165,7 +163,7 @@ int unsubscribeParam(std::string key) {
     return 0;
 }
 
-int hasParam(std::string key) {
+int Node::hasParam(std::string key) {
 
     //TODO: call ROS master unsubscribeParam(caller_id, caller_api, key) with callerId as first parameter
     std::cout << "Checking if parameter stored on server" << '\n';
@@ -174,7 +172,7 @@ int hasParam(std::string key) {
     return 0;
 }
 
-int getParamNames() {
+int Node::getParamNames() {
 
     //TODO: call ROS master getParamNames(caller_id) with callerId as parameter
     std::cout << "Getting list of all parameter names" << '\n';
@@ -183,7 +181,7 @@ int getParamNames() {
     return 0;
 }
 
-int getParam(std::string key) {
+int Node::getParam(std::string key) {
 
     //TODO: call ROS master getParam(caller_id, key) with callerId as parameter
     std::cout << "Getting a parameter" << '\n';
@@ -192,19 +190,6 @@ int getParam(std::string key) {
     return 0;
 }
 
-Node * getNode(int index) {
+Node * Node::getNode(int index) {
     return nodeList[index];
-}
-
-int main() {
-    for (int i = 0; i < MAX_NODES + 5; i++) {
-      Node::registerNode("Node " + std::to_string(i), "random hashID");
-
-      if(i < MAX_NODES){
-          std::cout << nodeList[i]->getID() << '\n';
-          std::cout << nodeList[i]->getName();
-          std::cout << "" << '\n';
-      }
-
-    }
 }
