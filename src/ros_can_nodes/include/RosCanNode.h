@@ -13,14 +13,15 @@
 #include<ros/callback_queue.h>
 #include<ros/callback_queue_interface.h>
 
-#include<ros/subscribe_options.h>
+//#include<ros/subscribe_options.h>
 
-#include"subscriber.h"
+//#include"subscriber.h"
 
 namespace roscan
 {
-    class Subscriber;
+    //class Subscriber;
 
+    /*
     class NodeBackingCollection
     {
         public:
@@ -35,6 +36,7 @@ namespace roscan
 
             boost::mutex mutex_;
     };
+    */
 
     class RosCanNode {
         public:
@@ -49,16 +51,16 @@ namespace roscan
                 return name_;
             }
 
-            Subscriber subscribe(ros::SubscribeOptions& ops);
+            //Subscriber subscribe(ros::SubscribeOptions& ops);
 
             void spinOnce();
 
-            void subChatterCallback(const boost::shared_ptr<std_msgs::String const>&);
+            //void subChatterCallback(const boost::shared_ptr<std_msgs::String const>&);
 
         private:
             std::string name_;
             ros::CallbackQueueInterface* callback_queue_;
-            NodeBackingCollection* collection_;
+            //NodeBackingCollection* collection_;
     };
 
     typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;

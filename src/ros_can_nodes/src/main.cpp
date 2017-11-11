@@ -33,7 +33,7 @@ namespace roscan
         std::cout << "  Starting xmlrpc manager\n";
         xmlrpcManager->start();
 
-        collection_ = new NodeBackingCollection;
+        //collection_ = new NodeBackingCollection;
         callback_queue_ = new ros::CallbackQueue;
     }
 
@@ -41,6 +41,7 @@ namespace roscan
         xmlrpcManager->shutdown();
     }
 
+    /*
     void RosCanNode::subChatterCallback(const boost::shared_ptr<std_msgs::String const>& msg) {
         std::cout << "received " << msg->data << std::endl;
     }
@@ -73,6 +74,7 @@ namespace roscan
     void RosCanNode::spinOnce() {
         ((ros::CallbackQueue*)callback_queue_)->callAvailable(ros::WallDuration());
     }
+    */
 }
 
 using namespace roscan;
@@ -110,6 +112,7 @@ int main() {
                 std::cout << "getAllNodes() failed!" << std::endl;
             }
         }
+        /*
         if (s == "subscribe") {
             ros::SubscribeOptions ops;
             ops.template init<std_msgs::String>("/chatter", 1, boost::bind(&roscan::RosCanNode::subChatterCallback, node, _1));
@@ -120,7 +123,7 @@ int main() {
                 node->spinOnce();
                 sleep(1);
             }
-        }
+        }*/
     }
 
     return 0;
