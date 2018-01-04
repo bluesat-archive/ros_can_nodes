@@ -5,15 +5,16 @@
  * ROS Node Name:
  * ROS Package: ros_can_nodes
  * Purpose:
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 201
+ * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
  */
 
+#include <linux/can.h>
 
 class CANMsgRouter{
 
     public:
 
-        static void processCANMsg(CANMsg msg);
+        static void processCANMsg(can_frame msg);
 
     private:
 
@@ -21,5 +22,4 @@ class CANMsgRouter{
 
         static void routePublishMsg(uint32_t identifier, uint8_t *data);
 
-        //TODO: abstract decoder jumptable
 }
