@@ -37,8 +37,6 @@ namespace roscan {
         callback_queue_ = new ros::CallbackQueue;
     }
 
-    RosCanNode::~RosCanNode() { xmlrpcManager->shutdown(); }
-
     /*
     void RosCanNode::subChatterCallback(const boost::shared_ptr<std_msgs::String const>& msg) {
         std::cout << "received " << msg->data << std::endl;
@@ -80,7 +78,6 @@ using namespace roscan;
 
 // main has to be in the global namespace lol
 int main() {
-
     network::init();
 
     std::cout << "Creating new node\n";
@@ -93,23 +90,29 @@ int main() {
         std::cout << "$ ";
         std::string s;
         std::cin >> s;
-        if (s == "exit")
+        if (s == "exit") {
             break;
-        if (s == "checkMaster") {
+        } else if (s == "checkMaster") {
             std::cout << node->xmlrpcManager->checkMaster("yo") << std::endl;
-        }
-        if (s == "getMasterURI") {
+        } else if (s == "getMasterURI") {
             std::cout << node->xmlrpcManager->getMasterURI() << std::endl;
-        }
-        if (s == "getAllNodes") {
+        } else if (s == "getAllNodes") {
             std::vector<std::string> nodes;
             if (node->xmlrpcManager->getAllNodes("yo", nodes)) {
                 for (unsigned i = 0; i < nodes.size(); ++i) {
                     std::cout << nodes[i] << std::endl;
                 }
-
             } else {
                 std::cout << "getAllNodes() failed!" << std::endl;
+            }
+        } else if (s == "getAllTopics") {
+            std::vector<XMLRPCManager::TopicInfo> topics;
+            if (node->xmlrpcManager->getAllTopics("yo", topics)) {
+                for (unsigned i = 0; i < topics.size(); ++i) {
+                    std::cout << topics[i].name << " (" << topics[i].datatype << ")" << std::endl;
+                }
+            } else {
+                std::cout << "getAllTopics() failed!" << std::endl;
             }
         }
         /*

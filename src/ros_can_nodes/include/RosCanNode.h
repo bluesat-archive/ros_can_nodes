@@ -40,7 +40,7 @@ namespace roscan {
     class RosCanNode {
         public:
             RosCanNode(std::string name);
-            ~RosCanNode();
+            ~RosCanNode() { xmlrpcManager->shutdown(); }
             XMLRPCManagerPtr xmlrpcManager;
             PollManagerPtr pollManager;
             ConnectionManagerPtr connectionManager;
