@@ -35,15 +35,11 @@
 
 namespace roscan
 {
-
-    /**
-     * \brief Manages an subscription callback on a specific topic.
-     *
-     * A Subscriber should always be created through a call to NodeHandle::subscribe(), or copied from one
-     * that was. Once all copies of a specific
-     * Subscriber go out of scope, the subscription callback associated with that handle will stop
-     * being called.  Once all Subscriber for a given topic go out of scope the topic will be unsubscribed.
-     */
+    // Manages an subscription callback on a specific topic.
+    // A Subscriber should always be created through a call to NodeHandle::subscribe(), or copied from one
+    // that was. Once all copies of a specific
+    // Subscriber go out of scope, the subscription callback associated with that handle will stop
+    // being called.  Once all Subscriber for a given topic go out of scope the topic will be unsubscribed.
     class Subscriber
     {
         public:
@@ -53,22 +49,16 @@ namespace roscan
             Subscriber(const std::string& topic, const RosCanNodePtr& node,
                     const ros::SubscriptionCallbackHelperPtr& helper);
 
-            /**
-             * \brief Unsubscribe the callback associated with this Subscriber
-             *
-             * This method usually does not need to be explicitly called, as automatic shutdown happens when
-             * all copies of this Subscriber go out of scope
-             *
-             * This method overrides the automatic reference counted unsubscribe, and immediately
-             * unsubscribes the callback associated with this Subscriber
-             */
+            // Unsubscribe the callback associated with this Subscriber
+            // This method usually does not need to be explicitly called, as automatic shutdown happens when
+            // all copies of this Subscriber go out of scope
+            // This method overrides the automatic reference counted unsubscribe, and immediately
+            // unsubscribes the callback associated with this Subscriber
             void shutdown();
 
             std::string getTopic() const;
 
-            /**
-             * \brief Returns the number of publishers this subscriber is connected to
-             */
+            // Returns the number of publishers this subscriber is connected to
             uint32_t getNumPublishers() const;
 
         private:

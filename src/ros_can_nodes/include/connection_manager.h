@@ -57,14 +57,10 @@ namespace roscan
             ConnectionManager();
             ~ConnectionManager();
 
-            /** @brief Get a new connection ID
-            */
+            // Get a new connection ID
             uint32_t getNewConnectionID();
 
-            /** @brief Add a connection to be tracked by the node.  Will automatically remove them if they've been dropped, but from inside the ros thread
-             *
-             * @param The connection to add
-             */
+            // Add a connection to be tracked by the node.  Will automatically remove them if they've been dropped, but from inside the ros thread
             void addConnection(const ros::ConnectionPtr& connection);
 
             void clear(ros::Connection::DropReason reason);
@@ -82,6 +78,7 @@ namespace roscan
 
         private:
             void onConnectionDropped(const ros::ConnectionPtr& conn);
+
             // Remove any dropped connections from our list, causing them to be destroyed
             // They can't just be removed immediately when they're dropped because the ros
             // thread may still be using them (or more likely their transport)
@@ -110,6 +107,6 @@ namespace roscan
             const static int MAX_TCPROS_CONN_QUEUE = 100; // magic
     };
 
-}
+} // namespace roscan
 
 #endif // ROSCAN_CONNECTION_MANAGER_H

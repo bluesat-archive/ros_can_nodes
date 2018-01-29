@@ -86,45 +86,24 @@ namespace roscan
             bool advertise(const ros::AdvertiseOptions& ops, const ros::SubscriberCallbacksPtr& callbacks);
             bool unadvertise(const std::string &topic, const ros::SubscriberCallbacksPtr& callbacks);
 
-            /** @brief Get the list of topics advertised by this node
-             *
-             * @param[out] topics The advertised topics
-             */
+            // Get the list of topics advertised by this node
             void getAdvertisedTopics(V_string& topics);
 
-            /** @brief Get the list of topics subscribed to by this node
-             *
-             * @param[out] The subscribed topics
-             */
+            // Get the list of topics subscribed to by this node
             void getSubscribedTopics(V_string& topics);
 
-            /** @brief Lookup an advertised topic.
-             *
-             * This method iterates over advertised_topics, looking for one with name
-             * matching the given topic name.  The advertised_topics_mutex is locked
-             * during this search.  This method is only used internally.
-             *
-             * @param topic The topic name to look for.
-             *
-             * @returns Pointer to the matching Publication, NULL if none is found.
-             */
+            // Lookup an advertised topic.
+            // This method iterates over advertised_topics, looking for one with name
+            // matching the given topic name.  The advertised_topics_mutex is locked
+            // during this search.  This method is only used internally.
+            // Returns pointer to the matching Publication, NULL if none is found.
             ros::PublicationPtr lookupPublication(const std::string& topic);
 
-            /** @brief Return the number of subscribers a node has for a particular topic:
-             *
-             * @param _topic The topic name to check
-             *
-             * @return number of subscribers
-             */
+            // Return the number of subscribers a node has for a particular topic
             size_t getNumSubscribers(const std::string &_topic);
             size_t getNumSubscriptions();
 
-            /**
-             * \brief Return the number of publishers connected to this node on a particular topic
-             *
-             * \param _topic the topic name to check
-             * \return the number of subscribers
-             */
+            // Return the number of publishers connected to this node on a particular topic
             size_t getNumPublishers(const std::string &_topic);
 
             template<typename M>
@@ -140,25 +119,19 @@ namespace roscan
             bool isLatched(const std::string& topic);
 
         private:
-            /** if it finds a pre-existing subscription to the same topic and of the
-             *  same message type, it appends the Functor to the callback vector for
-             *  that subscription. otherwise, it returns false, indicating that a new
-             *  subscription needs to be created.
-             */
+            // if it finds a pre-existing subscription to the same topic and of the
+            // same message type, it appends the Functor to the callback vector for
+            // that subscription. otherwise, it returns false, indicating that a new
+            // subscription needs to be created.
             bool addSubCallback(const ros::SubscribeOptions& ops);
 
-            /** @brief Request a topic
-             *
-             * Negotiate a subscriber connection on a topic.
-             *
-             * @param topic The topic of interest.
-             * @param protos List of transport protocols, in preference order
-             * @param ret Return value
-             *
-             * @return true on success, false otherwise
-             *
-             * @todo Consider making this private
-             */
+            // Request a topic
+            // Negotiate a subscriber connection on a topic.
+            // @param topic The topic of interest.
+            // @param protos List of transport protocols, in preference order
+            // @param ret Return value
+            // @return true on success, false otherwise
+            // @todo Consider making this private
             bool requestTopic(const std::string &topic, XmlRpc::XmlRpcValue &protos, XmlRpc::XmlRpcValue &ret);
 
             // Must lock the advertised topics mutex before calling this function
@@ -172,48 +145,36 @@ namespace roscan
 
             void processPublishQueues();
 
-            /** @brief Compute the statistics for the node's connectivity
-             *
-             * This is the implementation of the xml-rpc getBusStats function;
-             * it populates the XmlRpcValue object sent to it with various statistics
-             * about the node's connectivity, bandwidth utilization, etc.
-             */
+            // Compute the statistics for the node's connectivity
+            // This is the implementation of the xml-rpc getBusStats function;
+            // it populates the XmlRpcValue object sent to it with various statistics
+            // about the node's connectivity, bandwidth utilization, etc.
             void getBusStats(XmlRpc::XmlRpcValue &stats);
 
-            /** @brief Compute the info for the node's connectivity
-             *
-             * This is the implementation of the xml-rpc getBusInfo function;
-             * it populates the XmlRpcValue object sent to it with various info
-             * about the node's connectivity.
-             */
+            // Compute the info for the node's connectivity
+            // This is the implementation of the xml-rpc getBusInfo function;
+            // it populates the XmlRpcValue object sent to it with various info
+            // about the node's connectivity.
             void getBusInfo(XmlRpc::XmlRpcValue &info);
 
-            /** @brief Return the list of subcriptions for the node
-             *
-             * This is the implementation of the xml-rpc getSubscriptions
-             * function; it populates the XmlRpcValue object sent to it with the
-             * list of subscribed topics and their datatypes.
-             */
+            // Return the list of subcriptions for the node
+            // This is the implementation of the xml-rpc getSubscriptions
+            // function; it populates the XmlRpcValue object sent to it with the
+            // list of subscribed topics and their datatypes.
             void getSubscriptions(XmlRpc::XmlRpcValue &subscriptions);
 
-            /** @brief Return the list of advertised topics for the node
-             *
-             * This is the implementation of the xml-rpc getPublications
-             * function; it populates the XmlRpcValue object sent to it with the
-             * list of advertised topics and their datatypes.
-             */
+            // Return the list of advertised topics for the node
+            // This is the implementation of the xml-rpc getPublications
+            // function; it populates the XmlRpcValue object sent to it with the
+            // list of advertised topics and their datatypes.
             void getPublications(XmlRpc::XmlRpcValue &publications);
 
-            /** @brief Update local publisher lists.
-             *
-             * Use this method to update address information for publishers on a
-             * given topic.
-             *
-             * @param topic The topic of interest
-             * @param pubs The list of publishers to update.
-             *
-             * @return true on success, false otherwise.
-             */
+            // Update local publisher lists.
+            // Use this method to update address information for publishers on a
+            // given topic.
+            // @param topic The topic of interest
+            // @param pubs The list of publishers to update.
+            // Return true on success, false otherwise.
             bool pubUpdate(const std::string &topic, const std::vector<std::string> &pubs);
 
             void pubUpdateCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);

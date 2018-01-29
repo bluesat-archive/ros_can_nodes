@@ -996,8 +996,6 @@ namespace roscan
         }
     }
 
-    //extern std::string console::g_last_error_message;
-
     void TopicManager::pubUpdateCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
     {
         std::vector<std::string> pubs;

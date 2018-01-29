@@ -176,26 +176,7 @@ namespace roscan
             (*it)->drop();
         }
     }
-/*
-    void Subscription::addLocalConnection(const ros::PublicationPtr& pub)
-    {
-        boost::mutex::scoped_lock lock(publisher_links_mutex_);
-        if (dropped_)
-        {
-            return;
-        }
 
-        ROSCPP_LOG_DEBUG("Creating intraprocess link for topic [%s]", name_.c_str());
-
-        ros::IntraProcessPublisherLinkPtr pub_link(boost::make_shared<ros::IntraProcessPublisherLink>(shared_from_this(), node_->xmlrpcManager->getServerURI(), transport_hints_));
-        ros::IntraProcessSubscriberLinkPtr sub_link(boost::make_shared<ros::IntraProcessSubscriberLink>(pub));
-        pub_link->setPublisher(sub_link);
-        sub_link->setSubscriber(pub_link);
-
-        addPublisherLink(pub_link);
-        pub->addSubscriberLink(sub_link);
-    }
-*/
     bool urisEqual(const std::string& uri1, const std::string& uri2)
     {
         std::string host1, host2;
@@ -404,7 +385,6 @@ namespace roscan
 
         XmlRpc::XmlRpcClient* c = new XmlRpc::XmlRpcClient(peer_host.c_str(),
                 peer_port, "/");
-        // if (!c.execute("requestTopic", params, result) || !g_node->validateXmlrpcResponse("requestTopic", result, proto))
 
         // Initiate the negotiation.  We'll come back and check on it later.
         if (!c->executeNonBlock("requestTopic", params))

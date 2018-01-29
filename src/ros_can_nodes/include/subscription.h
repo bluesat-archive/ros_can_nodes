@@ -67,39 +67,30 @@ namespace roscan {
     class Subscription;
     typedef boost::shared_ptr<Subscription> SubscriptionPtr;
     typedef boost::weak_ptr<Subscription> SubscriptionWPtr;
-    /**
-     * \brief Manages a subscription on a single topic.
-     */
+
+    // Manages a subscription on a single topic.
     class Subscription : public boost::enable_shared_from_this<Subscription>
     {
         public:
             Subscription(const RosCanNodePtr &node, const std::string &name, const std::string& md5sum, const std::string& datatype, const ros::TransportHints& transport_hints);
             virtual ~Subscription();
 
-            /**
-             * \brief Terminate all our PublisherLinks
-             */
+            // Terminate all our PublisherLinks
             void drop();
-            /**
-             * \brief Terminate all our PublisherLinks and join our callback thread if it exists
-             */
+
+            // Terminate all our PublisherLinks and join our callback thread if it exists
             void shutdown();
-            /**
-             * \brief Handle a publisher update list received from the master. Creates/drops PublisherLinks based on
-             * the list.  Never handles new self-subscriptions
-             */
+
+            // Handle a publisher update list received from the master. Creates/drops PublisherLinks based on
+            // the list.  Never handles new self-subscriptions
             bool pubUpdate(const std::vector<std::string> &pubs);
-            /**
-             * \brief Negotiates a connection with a publisher
-             * \param xmlrpc_uri The XMLRPC URI to connect to to negotiate the connection
-             */
+
+            // Negotiates a connection with a publisher
             bool negotiateConnection(const std::string& xmlrpc_uri);
 
             void addLocalConnection(const ros::PublicationPtr& pub);
 
-            /**
-             * \brief Returns whether this Subscription has been dropped or not
-             */
+            // Returns whether this Subscription has been dropped or not
             bool isDropped() { return dropped_; }
             XmlRpc::XmlRpcValue getStats();
             void getInfo(XmlRpc::XmlRpcValue& info);
@@ -109,18 +100,14 @@ namespace roscan {
 
             typedef std::map<std::string, std::string> M_string;
 
-            /**
-             * \brief Called to notify that a new message has arrived from a publisher.
-             * Schedules the callback for invokation with the callback queue
-             */
+            // Called to notify that a new message has arrived from a publisher.
+            // Schedules the callback for invokation with the callback queue
             uint32_t handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy, const boost::shared_ptr<M_string>& connection_header, const ros::PublisherLinkPtr& link);
 
             const std::string datatype();
             const std::string md5sum();
 
-            /**
-             * \brief Removes a subscriber from our list
-             */
+            // Removes a subscriber from our list
             void removePublisherLink(const ros::PublisherLinkPtr& pub_link);
 
             const std::string& getName() const { return name_; }

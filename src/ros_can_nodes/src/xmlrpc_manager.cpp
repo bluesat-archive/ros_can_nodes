@@ -33,9 +33,6 @@
 #include <ros/file_log.h>
 #include <ros/io.h>
 
-//#include "ros/this_node.h"
-//#include "ros/network.h"
-
 #include <ros/console.h>
 #include <ros/assert.h>
 

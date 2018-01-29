@@ -38,17 +38,12 @@
 #include <ros/common.h>
 #include <XmlRpc.h>
 #include <XmlRpcValue.h>
-//#include "ros/forwards.h"
 
 #include <ros/time.h>
-
 
 namespace roscan
 {
 
-    /**
-     * \brief internal
-     */
     namespace xmlrpc
     {
         XmlRpc::XmlRpcValue responseStr(int code, const std::string& msg, const std::string& response);
@@ -100,22 +95,16 @@ namespace roscan
             XMLRPCManager();
             ~XMLRPCManager();
 
-            /** @brief Validate an XML/RPC response
-             *
-             * @param method The RPC method that was invoked.
-             * @param response The resonse that was received.
-             * @param payload The payload that was received.
-             *
-             * @return true if validation succeeds, false otherwise.
-             *
-             * @todo Consider making this private.
-             */
+            // Validate an XML/RPC response
+            // @param method The RPC method that was invoked.
+            // @param response The resonse that was received.
+            // @param payload The payload that was received.
+            // Return true if validation succeeds, false otherwise.
+            // @todo Consider making this private.
             bool validateXmlrpcResponse(const std::string& method, 
                     XmlRpc::XmlRpcValue &response, XmlRpc::XmlRpcValue &payload);
 
-            /**
-             * @brief Get the xmlrpc server URI of this node
-             */
+            // Get the xmlrpc server URI of this node
             inline const std::string& getServerURI() const { return uri_; }
             inline uint32_t getServerPort() const { return port_; }
 
@@ -133,87 +122,61 @@ namespace roscan
 
             bool isShuttingDown() { return shutting_down_; }
 
-            /** @brief Execute an XMLRPC call on the master
-             *
-             * @param method The RPC method to invoke
-             * @param request The arguments to the RPC call
-             * @param response [out] The resonse that was received.
-             * @param payload [out] The payload that was received.
-             * @param wait_for_master Whether or not this call should loop until it can contact the master
-             *
-             * @return true if call succeeds, false otherwise.
-             */
+            // Execute an XMLRPC call on the master
+            // @param method The RPC method to invoke
+            // @param request The arguments to the RPC call
+            // @param response [out] The resonse that was received.
+            // @param payload [out] The payload that was received.
+            // @param wait_for_master Whether or not this call should loop until it can contact the master
+            // @return true if call succeeds, false otherwise.
             bool callMaster(const std::string& method, const XmlRpc::XmlRpcValue& request, 
                     XmlRpc::XmlRpcValue& response, XmlRpc::XmlRpcValue& payload, bool wait_for_master);
 
-            /** @brief Get the hostname where the master runs.
-             *
-             * @return The master's hostname, as a string
-             */
+            // Get the hostname where the master runs.
             const std::string& getMasterHost();
-            /** @brief Get the port where the master runs.
-             *
-             * @return The master's port.
-             */
+
+            // Get the port where the master runs.
             uint32_t getMasterPort();
-            /**
-             * \brief Get the full URI to the master (eg. http://host:port/)
-             */
+
+            // Get the full URI to the master (eg. http://host:port/)
             const std::string& getMasterURI();
 
-            /** @brief Check whether the master is up
-             *
-             * This method tries to contact the master.  You can call it any time
-             * after ros::init has been called.  The intended usage is to check
-             * whether the master is up before trying to make other requests
-             * (subscriptions, advertisements, etc.).
-             *
-             * @returns true if the master is available, false otherwise.
-             */
+            // Check whether the master is up
+            // This method tries to contact the master.  You can call it any time
+            // after ros::init has been called.  The intended usage is to check
+            // whether the master is up before trying to make other requests
+            // (subscriptions, advertisements, etc.).
+            // Returns true if the master is available, false otherwise.
             bool checkMaster(std::string nodeName);
 
-            /**
-             * \brief Contains information retrieved from the master about a topic
-             */
+            // Contains information retrieved from the master about a topic
             struct TopicInfo
             {
                 TopicInfo() {}
                 TopicInfo(const std::string& _name, const std::string& _datatype /*, const std::string& _md5sum*/)
                     : name(_name)
                       , datatype(_datatype)
-                      //, md5sum(_md5sum)
                 {}
                 std::string name;        ///< Name of the topic
                 std::string datatype;    ///< Datatype of the topic
-
-                // not possible yet unfortunately (master does not have this information)
-                //std::string md5sum;      ///< md5sum of the topic
             };
             typedef std::vector<TopicInfo> V_TopicInfo;
 
-            /** @brief Get the list of topics that are being published by all nodes.
-             *
-             * This method communicates with the master to retrieve the list of all
-             * currently advertised topics.
-             *
-             * @param topics A place to store the resulting list.  Each item in the
-             * list is a pair <string topic, string type>.  The type is represented
-             * in the format "package_name/MessageName", and is also retrievable
-             * through message.__getDataType() or MessageName::__s_getDataType().
-             *
-             * @return true on success, false otherwise (topics not filled in)
-             */
+            // Get the list of topics that are being published by all nodes.
+            // This method communicates with the master to retrieve the list of all
+            // currently advertised topics.
+            // @param topics A place to store the resulting list.  Each item in the
+            // list is a pair <string topic, string type>.  The type is represented
+            // in the format "package_name/MessageName", and is also retrievable
+            // through message.__getDataType() or MessageName::__s_getDataType().
+            // Return true on success, false otherwise (topics not filled in)
             bool getAllTopics(std::string nodeName, V_TopicInfo& topics);
 
-            /**
-             * \brief Retreives the currently-known list of nodes from the master
-             */
+            // Retreives the currently-known list of nodes from the master
             bool getAllNodes(std::string nodeName, std::vector<std::string>& nodes);
 
-            /**
-             * @brief Set the max time this node should spend looping trying to connect to the master
-             * @param The timeout.  A negative value means infinite
-             */
+            // Set the max time this node should spend looping trying to connect to the master
+            // @param The timeout.  A negative value means infinite
             void setMasterRetryTimeout(ros::WallDuration timeout);
 
         private:

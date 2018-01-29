@@ -31,9 +31,7 @@
 #include <ros/io.h>     // cross-platform headers needed
 #include <ros/console.h>
 #include <ros/assert.h>
-#ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
-#endif
 
 #include <boost/lexical_cast.hpp>
 
@@ -120,8 +118,6 @@ namespace roscan
             }
 
             // Fourth, fall back on interface search, which will yield an IP address
-
-#ifdef HAVE_IFADDRS_H
             struct ifaddrs *ifa = NULL, *ifp = NULL;
             int rc;
             if ((rc = getifaddrs(&ifp)) < 0)
@@ -171,15 +167,6 @@ namespace roscan
             }
             ROSCPP_LOG_DEBUG( "preferred IP is guessed to be %s", preferred_ip);
             return std::string(preferred_ip);
-#else
-            // @todo Fix IP determination in the case where getifaddrs() isn't
-            // available.
-            ROS_ERROR( "You don't have the getifaddrs() call; I'm assuming that your IP "
-                    "address is 127.0.0.1.  This should work for local processes, "
-                    "but will almost certainly not work if you have remote processes."
-                    "Report to the ROS development team to seek a fix.");
-            return std::string("127.0.0.1");
-#endif
         }
 
         void init()
