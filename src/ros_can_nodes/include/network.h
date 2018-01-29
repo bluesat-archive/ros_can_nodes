@@ -32,14 +32,14 @@
 
 namespace roscan {
 
-namespace network {
+    namespace network {
 
-bool splitURI(const std::string &uri, std::string &host, uint32_t &port);
-const std::string &getHost();
-uint16_t getTCPROSPort();
-void init();
+        bool splitURI(const std::string &uri, std::string &host, uint32_t &port);
+        const std::string &getHost();
+        uint16_t getTCPROSPort();
+        void init();
 
-} // namespace network
+    } // namespace network
 
 } // namespace roscan
 

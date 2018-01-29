@@ -25,47 +25,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RosCanNode.h"
 #include "topic_manager.h"
-#include "xmlrpc_manager.h"
+#include "RosCanNode.h"
 #include "connection_manager.h"
-#include "poll_manager.h"
 #include "network.h"
-
+#include "poll_manager.h"
+#include "xmlrpc_manager.h"
+#include <ros/rosout_appender.h>
 #include <ros/transport/transport_tcp.h>
 #include <ros/transport/transport_udp.h>
-#include <ros/rosout_appender.h>
-
 #include <ros/publication.h>
 #include <ros/subscription.h>
-
 #include <ros/file_log.h>
 #include <ros/subscribe_options.h>
-
 #include <XmlRpc.h>
-
 #include <ros/console.h>
 
 using namespace XmlRpc; // A battle to be fought later
-using namespace std; // sigh
+using namespace std;    // sigh
 
 /// \todo Locking can be significantly simplified here once the Node API goes away.
 
-namespace roscan
-{
+namespace roscan {
 
-    TopicManager::TopicManager()
-        : shutting_down_(false)
-    {
-    }
-
-    TopicManager::~TopicManager()
-    {
-        shutdown();
-    }
-
-    void TopicManager::start(const RosCanNodePtr& node)
-    {
+    void TopicManager::start(const RosCanNodePtr &node) {
         boost::mutex::scoped_lock shutdown_lock(shutting_down_mutex_);
         shutting_down_ = false;
 
@@ -84,11 +67,9 @@ namespace roscan
         poll_manager_->addPollThreadListener(boost::bind(&TopicManager::processPublishQueues, this));
     }
 
-    void TopicManager::shutdown()
-    {
+    void TopicManager::shutdown() {
         boost::mutex::scoped_lock shutdown_lock(shutting_down_mutex_);
-        if (shutting_down_)
-        {
+        if (shutting_down_) {
             return;
         }
 
@@ -114,10 +95,8 @@ namespace roscan
             boost::recursive_mutex::scoped_lock adv_lock(advertised_topics_mutex_);
 
             for (V_Publication::iterator i = advertised_topics_.begin();
-                    i != advertised_topics_.end(); ++i)
-            {
-                if(!(*i)->isDropped())
-                {
+                i != advertised_topics_.end(); ++i) {
+                if (!(*i)->isDropped()) {
                     unregisterPublisher((*i)->getName());
                 }
                 (*i)->drop();
@@ -130,8 +109,7 @@ namespace roscan
         {
             boost::mutex::scoped_lock subs_lock(subs_mutex_);
 
-            for (L_Subscription::iterator s = subscriptions_.begin(); s != subscriptions_.end(); ++s)
-            {
+            for (L_Subscription::iterator s = subscriptions_.begin(); s != subscriptions_.end(); ++s) {
                 // Remove us as a subscriber from the master
                 unregisterSubscriber((*s)->getName());
                 // now, drop our side of the connection
@@ -141,21 +119,18 @@ namespace roscan
         }
     }
 
-    void TopicManager::processPublishQueues()
-    {
+    void TopicManager::processPublishQueues() {
         boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
 
         V_Publication::iterator it = advertised_topics_.begin();
         V_Publication::iterator end = advertised_topics_.end();
-        for (; it != end; ++it)
-        {
-            const ros::PublicationPtr& pub = *it;
+        for (; it != end; ++it) {
+            const ros::PublicationPtr &pub = *it;
             pub->processPublishQueue();
         }
     }
 
-    void TopicManager::getAdvertisedTopics(V_string& topics)
-    {
+    void TopicManager::getAdvertisedTopics(V_string &topics) {
         boost::mutex::scoped_lock lock(advertised_topic_names_mutex_);
 
         topics.resize(advertised_topic_names_.size());
@@ -164,34 +139,29 @@ namespace roscan
                 topics.begin());
     }
 
-    void TopicManager::getSubscribedTopics(V_string& topics)
-    {
+    void TopicManager::getSubscribedTopics(V_string &topics) {
         boost::mutex::scoped_lock lock(subs_mutex_);
 
         topics.reserve(subscriptions_.size());
         L_Subscription::const_iterator it = subscriptions_.begin();
         L_Subscription::const_iterator end = subscriptions_.end();
-        for (; it != end; ++it)
-        {
-            const ros::SubscriptionPtr& sub = *it;
+        for (; it != end; ++it) {
+            const ros::SubscriptionPtr &sub = *it;
             topics.push_back(sub->getName());
         }
     }
 
-    ros::PublicationPtr TopicManager::lookupPublication(const std::string& topic)
-    {
+    ros::PublicationPtr TopicManager::lookupPublication(const std::string &topic) {
         boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
 
         return lookupPublicationWithoutLock(topic);
     }
 
-    bool md5sumsMatch(const std::string& lhs, const std::string& rhs)
-    {
+    bool md5sumsMatch(const std::string &lhs, const std::string &rhs) {
         return lhs == "*" || rhs == "*" || lhs == rhs;
     }
 
-    bool TopicManager::addSubCallback(const ros::SubscribeOptions& ops)
-    {
+    bool TopicManager::addSubCallback(const ros::SubscribeOptions &ops) {
         // spin through the subscriptions and see if we find a match. if so, use it.
         bool found = false;
         bool found_topic = false;
@@ -199,20 +169,16 @@ namespace roscan
         ros::SubscriptionPtr sub;
 
         {
-            if (isShuttingDown())
-            {
+            if (isShuttingDown()) {
                 return false;
             }
 
             for (L_Subscription::iterator s = subscriptions_.begin();
-                    s != subscriptions_.end() && !found; ++s)
-            {
+                s != subscriptions_.end() && !found; ++s) {
                 sub = *s;
-                if (!sub->isDropped() && sub->getName() == ops.topic)
-                {
+                if (!sub->isDropped() && sub->getName() == ops.topic) {
                     found_topic = true;
-                    if (md5sumsMatch(ops.md5sum, sub->md5sum()))
-                    {
+                    if (md5sumsMatch(ops.md5sum, sub->md5sum())) {
                         found = true;
                     }
                     break;
@@ -220,16 +186,12 @@ namespace roscan
             }
         }
 
-        if (found_topic && !found)
-        {
+        if (found_topic && !found) {
             std::stringstream ss;
             ss << "Tried to subscribe to a topic with the same name but different md5sum as a topic that was already subscribed [" << ops.datatype << "/" << ops.md5sum << " vs. " << sub->datatype() << "/" << sub->md5sum() << "]";
             throw ros::ConflictingSubscriptionException(ss.str());
-        }
-        else if (found)
-        {
-            if (!sub->addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size, ops.tracked_object, ops.allow_concurrent_callbacks))
-            {
+        } else if (found) {
+            if (!sub->addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size, ops.tracked_object, ops.allow_concurrent_callbacks)) {
                 return false;
             }
         }
@@ -238,43 +200,36 @@ namespace roscan
     }
 
     // this function has the subscription code that doesn't need to be templated.
-    bool TopicManager::subscribe(const ros::SubscribeOptions& ops)
-    {
+    bool TopicManager::subscribe(const ros::SubscribeOptions &ops) {
         boost::mutex::scoped_lock lock(subs_mutex_);
 
-        if (addSubCallback(ops))
-        {
+        if (addSubCallback(ops)) {
             return true;
         }
 
-        if (isShuttingDown())
-        {
+        if (isShuttingDown()) {
             return false;
         }
 
-        if (ops.md5sum.empty())
-        {
+        if (ops.md5sum.empty()) {
             throw ros::InvalidParameterException("Subscribing to topic [" + ops.topic + "] with an empty md5sum");
         }
 
-        if (ops.datatype.empty())
-        {
+        if (ops.datatype.empty()) {
             throw ros::InvalidParameterException("Subscribing to topic [" + ops.topic + "] with an empty datatype");
         }
 
-        if (!ops.helper)
-        {
+        if (!ops.helper) {
             throw ros::InvalidParameterException("Subscribing to topic [" + ops.topic + "] without a callback");
         }
 
-        const std::string& md5sum = ops.md5sum;
+        const std::string &md5sum = ops.md5sum;
         std::string datatype = ops.datatype;
 
         ros::SubscriptionPtr s(boost::make_shared<ros::Subscription>(ops.topic, md5sum, datatype, ops.transport_hints));
         s->addCallback(ops.helper, ops.md5sum, ops.callback_queue, ops.queue_size, ops.tracked_object, ops.allow_concurrent_callbacks);
 
-        if (!registerSubscriber(s, ops.datatype))
-        {
+        if (!registerSubscriber(s, ops.datatype)) {
             ROS_WARN("couldn't register subscriber on topic [%s]", ops.topic.c_str());
             s->shutdown();
             return false;
@@ -285,34 +240,28 @@ namespace roscan
         return true;
     }
 
-    bool TopicManager::advertise(const ros::AdvertiseOptions& ops, const ros::SubscriberCallbacksPtr& callbacks)
-    {
-        if (ops.datatype == "*")
-        {
+    bool TopicManager::advertise(const ros::AdvertiseOptions &ops, const ros::SubscriberCallbacksPtr &callbacks) {
+        if (ops.datatype == "*") {
             std::stringstream ss;
             ss << "Advertising with * as the datatype is not allowed.  Topic [" << ops.topic << "]";
             throw ros::InvalidParameterException(ss.str());
         }
 
-        if (ops.md5sum == "*")
-        {
+        if (ops.md5sum == "*") {
             std::stringstream ss;
             ss << "Advertising with * as the md5sum is not allowed.  Topic [" << ops.topic << "]";
             throw ros::InvalidParameterException(ss.str());
         }
 
-        if (ops.md5sum.empty())
-        {
+        if (ops.md5sum.empty()) {
             throw ros::InvalidParameterException("Advertising on topic [" + ops.topic + "] with an empty md5sum");
         }
 
-        if (ops.datatype.empty())
-        {
+        if (ops.datatype.empty()) {
             throw ros::InvalidParameterException("Advertising on topic [" + ops.topic + "] with an empty datatype");
         }
 
-        if (ops.message_definition.empty())
-        {
+        if (ops.message_definition.empty()) {
             ROS_WARN("Advertising on topic [%s] with an empty message definition.  Some tools (e.g. rosbag) may not work correctly.", ops.topic.c_str());
         }
 
@@ -321,21 +270,17 @@ namespace roscan
         {
             boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
 
-            if (isShuttingDown())
-            {
+            if (isShuttingDown()) {
                 return false;
             }
 
             pub = lookupPublicationWithoutLock(ops.topic);
-            if (pub && pub->getNumCallbacks() == 0)
-            {
+            if (pub && pub->getNumCallbacks() == 0) {
                 pub.reset();
             }
 
-            if (pub)
-            {
-                if (pub->getMD5Sum() != ops.md5sum)
-                {
+            if (pub) {
+                if (pub->getMD5Sum() != ops.md5sum) {
                     ROS_ERROR("Tried to advertise on topic [%s] with md5sum [%s] and datatype [%s], but the topic is already advertised as md5sum [%s] and datatype [%s]",
                             ops.topic.c_str(), ops.md5sum.c_str(), ops.datatype.c_str(), pub->getMD5Sum().c_str(), pub->getDataType().c_str());
                     return false;
@@ -350,7 +295,6 @@ namespace roscan
             pub->addCallbacks(callbacks);
             advertised_topics_.push_back(pub);
         }
-
 
         {
             boost::mutex::scoped_lock lock(advertised_topic_names_mutex_);
@@ -368,10 +312,8 @@ namespace roscan
             boost::mutex::scoped_lock lock(subs_mutex_);
 
             for (L_Subscription::iterator s = subscriptions_.begin();
-                    s != subscriptions_.end() && !found; ++s)
-            {
-                if ((*s)->getName() == ops.topic && md5sumsMatch((*s)->md5sum(), ops.md5sum) && !(*s)->isDropped())
-                {
+                s != subscriptions_.end() && !found; ++s) {
+                if ((*s)->getName() == ops.topic && md5sumsMatch((*s)->md5sum(), ops.md5sum) && !(*s)->isDropped()) {
                     found = true;
                     sub = *s;
                     break;
@@ -379,8 +321,7 @@ namespace roscan
             }
         }
 
-        if(found)
-        {
+        if (found) {
             sub->addLocalConnection(pub);
         }
 
@@ -394,31 +335,26 @@ namespace roscan
         return true;
     }
 
-    bool TopicManager::unadvertise(const std::string &topic, const ros::SubscriberCallbacksPtr& callbacks)
-    {
+    bool TopicManager::unadvertise(const std::string &topic, const ros::SubscriberCallbacksPtr &callbacks) {
         ros::PublicationPtr pub;
         V_Publication::iterator i;
         {
             boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
 
-            if (isShuttingDown())
-            {
+            if (isShuttingDown()) {
                 return false;
             }
 
             for (i = advertised_topics_.begin();
-                    i != advertised_topics_.end(); ++i)
-            {
-                if(((*i)->getName() == topic) && (!(*i)->isDropped()))
-                {
+                i != advertised_topics_.end(); ++i) {
+                if (((*i)->getName() == topic) && (!(*i)->isDropped())) {
                     pub = *i;
                     break;
                 }
             }
         }
 
-        if (!pub)
-        {
+        if (!pub) {
             return false;
         }
 
@@ -426,8 +362,7 @@ namespace roscan
 
         {
             boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
-            if (pub->getNumCallbacks() == 0)
-            {
+            if (pub->getNumCallbacks() == 0) {
                 unregisterPublisher(pub->getName());
                 pub->drop();
 
@@ -443,8 +378,7 @@ namespace roscan
         return true;
     }
 
-    bool TopicManager::unregisterPublisher(const std::string& topic)
-    {
+    bool TopicManager::unregisterPublisher(const std::string &topic) {
         XmlRpcValue args, result, payload;
         args[0] = node_->getName();
         args[1] = topic;
@@ -454,12 +388,9 @@ namespace roscan
         return true;
     }
 
-    bool TopicManager::isTopicAdvertised(const string &topic)
-    {
-        for (V_Publication::iterator t = advertised_topics_.begin(); t != advertised_topics_.end(); ++t)
-        {
-            if (((*t)->getName() == topic) && (!(*t)->isDropped()))
-            {
+    bool TopicManager::isTopicAdvertised(const string &topic) {
+        for (V_Publication::iterator t = advertised_topics_.begin(); t != advertised_topics_.end(); ++t) {
+            if (((*t)->getName() == topic) && (!(*t)->isDropped())) {
                 return true;
             }
         }
@@ -467,45 +398,38 @@ namespace roscan
         return false;
     }
 
-    bool TopicManager::registerSubscriber(const ros::SubscriptionPtr& s, const string &datatype)
-    {
+    bool TopicManager::registerSubscriber(const ros::SubscriptionPtr &s, const string &datatype) {
         XmlRpcValue args, result, payload;
         args[0] = node_->getName();
         args[1] = s->getName();
         args[2] = datatype;
         args[3] = xmlrpc_manager_->getServerURI();
 
-        if (!xmlrpc_manager_->callMaster("registerSubscriber", args, result, payload, true))
-        {
+        if (!xmlrpc_manager_->callMaster("registerSubscriber", args, result, payload, true)) {
             return false;
         }
 
         vector<string> pub_uris;
-        for (int i = 0; i < payload.size(); i++)
-        {
-            if (payload[i] != xmlrpc_manager_->getServerURI())
-            {
+        for (int i = 0; i < payload.size(); i++) {
+            if (payload[i] != xmlrpc_manager_->getServerURI()) {
                 pub_uris.push_back(string(payload[i]));
             }
         }
 
         bool self_subscribed = false;
         ros::PublicationPtr pub;
-        const std::string& sub_md5sum = s->md5sum();
+        const std::string &sub_md5sum = s->md5sum();
         // Figure out if we have a local publisher
         {
             boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
             V_Publication::const_iterator it = advertised_topics_.begin();
             V_Publication::const_iterator end = advertised_topics_.end();
-            for (; it != end; ++it)
-            {
+            for (; it != end; ++it) {
                 pub = *it;
-                const std::string& pub_md5sum = pub->getMD5Sum();
+                const std::string &pub_md5sum = pub->getMD5Sum();
 
-                if (pub->getName() == s->getName() && !pub->isDropped())
-                {
-                    if (!md5sumsMatch(pub_md5sum, sub_md5sum))
-                    {
+                if (pub->getName() == s->getName() && !pub->isDropped()) {
+                    if (!md5sumsMatch(pub_md5sum, sub_md5sum)) {
                         ROS_ERROR("md5sum mismatch making local subscription to topic %s.",
                                 s->getName().c_str());
                         ROS_ERROR("Subscriber expects type %s, md5sum %s",
@@ -522,16 +446,14 @@ namespace roscan
         }
 
         s->pubUpdate(pub_uris);
-        if (self_subscribed)
-        {
+        if (self_subscribed) {
             s->addLocalConnection(pub);
         }
 
         return true;
     }
 
-    bool TopicManager::unregisterSubscriber(const string &topic)
-    {
+    bool TopicManager::unregisterSubscriber(const string &topic) {
         XmlRpcValue args, result, payload;
         args[0] = node_->getName();
         args[1] = topic;
@@ -542,67 +464,56 @@ namespace roscan
         return true;
     }
 
-    bool TopicManager::pubUpdate(const string &topic, const vector<string> &pubs)
-    {
+    bool TopicManager::pubUpdate(const string &topic, const vector<string> &pubs) {
         ros::SubscriptionPtr sub;
         {
             boost::mutex::scoped_lock lock(subs_mutex_);
 
-            if (isShuttingDown())
-            {
+            if (isShuttingDown()) {
                 return false;
             }
 
             ROS_DEBUG("Received update for topic [%s] (%d publishers)", topic.c_str(), (int)pubs.size());
             // find the subscription
-            for (L_Subscription::const_iterator s  = subscriptions_.begin();
-                    s != subscriptions_.end(); ++s)
-            {
+            for (L_Subscription::const_iterator s = subscriptions_.begin();
+                s != subscriptions_.end(); ++s) {
                 if ((*s)->getName() != topic || (*s)->isDropped())
                     continue;
 
                 sub = *s;
                 break;
             }
-
         }
 
-        if (sub)
-        {
+        if (sub) {
             return sub->pubUpdate(pubs);
-        }
-        else
-        {
-            ROSCPP_LOG_DEBUG("got a request for updating publishers of topic %s, but I " \
-                    "don't have any subscribers to that topic.", topic.c_str());
+        } else {
+            ROSCPP_LOG_DEBUG("got a request for updating publishers of topic %s, but I "
+                            "don't have any subscribers to that topic.",
+                            topic.c_str());
         }
 
         return false;
     }
 
     bool TopicManager::requestTopic(const string &topic,
-            XmlRpcValue &protos,
-            XmlRpcValue &ret)
-    {
-        for (int proto_idx = 0; proto_idx < protos.size(); proto_idx++)
-        {
+                                    XmlRpcValue &protos,
+                                    XmlRpcValue &ret) {
+        for (int proto_idx = 0; proto_idx < protos.size(); proto_idx++) {
             XmlRpcValue proto = protos[proto_idx]; // save typing
-            if (proto.getType() != XmlRpcValue::TypeArray)
-            {
-                ROSCPP_LOG_DEBUG( "requestTopic protocol list was not a list of lists");
+            if (proto.getType() != XmlRpcValue::TypeArray) {
+                ROSCPP_LOG_DEBUG("requestTopic protocol list was not a list of lists");
                 return false;
             }
 
-            if (proto[0].getType() != XmlRpcValue::TypeString)
-            {
-                ROSCPP_LOG_DEBUG( "requestTopic received a protocol list in which a sublist " \
-                        "did not start with a string");
+            if (proto[0].getType() != XmlRpcValue::TypeString) {
+                ROSCPP_LOG_DEBUG("requestTopic received a protocol list in which a sublist "
+                                "did not start with a string");
                 return false;
             }
 
             string proto_name = proto[0];
-            if (proto_name == string("TCPROS"))
-            {
+            if (proto_name == string("TCPROS")) {
                 XmlRpcValue tcpros_params;
                 tcpros_params[0] = string("TCPROS");
                 tcpros_params[1] = network::getHost();
@@ -611,15 +522,12 @@ namespace roscan
                 ret[1] = string();
                 ret[2] = tcpros_params;
                 return true;
-            }
-            else if (proto_name == string("UDPROS"))
-            {
+            } else if (proto_name == string("UDPROS")) {
                 if (proto.size() != 5 ||
-                        proto[1].getType() != XmlRpcValue::TypeBase64 ||
-                        proto[2].getType() != XmlRpcValue::TypeString ||
-                        proto[3].getType() != XmlRpcValue::TypeInt ||
-                        proto[4].getType() != XmlRpcValue::TypeInt)
-                {
+                    proto[1].getType() != XmlRpcValue::TypeBase64 ||
+                    proto[2].getType() != XmlRpcValue::TypeString ||
+                    proto[3].getType() != XmlRpcValue::TypeInt ||
+                    proto[4].getType() != XmlRpcValue::TypeInt) {
                     ROSCPP_LOG_DEBUG("Invalid protocol parameters for UDPROS");
                     return false;
                 }
@@ -628,15 +536,13 @@ namespace roscan
                 memcpy(buffer.get(), &header_bytes[0], header_bytes.size());
                 ros::Header h;
                 string err;
-                if (!h.parse(buffer, header_bytes.size(), err))
-                {
+                if (!h.parse(buffer, header_bytes.size(), err)) {
                     ROSCPP_LOG_DEBUG("Unable to parse UDPROS connection header: %s", err.c_str());
                     return false;
                 }
 
                 ros::PublicationPtr pub_ptr = lookupPublication(topic);
-                if(!pub_ptr)
-                {
+                if (!pub_ptr) {
                     ROSCPP_LOG_DEBUG("Unable to find advertised topic %s for UDPROS connection", topic.c_str());
                     return false;
                 }
@@ -646,8 +552,7 @@ namespace roscan
 
                 std::map<std::string, std::string> m;
                 std::string error_msg;
-                if (!pub_ptr->validateHeader(h, error_msg))
-                {
+                if (!pub_ptr->validateHeader(h, error_msg)) {
                     ROSCPP_LOG_DEBUG("Error validating header from [%s:%d] for topic [%s]: %s", host.c_str(), port, topic.c_str(), error_msg.c_str());
                     return false;
                 }
@@ -655,8 +560,7 @@ namespace roscan
                 int max_datagram_size = proto[4];
                 int conn_id = connection_manager_->getNewConnectionID();
                 ros::TransportUDPPtr transport = connection_manager_->getUDPServerTransport()->createOutgoing(host, port, conn_id, max_datagram_size);
-                if (!transport)
-                {
+                if (!transport) {
                     ROSCPP_LOG_DEBUG("Error creating outgoing transport for [%s:%d]", host.c_str(), port);
                     return false;
                 }
@@ -682,32 +586,27 @@ namespace roscan
                 ret[1] = string();
                 ret[2] = udpros_params;
                 return true;
-            }
-            else
-            {
-                ROSCPP_LOG_DEBUG( "an unsupported protocol was offered: [%s]",
-                        proto_name.c_str());
+            } else {
+                ROSCPP_LOG_DEBUG("an unsupported protocol was offered: [%s]",
+                                proto_name.c_str());
             }
         }
 
-        ROSCPP_LOG_DEBUG( "Currently, roscpp only supports TCPROS. The caller to " \
-                "requestTopic did not support TCPROS, so there are no " \
-                "protocols in common.");
+        ROSCPP_LOG_DEBUG("Currently, roscpp only supports TCPROS. The caller to "
+                        "requestTopic did not support TCPROS, so there are no "
+                        "protocols in common.");
         return false;
     }
 
-    void TopicManager::publish(const std::string& topic, const boost::function<ros::SerializedMessage(void)>& serfunc, ros::SerializedMessage& m)
-    {
+    void TopicManager::publish(const std::string &topic, const boost::function<ros::SerializedMessage(void)> &serfunc, ros::SerializedMessage &m) {
         boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
 
-        if (isShuttingDown())
-        {
+        if (isShuttingDown()) {
             return;
         }
 
         ros::PublicationPtr p = lookupPublicationWithoutLock(topic);
-        if (p->hasSubscribers() || p->isLatching())
-        {
+        if (p->hasSubscribers() || p->isLatching()) {
             ROS_DEBUG_NAMED("superdebug", "Publishing message on topic [%s] with sequence number [%d]", p->getName().c_str(), p->getSequence());
 
             // Determine what kinds of subscribers we're publishing to.  If they're intraprocess with the same C++ type we can
@@ -716,23 +615,18 @@ namespace roscan
             bool serialize = false;
 
             // We can only do a no-copy publish if a shared_ptr to the message is provided, and we have type information for it
-            if (m.type_info && m.message)
-            {
+            if (m.type_info && m.message) {
                 p->getPublishTypes(serialize, nocopy, *m.type_info);
-            }
-            else
-            {
+            } else {
                 serialize = true;
             }
 
-            if (!nocopy)
-            {
+            if (!nocopy) {
                 m.message.reset();
                 m.type_info = 0;
             }
 
-            if (serialize || p->isLatching())
-            {
+            if (serialize || p->isLatching()) {
                 ros::SerializedMessage m2 = serfunc();
                 m.buf = m2.buf;
                 m.num_bytes = m2.num_bytes;
@@ -743,45 +637,35 @@ namespace roscan
 
             // If we're not doing a serialized publish we don't need to signal the pollset.  The write()
             // call inside signal() is actually relatively expensive when doing a nocopy publish.
-            if (serialize)
-            {
+            if (serialize) {
                 poll_manager_->getPollSet().signal();
             }
-        }
-        else
-        {
+        } else {
             p->incrementSequence();
         }
     }
 
-    void TopicManager::incrementSequence(const std::string& topic)
-    {
+    void TopicManager::incrementSequence(const std::string &topic) {
         ros::PublicationPtr pub = lookupPublication(topic);
-        if (pub)
-        {
+        if (pub) {
             pub->incrementSequence();
         }
     }
 
-    bool TopicManager::isLatched(const std::string& topic)
-    {
+    bool TopicManager::isLatched(const std::string &topic) {
         ros::PublicationPtr pub = lookupPublication(topic);
-        if (pub)
-        {
+        if (pub) {
             return pub->isLatched();
         }
 
         return false;
     }
 
-    ros::PublicationPtr TopicManager::lookupPublicationWithoutLock(const string &topic)
-    {
+    ros::PublicationPtr TopicManager::lookupPublicationWithoutLock(const string &topic) {
         ros::PublicationPtr t;
         for (V_Publication::iterator i = advertised_topics_.begin();
-                !t && i != advertised_topics_.end(); ++i)
-        {
-            if (((*i)->getName() == topic) && (!(*i)->isDropped()))
-            {
+            !t && i != advertised_topics_.end(); ++i) {
+            if (((*i)->getName() == topic) && (!(*i)->isDropped())) {
                 t = *i;
                 break;
             }
@@ -790,56 +674,47 @@ namespace roscan
         return t;
     }
 
-    bool TopicManager::unsubscribe(const std::string &topic, const ros::SubscriptionCallbackHelperPtr& helper)
-    {
+    bool TopicManager::unsubscribe(const std::string &topic, const ros::SubscriptionCallbackHelperPtr &helper) {
         ros::SubscriptionPtr sub;
 
         {
             boost::mutex::scoped_lock lock(subs_mutex_);
 
-            if (isShuttingDown())
-            {
+            if (isShuttingDown()) {
                 return false;
             }
 
             L_Subscription::iterator it;
             for (it = subscriptions_.begin();
-                    it != subscriptions_.end(); ++it)
-            {
-                if ((*it)->getName() == topic)
-                {
+                it != subscriptions_.end(); ++it) {
+                if ((*it)->getName() == topic) {
                     sub = *it;
                     break;
                 }
             }
         }
 
-        if (!sub)
-        {
+        if (!sub) {
             return false;
         }
 
         sub->removeCallback(helper);
 
-        if (sub->getNumCallbacks() == 0)
-        {
+        if (sub->getNumCallbacks() == 0) {
             // nobody is left. blow away the subscription.
             {
                 boost::mutex::scoped_lock lock(subs_mutex_);
 
                 L_Subscription::iterator it;
                 for (it = subscriptions_.begin();
-                        it != subscriptions_.end(); ++it)
-                {
-                    if ((*it)->getName() == topic)
-                    {
+                    it != subscriptions_.end(); ++it) {
+                    if ((*it)->getName() == topic) {
                         subscriptions_.erase(it);
                         break;
                     }
                 }
 
-                if (!unregisterSubscriber(topic))
-                {
+                if (!unregisterSubscriber(topic)) {
                     ROSCPP_LOG_DEBUG("Couldn't unregister subscriber for topic [%s]", topic.c_str());
                 }
             }
@@ -851,44 +726,36 @@ namespace roscan
         return true;
     }
 
-    size_t TopicManager::getNumSubscribers(const std::string &topic)
-    {
+    size_t TopicManager::getNumSubscribers(const std::string &topic) {
         boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
 
-        if (isShuttingDown())
-        {
+        if (isShuttingDown()) {
             return 0;
         }
 
         ros::PublicationPtr p = lookupPublicationWithoutLock(topic);
-        if (p)
-        {
+        if (p) {
             return p->getNumSubscribers();
         }
 
         return 0;
     }
 
-    size_t TopicManager::getNumSubscriptions()
-    {
+    size_t TopicManager::getNumSubscriptions() {
         boost::mutex::scoped_lock lock(subs_mutex_);
         return subscriptions_.size();
     }
 
-    size_t TopicManager::getNumPublishers(const std::string &topic)
-    {
+    size_t TopicManager::getNumPublishers(const std::string &topic) {
         boost::mutex::scoped_lock lock(subs_mutex_);
 
-        if (isShuttingDown())
-        {
+        if (isShuttingDown()) {
             return 0;
         }
 
         for (L_Subscription::const_iterator t = subscriptions_.begin();
-                t != subscriptions_.end(); ++t)
-        {
-            if (!(*t)->isDropped() && (*t)->getName() == topic)
-            {
+            t != subscriptions_.end(); ++t) {
+            if (!(*t)->isDropped() && (*t)->getName() == topic) {
                 return (*t)->getNumPublishers();
             }
         }
@@ -896,8 +763,7 @@ namespace roscan
         return 0;
     }
 
-    void TopicManager::getBusStats(XmlRpcValue &stats)
-    {
+    void TopicManager::getBusStats(XmlRpcValue &stats) {
         XmlRpcValue publish_stats, subscribe_stats, service_stats;
         // force these guys to be arrays, even if we don't populate them
         publish_stats.setSize(0);
@@ -908,8 +774,7 @@ namespace roscan
         {
             boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
             for (V_Publication::iterator t = advertised_topics_.begin();
-                    t != advertised_topics_.end(); ++t)
-            {
+                t != advertised_topics_.end(); ++t) {
                 publish_stats[pidx++] = (*t)->getStats();
             }
         }
@@ -918,8 +783,7 @@ namespace roscan
             uint32_t sidx = 0;
 
             boost::mutex::scoped_lock lock(subs_mutex_);
-            for (L_Subscription::iterator t = subscriptions_.begin(); t != subscriptions_.end(); ++t)
-            {
+            for (L_Subscription::iterator t = subscriptions_.begin(); t != subscriptions_.end(); ++t) {
                 subscribe_stats[sidx++] = (*t)->getStats();
             }
         }
@@ -929,8 +793,7 @@ namespace roscan
         stats[2] = service_stats;
     }
 
-    void TopicManager::getBusInfo(XmlRpcValue &info)
-    {
+    void TopicManager::getBusInfo(XmlRpcValue &info) {
         // force these guys to be arrays, even if we don't populate them
         info.setSize(0);
 
@@ -938,8 +801,7 @@ namespace roscan
             boost::recursive_mutex::scoped_lock lock(advertised_topics_mutex_);
 
             for (V_Publication::iterator t = advertised_topics_.begin();
-                    t != advertised_topics_.end(); ++t)
-            {
+                t != advertised_topics_.end(); ++t) {
                 (*t)->getInfo(info);
             }
         }
@@ -947,15 +809,13 @@ namespace roscan
         {
             boost::mutex::scoped_lock lock(subs_mutex_);
 
-            for (L_Subscription::iterator t = subscriptions_.begin(); t != subscriptions_.end(); ++t)
-            {
+            for (L_Subscription::iterator t = subscriptions_.begin(); t != subscriptions_.end(); ++t) {
                 (*t)->getInfo(info);
             }
         }
     }
 
-    void TopicManager::getSubscriptions(XmlRpcValue &subs)
-    {
+    void TopicManager::getSubscriptions(XmlRpcValue &subs) {
         // force these guys to be arrays, even if we don't populate them
         subs.setSize(0);
 
@@ -964,8 +824,7 @@ namespace roscan
 
             uint32_t sidx = 0;
 
-            for (L_Subscription::iterator t = subscriptions_.begin(); t != subscriptions_.end(); ++t)
-            {
+            for (L_Subscription::iterator t = subscriptions_.begin(); t != subscriptions_.end(); ++t) {
                 XmlRpcValue sub;
                 sub[0] = (*t)->getName();
                 sub[1] = (*t)->datatype();
@@ -974,8 +833,7 @@ namespace roscan
         }
     }
 
-    void TopicManager::getPublications(XmlRpcValue &pubs)
-    {
+    void TopicManager::getPublications(XmlRpcValue &pubs) {
         // force these guys to be arrays, even if we don't populate them
         pubs.setSize(0);
 
@@ -985,44 +843,34 @@ namespace roscan
             uint32_t sidx = 0;
 
             for (V_Publication::iterator t = advertised_topics_.begin();
-                    t != advertised_topics_.end(); ++t)
-            {
+                t != advertised_topics_.end(); ++t) {
                 XmlRpcValue pub;
                 pub[0] = (*t)->getName();
                 pub[1] = (*t)->getDataType();
                 pubs[sidx++] = pub;
             }
-
         }
     }
 
-    void TopicManager::pubUpdateCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
-    {
+    void TopicManager::pubUpdateCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result) {
         std::vector<std::string> pubs;
-        for (int idx = 0; idx < params[2].size(); idx++)
-        {
+        for (int idx = 0; idx < params[2].size(); idx++) {
             pubs.push_back(params[2][idx]);
         }
-        if (pubUpdate(params[1], pubs))
-        {
+        if (pubUpdate(params[1], pubs)) {
             result = xmlrpc::responseInt(1, "", 0);
-        }
-        else
-        {
+        } else {
             result = xmlrpc::responseInt(0, "SOME KIND OF ERROR OH NO", 0);
         }
     }
 
-    void TopicManager::requestTopicCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
-    {
-        if (!requestTopic(params[1], params[2], result))
-        {
+    void TopicManager::requestTopicCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result) {
+        if (!requestTopic(params[1], params[2], result)) {
             result = xmlrpc::responseInt(0, "SOME KINDA ERROR OH NO", 0);
         }
     }
 
-    void TopicManager::getBusStatsCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
-    {
+    void TopicManager::getBusStatsCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result) {
         (void)params;
         result[0] = 1;
         result[1] = std::string("");
@@ -1031,8 +879,7 @@ namespace roscan
         result[2] = response;
     }
 
-    void TopicManager::getBusInfoCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
-    {
+    void TopicManager::getBusInfoCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result) {
         (void)params;
         result[0] = 1;
         result[1] = std::string("");
@@ -1041,8 +888,7 @@ namespace roscan
         result[2] = response;
     }
 
-    void TopicManager::getSubscriptionsCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
-    {
+    void TopicManager::getSubscriptionsCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result) {
         (void)params;
         result[0] = 1;
         result[1] = std::string("subscriptions");
@@ -1051,8 +897,7 @@ namespace roscan
         result[2] = response;
     }
 
-    void TopicManager::getPublicationsCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result)
-    {
+    void TopicManager::getPublicationsCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result) {
         (void)params;
         result[0] = 1;
         result[1] = std::string("publications");

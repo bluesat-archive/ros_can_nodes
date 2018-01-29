@@ -28,57 +28,49 @@
 #ifndef ROSCAN_XMLRPC_MANAGER_H
 #define ROSCAN_XMLRPC_MANAGER_H
 
-#include <string>
-#include <set>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/function.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/enable_shared_from_this.hpp>
-
-#include <ros/common.h>
+#include <set>
+#include <string>
 #include <XmlRpc.h>
 #include <XmlRpcValue.h>
-
+#include <ros/common.h>
 #include <ros/time.h>
 
-namespace roscan
-{
+namespace roscan {
 
-    namespace xmlrpc
-    {
-        XmlRpc::XmlRpcValue responseStr(int code, const std::string& msg, const std::string& response);
-        XmlRpc::XmlRpcValue responseInt(int code, const std::string& msg, int response);
-        XmlRpc::XmlRpcValue responseBool(int code, const std::string& msg, bool response);
-    }
+    namespace xmlrpc {
+
+        XmlRpc::XmlRpcValue responseStr(int code, const std::string &msg, const std::string &response);
+        XmlRpc::XmlRpcValue responseInt(int code, const std::string &msg, int response);
+        XmlRpc::XmlRpcValue responseBool(int code, const std::string &msg, bool response);
+
+    } // namespace xmlrpc
 
     class XMLRPCCallWrapper;
     typedef boost::shared_ptr<XMLRPCCallWrapper> XMLRPCCallWrapperPtr;
 
-    class ASyncXMLRPCConnection : public boost::enable_shared_from_this<ASyncXMLRPCConnection>
-    {
+    class ASyncXMLRPCConnection : public boost::enable_shared_from_this<ASyncXMLRPCConnection> {
         public:
             virtual ~ASyncXMLRPCConnection() {}
 
-            virtual void addToDispatch(XmlRpc::XmlRpcDispatch* disp) = 0;
-            virtual void removeFromDispatch(XmlRpc::XmlRpcDispatch* disp) = 0;
+            virtual void addToDispatch(XmlRpc::XmlRpcDispatch *disp) = 0;
+            virtual void removeFromDispatch(XmlRpc::XmlRpcDispatch *disp) = 0;
 
             virtual bool check() = 0;
     };
     typedef boost::shared_ptr<ASyncXMLRPCConnection> ASyncXMLRPCConnectionPtr;
     typedef std::set<ASyncXMLRPCConnectionPtr> S_ASyncXMLRPCConnection;
 
-    class CachedXmlRpcClient
-    {
+    class CachedXmlRpcClient {
         public:
-            CachedXmlRpcClient(XmlRpc::XmlRpcClient *c)
-                : in_use_(false)
-                  , client_(c)
-        {
-        }
+            CachedXmlRpcClient(XmlRpc::XmlRpcClient *c) : in_use_(false), client_(c) { }
 
             bool in_use_;
             ros::WallTime last_use_time_; // for reaping
-            XmlRpc::XmlRpcClient* client_;
+            XmlRpc::XmlRpcClient *client_;
 
             static const ros::WallDuration s_zombie_time_; // how long before it is toasted
     };
@@ -86,14 +78,12 @@ namespace roscan
     class XMLRPCManager;
     typedef boost::shared_ptr<XMLRPCManager> XMLRPCManagerPtr;
 
-    typedef boost::function<void(XmlRpc::XmlRpcValue&, XmlRpc::XmlRpcValue&)> XMLRPCFunc;
+    typedef boost::function<void(XmlRpc::XmlRpcValue &, XmlRpc::XmlRpcValue &)> XMLRPCFunc;
 
-    class XMLRPCManager
-    {
+    class XMLRPCManager {
         public:
-
-            XMLRPCManager();
-            ~XMLRPCManager();
+            XMLRPCManager() : port_(0), shutting_down_(false), unbind_requested_(false) {}
+            ~XMLRPCManager() { shutdown(); }
 
             // Validate an XML/RPC response
             // @param method The RPC method that was invoked.
@@ -101,21 +91,20 @@ namespace roscan
             // @param payload The payload that was received.
             // Return true if validation succeeds, false otherwise.
             // @todo Consider making this private.
-            bool validateXmlrpcResponse(const std::string& method, 
-                    XmlRpc::XmlRpcValue &response, XmlRpc::XmlRpcValue &payload);
+            bool validateXmlrpcResponse(const std::string &method, XmlRpc::XmlRpcValue &response, XmlRpc::XmlRpcValue &payload);
 
             // Get the xmlrpc server URI of this node
-            inline const std::string& getServerURI() const { return uri_; }
+            inline const std::string &getServerURI() const { return uri_; }
             inline uint32_t getServerPort() const { return port_; }
 
-            XmlRpc::XmlRpcClient* getXMLRPCClient(const std::string& host, const int port, const std::string& uri);
-            void releaseXMLRPCClient(XmlRpc::XmlRpcClient* c);
+            XmlRpc::XmlRpcClient *getXMLRPCClient(const std::string &host, const int port, const std::string &uri);
+            void releaseXMLRPCClient(XmlRpc::XmlRpcClient *c);
 
-            void addASyncConnection(const ASyncXMLRPCConnectionPtr& conn);
-            void removeASyncConnection(const ASyncXMLRPCConnectionPtr& conn);
+            void addASyncConnection(const ASyncXMLRPCConnectionPtr &conn);
+            void removeASyncConnection(const ASyncXMLRPCConnectionPtr &conn);
 
-            bool bind(const std::string& function_name, const XMLRPCFunc& cb);
-            void unbind(const std::string& function_name);
+            bool bind(const std::string &function_name, const XMLRPCFunc &cb);
+            void unbind(const std::string &function_name);
 
             void start();
             void shutdown();
@@ -128,18 +117,17 @@ namespace roscan
             // @param response [out] The resonse that was received.
             // @param payload [out] The payload that was received.
             // @param wait_for_master Whether or not this call should loop until it can contact the master
-            // @return true if call succeeds, false otherwise.
-            bool callMaster(const std::string& method, const XmlRpc::XmlRpcValue& request, 
-                    XmlRpc::XmlRpcValue& response, XmlRpc::XmlRpcValue& payload, bool wait_for_master);
+            // Returns true if call succeeds, false otherwise.
+            bool callMaster(const std::string &method, const XmlRpc::XmlRpcValue &request, XmlRpc::XmlRpcValue &response, XmlRpc::XmlRpcValue &payload, bool wait_for_master);
 
             // Get the hostname where the master runs.
-            const std::string& getMasterHost();
+            const std::string &getMasterHost();
 
             // Get the port where the master runs.
             uint32_t getMasterPort();
 
             // Get the full URI to the master (eg. http://host:port/)
-            const std::string& getMasterURI();
+            const std::string &getMasterURI();
 
             // Check whether the master is up
             // This method tries to contact the master.  You can call it any time
@@ -150,15 +138,11 @@ namespace roscan
             bool checkMaster(std::string nodeName);
 
             // Contains information retrieved from the master about a topic
-            struct TopicInfo
-            {
+            struct TopicInfo {
                 TopicInfo() {}
-                TopicInfo(const std::string& _name, const std::string& _datatype /*, const std::string& _md5sum*/)
-                    : name(_name)
-                      , datatype(_datatype)
-                {}
-                std::string name;        ///< Name of the topic
-                std::string datatype;    ///< Datatype of the topic
+                TopicInfo(const std::string &_name, const std::string &_datatype) : name(_name), datatype(_datatype) {}
+                std::string name;     ///< Name of the topic
+                std::string datatype; ///< Datatype of the topic
             };
             typedef std::vector<TopicInfo> V_TopicInfo;
 
@@ -170,10 +154,10 @@ namespace roscan
             // in the format "package_name/MessageName", and is also retrievable
             // through message.__getDataType() or MessageName::__s_getDataType().
             // Return true on success, false otherwise (topics not filled in)
-            bool getAllTopics(std::string nodeName, V_TopicInfo& topics);
+            bool getAllTopics(std::string nodeName, V_TopicInfo &topics);
 
             // Retreives the currently-known list of nodes from the master
-            bool getAllNodes(std::string nodeName, std::vector<std::string>& nodes);
+            bool getAllNodes(std::string nodeName, std::vector<std::string> &nodes);
 
             // Set the max time this node should spend looping trying to connect to the master
             // @param The timeout.  A negative value means infinite
@@ -202,9 +186,7 @@ namespace roscan
 
             S_ASyncXMLRPCConnection connections_;
 
-
-            struct FunctionInfo
-            {
+            struct FunctionInfo {
                 std::string name;
                 XMLRPCFunc function;
                 XMLRPCCallWrapperPtr wrapper;

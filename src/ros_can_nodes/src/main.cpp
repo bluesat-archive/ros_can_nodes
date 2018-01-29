@@ -4,8 +4,8 @@
 //#include "ros/ros.h"
 #include <unistd.h>
 
-namespace roscan
-{
+namespace roscan {
+
     RosCanNode::RosCanNode(std::string name) {
         name_ = name;
 
@@ -37,9 +37,7 @@ namespace roscan
         callback_queue_ = new ros::CallbackQueue;
     }
 
-    RosCanNode::~RosCanNode() {
-        xmlrpcManager->shutdown();
-    }
+    RosCanNode::~RosCanNode() { xmlrpcManager->shutdown(); }
 
     /*
     void RosCanNode::subChatterCallback(const boost::shared_ptr<std_msgs::String const>& msg) {
@@ -75,6 +73,7 @@ namespace roscan
         ((ros::CallbackQueue*)callback_queue_)->callAvailable(ros::WallDuration());
     }
     */
+
 } // namespace roscan
 
 using namespace roscan;
@@ -94,12 +93,13 @@ int main() {
         std::cout << "$ ";
         std::string s;
         std::cin >> s;
-        if (s == "exit") break;
+        if (s == "exit")
+            break;
         if (s == "checkMaster") {
-            std:: cout << node->xmlrpcManager->checkMaster("yo") << std::endl;
+            std::cout << node->xmlrpcManager->checkMaster("yo") << std::endl;
         }
         if (s == "getMasterURI") {
-            std:: cout << node->xmlrpcManager->getMasterURI() << std::endl;
+            std::cout << node->xmlrpcManager->getMasterURI() << std::endl;
         }
         if (s == "getAllNodes") {
             std::vector<std::string> nodes;

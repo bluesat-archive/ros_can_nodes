@@ -28,26 +28,27 @@
 #ifndef ROSCPP_SUBSCRIBER_HANDLE_H
 #define ROSCPP_SUBSCRIBER_HANDLE_H
 
+#include "RosCanNode.h"
 #include <ros/common.h>
 #include <ros/forwards.h>
 #include <ros/subscription_callback_helper.h>
-#include "RosCanNode.h"
 
-namespace roscan
-{
+namespace roscan {
+
+    class Subscriber;
+    typedef std::vector<Subscriber> V_Subscriber;
+
     // Manages an subscription callback on a specific topic.
     // A Subscriber should always be created through a call to NodeHandle::subscribe(), or copied from one
     // that was. Once all copies of a specific
     // Subscriber go out of scope, the subscription callback associated with that handle will stop
     // being called.  Once all Subscriber for a given topic go out of scope the topic will be unsubscribed.
-    class Subscriber
-    {
+    class Subscriber {
         public:
-            Subscriber() {};
+            Subscriber(){};
             ~Subscriber();
 
-            Subscriber(const std::string& topic, const RosCanNodePtr& node,
-                    const ros::SubscriptionCallbackHelperPtr& helper);
+            Subscriber(const std::string &topic, const RosCanNodePtr &node, const ros::SubscriptionCallbackHelperPtr &helper);
 
             // Unsubscribe the callback associated with this Subscriber
             // This method usually does not need to be explicitly called, as automatic shutdown happens when
@@ -62,13 +63,11 @@ namespace roscan
             uint32_t getNumPublishers() const;
 
         private:
-
             std::string topic_;
             RosCanNodePtr node_;
             ros::SubscriptionCallbackHelperPtr helper_;
             bool unsubscribed_;
     };
-    typedef std::vector<Subscriber> V_Subscriber;
 
 } // namespace roscan
 

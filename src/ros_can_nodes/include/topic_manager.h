@@ -28,28 +28,29 @@
 #ifndef ROSCAN_TOPIC_MANAGER_H
 #define ROSCAN_TOPIC_MANAGER_H
 
-#include <ros/forwards.h>
 #include <ros/common.h>
-#include <ros/serialization.h>
+#include <ros/forwards.h>
 #include <ros/rosout_appender.h>
+#include <ros/serialization.h>
 
 #include <XmlRpcValue.h>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
-namespace ros
-{
+namespace ros {
+
     class Message;
     struct SubscribeOptions;
     struct AdvertiseOptions;
 
     class SubscriptionCallbackHelper;
     typedef boost::shared_ptr<SubscriptionCallbackHelper> SubscriptionCallbackHelperPtr;
-}
 
-namespace roscan
-{
+} // namespace ros
+
+namespace roscan {
+
     class RosCanNode;
     typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
 
@@ -70,34 +71,32 @@ namespace roscan
     typedef std::vector<ros::SubscriptionPtr> V_Subscription;
     typedef std::vector<ros::PublicationPtr> V_Publication;
 
-    class TopicManager
-    {
+    class TopicManager {
         public:
+            TopicManager() : shutting_down_(false) {}
+            ~TopicManager()  { shutdown(); }
 
-            TopicManager();
-            ~TopicManager();
-
-            void start(const RosCanNodePtr& node);
+            void start(const RosCanNodePtr &node);
             void shutdown();
 
-            bool subscribe(const ros::SubscribeOptions& ops);
-            bool unsubscribe(const std::string &_topic, const ros::SubscriptionCallbackHelperPtr& helper);
+            bool subscribe(const ros::SubscribeOptions &ops);
+            bool unsubscribe(const std::string &_topic, const ros::SubscriptionCallbackHelperPtr &helper);
 
-            bool advertise(const ros::AdvertiseOptions& ops, const ros::SubscriberCallbacksPtr& callbacks);
-            bool unadvertise(const std::string &topic, const ros::SubscriberCallbacksPtr& callbacks);
+            bool advertise(const ros::AdvertiseOptions &ops, const ros::SubscriberCallbacksPtr &callbacks);
+            bool unadvertise(const std::string &topic, const ros::SubscriberCallbacksPtr &callbacks);
 
             // Get the list of topics advertised by this node
-            void getAdvertisedTopics(V_string& topics);
+            void getAdvertisedTopics(V_string &topics);
 
             // Get the list of topics subscribed to by this node
-            void getSubscribedTopics(V_string& topics);
+            void getSubscribedTopics(V_string &topics);
 
             // Lookup an advertised topic.
             // This method iterates over advertised_topics, looking for one with name
             // matching the given topic name.  The advertised_topics_mutex is locked
             // during this search.  This method is only used internally.
             // Returns pointer to the matching Publication, NULL if none is found.
-            ros::PublicationPtr lookupPublication(const std::string& topic);
+            ros::PublicationPtr lookupPublication(const std::string &topic);
 
             // Return the number of subscribers a node has for a particular topic
             size_t getNumSubscribers(const std::string &_topic);
@@ -106,24 +105,23 @@ namespace roscan
             // Return the number of publishers connected to this node on a particular topic
             size_t getNumPublishers(const std::string &_topic);
 
-            template<typename M>
-                void publish(const std::string& topic, const M& message)
-                {
-                    ros::SerializedMessage m;
-                    publish(topic, boost::bind(ros::serialization::serializeMessage<M>, boost::ref(message)), m);
-                }
+            template <typename M>
+            void publish(const std::string &topic, const M &message) {
+                ros::SerializedMessage m;
+                publish(topic, boost::bind(ros::serialization::serializeMessage<M>, boost::ref(message)), m);
+            }
 
-            void publish(const std::string &_topic, const boost::function<ros::SerializedMessage(void)>& serfunc, ros::SerializedMessage& m);
+            void publish(const std::string &_topic, const boost::function<ros::SerializedMessage(void)> &serfunc, ros::SerializedMessage &m);
 
             void incrementSequence(const std::string &_topic);
-            bool isLatched(const std::string& topic);
+            bool isLatched(const std::string &topic);
 
         private:
             // if it finds a pre-existing subscription to the same topic and of the
             // same message type, it appends the Functor to the callback vector for
             // that subscription. otherwise, it returns false, indicating that a new
             // subscription needs to be created.
-            bool addSubCallback(const ros::SubscribeOptions& ops);
+            bool addSubCallback(const ros::SubscribeOptions &ops);
 
             // Request a topic
             // Negotiate a subscriber connection on a topic.
@@ -135,11 +133,11 @@ namespace roscan
             bool requestTopic(const std::string &topic, XmlRpc::XmlRpcValue &protos, XmlRpc::XmlRpcValue &ret);
 
             // Must lock the advertised topics mutex before calling this function
-            bool isTopicAdvertised(const std::string& topic);
+            bool isTopicAdvertised(const std::string &topic);
 
-            bool registerSubscriber(const ros::SubscriptionPtr& s, const std::string& datatype);
-            bool unregisterSubscriber(const std::string& topic);
-            bool unregisterPublisher(const std::string& topic);
+            bool registerSubscriber(const ros::SubscriptionPtr &s, const std::string &datatype);
+            bool unregisterSubscriber(const std::string &topic);
+            bool unregisterPublisher(const std::string &topic);
 
             ros::PublicationPtr lookupPublicationWithoutLock(const std::string &topic);
 
@@ -177,12 +175,12 @@ namespace roscan
             // Return true on success, false otherwise.
             bool pubUpdate(const std::string &topic, const std::vector<std::string> &pubs);
 
-            void pubUpdateCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);
-            void requestTopicCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);
-            void getBusStatsCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);
-            void getBusInfoCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);
-            void getSubscriptionsCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);
-            void getPublicationsCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);
+            void pubUpdateCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result);
+            void requestTopicCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result);
+            void getBusStatsCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result);
+            void getBusInfoCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result);
+            void getSubscriptionsCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result);
+            void getPublicationsCallback(XmlRpc::XmlRpcValue &params, XmlRpc::XmlRpcValue &result);
 
             bool isShuttingDown() { return shutting_down_; }
 

@@ -28,11 +28,10 @@
 #include "subscriber.h"
 #include "topic_manager.h"
 
-namespace roscan
-{
-    Subscriber::Subscriber(const std::string& topic, const RosCanNodePtr& node,
-            const ros::SubscriptionCallbackHelperPtr& helper)
-    {
+namespace roscan {
+
+    Subscriber::Subscriber(const std::string &topic, const RosCanNodePtr &node,
+                        const ros::SubscriptionCallbackHelperPtr &helper) {
         topic_ = topic;
         helper_ = helper;
         node_ = node;
@@ -43,27 +42,23 @@ namespace roscan
         unsubscribed_ = true;
     }
 
-    void Subscriber::shutdown()
-    {
+    void Subscriber::shutdown() {
         if (!unsubscribed_) {
             unsubscribed_ = true;
             node_->topicManager->unsubscribe(topic_, helper_);
             node_.reset();
             helper_.reset();
         }
-
     }
 
-    std::string Subscriber::getTopic() const
-    {
+    std::string Subscriber::getTopic() const {
         if (!unsubscribed_) {
             return topic_;
         }
         return std::string();
     }
 
-    uint32_t Subscriber::getNumPublishers() const
-    {
+    uint32_t Subscriber::getNumPublishers() const {
         if (!unsubscribed_) {
             return node_->topicManager->getNumPublishers(topic_);
         }

@@ -28,22 +28,19 @@
 #ifndef ROSCAN_SUBSCRIPTION_H
 #define ROSCAN_SUBSCRIPTION_H
 
+#include <XmlRpc.h>
 #include <queue>
 #include <ros/common.h>
-#include <ros/header.h>
 #include <ros/forwards.h>
-#include <ros/transport_hints.h>
+#include <ros/header.h>
 #include <ros/statistics.h>
-#include <XmlRpc.h>
-
+#include <ros/transport_hints.h>
 #include "xmlrpc_manager.h"
-
-#include <boost/thread.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 
-namespace ros
-{
+namespace ros {
 
     class PublisherLink;
     typedef boost::shared_ptr<PublisherLink> PublisherLinkPtr;
@@ -60,7 +57,7 @@ namespace ros
     class SubscriptionCallbackHelper;
     typedef boost::shared_ptr<SubscriptionCallbackHelper> SubscriptionCallbackHelperPtr;
 
-}
+} // namespace ros
 
 namespace roscan {
 
@@ -69,10 +66,9 @@ namespace roscan {
     typedef boost::weak_ptr<Subscription> SubscriptionWPtr;
 
     // Manages a subscription on a single topic.
-    class Subscription : public boost::enable_shared_from_this<Subscription>
-    {
+    class Subscription : public boost::enable_shared_from_this<Subscription> {
         public:
-            Subscription(const RosCanNodePtr &node, const std::string &name, const std::string& md5sum, const std::string& datatype, const ros::TransportHints& transport_hints);
+            Subscription(const RosCanNodePtr &node, const std::string &name, const std::string &md5sum, const std::string &datatype, const ros::TransportHints &transport_hints);
             virtual ~Subscription();
 
             // Terminate all our PublisherLinks
@@ -86,109 +82,95 @@ namespace roscan {
             bool pubUpdate(const std::vector<std::string> &pubs);
 
             // Negotiates a connection with a publisher
-            bool negotiateConnection(const std::string& xmlrpc_uri);
+            bool negotiateConnection(const std::string &xmlrpc_uri);
 
-            void addLocalConnection(const ros::PublicationPtr& pub);
+            void addLocalConnection(const ros::PublicationPtr &pub);
 
             // Returns whether this Subscription has been dropped or not
             bool isDropped() { return dropped_; }
             XmlRpc::XmlRpcValue getStats();
-            void getInfo(XmlRpc::XmlRpcValue& info);
+            void getInfo(XmlRpc::XmlRpcValue &info);
 
-            bool addCallback(const ros::SubscriptionCallbackHelperPtr& helper, const std::string& md5sum, ros::CallbackQueueInterface* queue, int32_t queue_size, const ros::VoidConstPtr& tracked_object, bool allow_concurrent_callbacks);
-            void removeCallback(const ros::SubscriptionCallbackHelperPtr& helper);
+            bool addCallback(const ros::SubscriptionCallbackHelperPtr &helper, const std::string &md5sum, ros::CallbackQueueInterface *queue, int32_t queue_size, const ros::VoidConstPtr &tracked_object, bool allow_concurrent_callbacks);
+            void removeCallback(const ros::SubscriptionCallbackHelperPtr &helper);
 
             typedef std::map<std::string, std::string> M_string;
 
             // Called to notify that a new message has arrived from a publisher.
             // Schedules the callback for invokation with the callback queue
-            uint32_t handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy, const boost::shared_ptr<M_string>& connection_header, const ros::PublisherLinkPtr& link);
+            uint32_t handleMessage(const ros::SerializedMessage &m, bool ser, bool nocopy, const boost::shared_ptr<M_string> &connection_header, const ros::PublisherLinkPtr &link);
 
             const std::string datatype();
             const std::string md5sum();
 
             // Removes a subscriber from our list
-            void removePublisherLink(const ros::PublisherLinkPtr& pub_link);
+            void removePublisherLink(const ros::PublisherLinkPtr &pub_link);
 
-            const std::string& getName() const { return name_; }
+            const std::string &getName() const { return name_; }
             uint32_t getNumCallbacks() const { return callbacks_.size(); }
             uint32_t getNumPublishers();
 
-            // We'll keep a list of these objects, representing in-progress XMLRPC 
+            // We'll keep a list of these objects, representing in-progress XMLRPC
             // connections to other nodes.
-            class PendingConnection : public ASyncXMLRPCConnection
-        {
-            public:
-                PendingConnection(XmlRpc::XmlRpcClient* client, ros::TransportUDPPtr udp_transport, const SubscriptionWPtr& parent, const std::string& remote_uri)
-                    : client_(client)
-                      , udp_transport_(udp_transport)
-                      , parent_(parent)
-                      , remote_uri_(remote_uri)
-            {}
+            class PendingConnection : public ASyncXMLRPCConnection {
+                public:
+                    PendingConnection(XmlRpc::XmlRpcClient *client, ros::TransportUDPPtr udp_transport, const SubscriptionWPtr &parent, const std::string &remote_uri)
+                    : client_(client), udp_transport_(udp_transport), parent_(parent), remote_uri_(remote_uri) {}
 
-                ~PendingConnection()
-                {
-                    delete client_;
-                }
+                    ~PendingConnection() { delete client_; }
 
-                XmlRpc::XmlRpcClient* getClient() const { return client_; }
-                ros::TransportUDPPtr getUDPTransport() const { return udp_transport_; }
+                    XmlRpc::XmlRpcClient *getClient() const { return client_; }
+                    ros::TransportUDPPtr getUDPTransport() const { return udp_transport_; }
 
-                virtual void addToDispatch(XmlRpc::XmlRpcDispatch* disp)
-                {
-                    disp->addSource(client_, XmlRpc::XmlRpcDispatch::WritableEvent | XmlRpc::XmlRpcDispatch::Exception);
-                }
-
-                virtual void removeFromDispatch(XmlRpc::XmlRpcDispatch* disp)
-                {
-                    disp->removeSource(client_);
-                }
-
-                virtual bool check()
-                {
-                    SubscriptionPtr parent = parent_.lock();
-                    if (!parent)
-                    {
-                        return true;
+                    virtual void addToDispatch(XmlRpc::XmlRpcDispatch *disp) {
+                        disp->addSource(client_, XmlRpc::XmlRpcDispatch::WritableEvent | XmlRpc::XmlRpcDispatch::Exception);
                     }
 
-                    XmlRpc::XmlRpcValue result;
-                    if (client_->executeCheckDone(result))
-                    {
-                        parent->pendingConnectionDone(boost::dynamic_pointer_cast<PendingConnection>(shared_from_this()), result);
-                        return true;
+                    virtual void removeFromDispatch(XmlRpc::XmlRpcDispatch *disp) {
+                        disp->removeSource(client_);
                     }
 
-                    return false;
-                }
+                    virtual bool check() {
+                        SubscriptionPtr parent = parent_.lock();
+                        if (!parent) {
+                            return true;
+                        }
 
-                const std::string& getRemoteURI() { return remote_uri_; }
+                        XmlRpc::XmlRpcValue result;
+                        if (client_->executeCheckDone(result)) {
+                            parent->pendingConnectionDone(boost::dynamic_pointer_cast<PendingConnection>(shared_from_this()), result);
+                            return true;
+                        }
 
-            private:
-                XmlRpc::XmlRpcClient* client_;
-                ros::TransportUDPPtr udp_transport_;
-                SubscriptionWPtr parent_;
-                std::string remote_uri_;
-        };
+                        return false;
+                    }
+
+                    const std::string &getRemoteURI() { return remote_uri_; }
+
+                private:
+                    XmlRpc::XmlRpcClient *client_;
+                    ros::TransportUDPPtr udp_transport_;
+                    SubscriptionWPtr parent_;
+                    std::string remote_uri_;
+            };
             typedef boost::shared_ptr<PendingConnection> PendingConnectionPtr;
 
-            void pendingConnectionDone(const PendingConnectionPtr& pending_conn, XmlRpc::XmlRpcValue& result);
+            void pendingConnectionDone(const PendingConnectionPtr &pending_conn, XmlRpc::XmlRpcValue &result);
 
-            void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti);
+            void getPublishTypes(bool &ser, bool &nocopy, const std::type_info &ti);
 
-            void headerReceived(const ros::PublisherLinkPtr& link, const ros::Header& h);
+            void headerReceived(const ros::PublisherLinkPtr &link, const ros::Header &h);
 
         private:
-            Subscription(const Subscription &); // not copyable
-            Subscription &operator =(const Subscription &); // nor assignable
+            Subscription(const Subscription &);            // not copyable
+            Subscription &operator=(const Subscription &); // nor assignable
 
             void dropAllConnections();
 
-            void addPublisherLink(const ros::PublisherLinkPtr& link);
+            void addPublisherLink(const ros::PublisherLinkPtr &link);
 
-            struct CallbackInfo
-            {
-                ros::CallbackQueueInterface* callback_queue_;
+            struct CallbackInfo {
+                ros::CallbackQueueInterface *callback_queue_;
 
                 // Only used if callback_queue_ is non-NULL (NodeHandle API)
                 ros::SubscriptionCallbackHelperPtr helper_;
@@ -225,18 +207,17 @@ namespace roscan {
 
             ros::StatisticsLogger statistics_;
 
-            struct LatchInfo
-            {
+            struct LatchInfo {
                 ros::SerializedMessage message;
                 ros::PublisherLinkPtr link;
-                boost::shared_ptr<std::map<std::string, std::string> > connection_header;
+                boost::shared_ptr<std::map<std::string, std::string>> connection_header;
                 ros::Time receipt_time;
             };
 
             typedef std::map<ros::PublisherLinkPtr, LatchInfo> M_PublisherLinkToLatchInfo;
             M_PublisherLinkToLatchInfo latched_messages_;
 
-            typedef std::vector<std::pair<const std::type_info*, ros::MessageDeserializerPtr> > V_TypeAndDeserializer;
+            typedef std::vector<std::pair<const std::type_info *, ros::MessageDeserializerPtr>> V_TypeAndDeserializer;
             V_TypeAndDeserializer cached_deserializers_;
     };
 

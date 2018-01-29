@@ -32,61 +32,47 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sstream>
-#include <fcntl.h>
 #include <cerrno>
 #include <cstring>
+#include <fcntl.h>
+#include <sstream>
 #include <typeinfo>
-
+#include <ros/callback_queue_interface.h>
 #include <ros/common.h>
-#include <ros/io.h>
-#include <ros/publication.h>
-#include <ros/transport_publisher_link.h>
+#include <ros/connection.h>
+#include <ros/file_log.h>
 #include <ros/intraprocess_publisher_link.h>
 #include <ros/intraprocess_subscriber_link.h>
-#include <ros/connection.h>
+#include <ros/io.h>
+#include <ros/message_deserializer.h>
+#include <ros/publication.h>
+#include <ros/subscription_callback_helper.h>
+#include <ros/subscription_queue.h>
 #include <ros/transport/transport_tcp.h>
 #include <ros/transport/transport_udp.h>
-#include <ros/callback_queue_interface.h>
-#include <ros/message_deserializer.h>
-#include <ros/subscription_queue.h>
-#include <ros/file_log.h>
 #include <ros/transport_hints.h>
-#include <ros/subscription_callback_helper.h>
-
+#include <ros/transport_publisher_link.h>
 #include "RosCanNode.h"
-#include "poll_manager.h"
 #include "connection_manager.h"
-#include "subscription.h"
 #include "network.h"
-
+#include "poll_manager.h"
+#include "subscription.h"
 #include <boost/make_shared.hpp>
 
 using XmlRpc::XmlRpcValue;
 
-namespace roscan
-{
+namespace roscan {
 
-    Subscription::Subscription(const RosCanNodePtr &node, const std::string &name, const std::string& md5sum, const std::string& datatype, const ros::TransportHints& transport_hints)
-        : name_(name)
-          , md5sum_(md5sum)
-          , datatype_(datatype)
-          , nonconst_callbacks_(0)
-          , dropped_(false)
-          , shutting_down_(false)
-          , transport_hints_(transport_hints)
-          , node_(node)
-    {
+    Subscription::Subscription(const RosCanNodePtr &node, const std::string &name, const std::string &md5sum, const std::string &datatype, const ros::TransportHints &transport_hints)
+        : name_(name), md5sum_(md5sum), datatype_(datatype), nonconst_callbacks_(0), dropped_(false), shutting_down_(false), transport_hints_(transport_hints), node_(node) {
     }
 
-    Subscription::~Subscription()
-    {
+    Subscription::~Subscription() {
         pending_connections_.clear();
         callbacks_.clear();
     }
 
-    void Subscription::shutdown()
-    {
+    void Subscription::shutdown() {
         {
             boost::mutex::scoped_lock lock(shutdown_mutex_);
             shutting_down_ = true;
@@ -95,8 +81,7 @@ namespace roscan
         drop();
     }
 
-    XmlRpcValue Subscription::getStats()
-    {
+    XmlRpcValue Subscription::getStats() {
         XmlRpcValue stats;
         stats[0] = name_;
         XmlRpcValue conn_data;
@@ -106,9 +91,8 @@ namespace roscan
 
         uint32_t cidx = 0;
         for (V_PublisherLink::iterator c = publisher_links_.begin();
-                c != publisher_links_.end(); ++c)
-        {
-            const ros::PublisherLink::Stats& s = (*c)->getStats();
+            c != publisher_links_.end(); ++c) {
+            const ros::PublisherLink::Stats &s = (*c)->getStats();
             conn_data[cidx][0] = (*c)->getConnectionID();
             conn_data[cidx][1] = (int)s.bytes_received_;
             conn_data[cidx][2] = (int)s.messages_received_;
@@ -122,13 +106,11 @@ namespace roscan
 
     // [(connection_id, publisher_xmlrpc_uri, direction, transport, topic_name, connected, connection_info_string)*]
     // e.g. [(1, 'http://host:54893/', 'i', 'TCPROS', '/chatter', 1, 'TCPROS connection on port 59746 to [host:34318 on socket 11]')]
-    void Subscription::getInfo(XmlRpc::XmlRpcValue& info)
-    {
+    void Subscription::getInfo(XmlRpc::XmlRpcValue &info) {
         boost::mutex::scoped_lock lock(publisher_links_mutex_);
 
         for (ros::V_PublisherLink::iterator c = publisher_links_.begin();
-                c != publisher_links_.end(); ++c)
-        {
+            c != publisher_links_.end(); ++c) {
             XmlRpcValue curr_info;
             curr_info[0] = (int)(*c)->getConnectionID();
             curr_info[1] = (*c)->getPublisherXMLRPCURI();
@@ -141,24 +123,20 @@ namespace roscan
         }
     }
 
-    uint32_t Subscription::getNumPublishers()
-    {
+    uint32_t Subscription::getNumPublishers() {
         boost::mutex::scoped_lock lock(publisher_links_mutex_);
         return (uint32_t)publisher_links_.size();
     }
 
-    void Subscription::drop()
-    {
-        if (!dropped_)
-        {
+    void Subscription::drop() {
+        if (!dropped_) {
             dropped_ = true;
 
             dropAllConnections();
         }
     }
 
-    void Subscription::dropAllConnections()
-    {
+    void Subscription::dropAllConnections() {
         // Swap our subscribers list with a local one so we can only lock for a short period of time, because a
         // side effect of our calling drop() on connections can be re-locking the subscribers mutex
         V_PublisherLink localsubscribers;
@@ -171,14 +149,12 @@ namespace roscan
 
         V_PublisherLink::iterator it = localsubscribers.begin();
         V_PublisherLink::iterator end = localsubscribers.end();
-        for (;it != end; ++it)
-        {
+        for (; it != end; ++it) {
             (*it)->drop();
         }
     }
 
-    bool urisEqual(const std::string& uri1, const std::string& uri2)
-    {
+    bool urisEqual(const std::string &uri1, const std::string &uri2) {
         std::string host1, host2;
         uint32_t port1 = 0, port2 = 0;
         network::splitURI(uri1, host1, port1);
@@ -186,12 +162,10 @@ namespace roscan
         return port1 == port2 && host1 == host2;
     }
 
-    bool Subscription::pubUpdate(const V_string& new_pubs)
-    {
+    bool Subscription::pubUpdate(const V_string &new_pubs) {
         boost::mutex::scoped_lock lock(shutdown_mutex_);
 
-        if (shutting_down_ || dropped_)
-        {
+        if (shutting_down_ || dropped_) {
             return false;
         }
 
@@ -201,8 +175,7 @@ namespace roscan
             std::stringstream ss;
 
             for (V_string::const_iterator up_i = new_pubs.begin();
-                    up_i != new_pubs.end(); ++up_i)
-            {
+                up_i != new_pubs.end(); ++up_i) {
                 ss << *up_i << ", ";
             }
 
@@ -210,8 +183,7 @@ namespace roscan
             {
                 boost::mutex::scoped_lock lock(publisher_links_mutex_);
                 for (V_PublisherLink::iterator spc = publisher_links_.begin();
-                        spc!= publisher_links_.end(); ++spc)
-                {
+                    spc != publisher_links_.end(); ++spc) {
                     ss << (*spc)->getPublisherXMLRPCURI() << ", ";
                 }
             }
@@ -219,8 +191,7 @@ namespace roscan
             boost::mutex::scoped_lock lock(pending_connections_mutex_);
             S_PendingConnection::iterator it = pending_connections_.begin();
             S_PendingConnection::iterator end = pending_connections_.end();
-            for (; it != end; ++it)
-            {
+            for (; it != end; ++it) {
                 ss << (*it)->getRemoteURI() << ", ";
             }
 
@@ -236,85 +207,66 @@ namespace roscan
             boost::mutex::scoped_lock lock(publisher_links_mutex_);
 
             for (V_PublisherLink::iterator spc = publisher_links_.begin();
-                    spc!= publisher_links_.end(); ++spc)
-            {
+                spc != publisher_links_.end(); ++spc) {
                 bool found = false;
                 for (V_string::const_iterator up_i = new_pubs.begin();
-                        !found && up_i != new_pubs.end(); ++up_i)
-                {
-                    if (urisEqual((*spc)->getPublisherXMLRPCURI(), *up_i))
-                    {
+                    !found && up_i != new_pubs.end(); ++up_i) {
+                    if (urisEqual((*spc)->getPublisherXMLRPCURI(), *up_i)) {
                         found = true;
                         break;
                     }
                 }
 
-                if (!found)
-                {
+                if (!found) {
                     subtractions.push_back(*spc);
                 }
             }
 
-            for (V_string::const_iterator up_i  = new_pubs.begin(); up_i != new_pubs.end(); ++up_i)
-            {
+            for (V_string::const_iterator up_i = new_pubs.begin(); up_i != new_pubs.end(); ++up_i) {
                 bool found = false;
                 for (V_PublisherLink::iterator spc = publisher_links_.begin();
-                        !found && spc != publisher_links_.end(); ++spc)
-                {
-                    if (urisEqual(*up_i, (*spc)->getPublisherXMLRPCURI()))
-                    {
+                    !found && spc != publisher_links_.end(); ++spc) {
+                    if (urisEqual(*up_i, (*spc)->getPublisherXMLRPCURI())) {
                         found = true;
                         break;
                     }
                 }
 
-                if (!found)
-                {
+                if (!found) {
                     boost::mutex::scoped_lock lock(pending_connections_mutex_);
                     S_PendingConnection::iterator it = pending_connections_.begin();
                     S_PendingConnection::iterator end = pending_connections_.end();
-                    for (; it != end; ++it)
-                    {
-                        if (urisEqual(*up_i, (*it)->getRemoteURI()))
-                        {
+                    for (; it != end; ++it) {
+                        if (urisEqual(*up_i, (*it)->getRemoteURI())) {
                             found = true;
                             break;
                         }
                     }
                 }
 
-                if (!found)
-                {
+                if (!found) {
                     additions.push_back(*up_i);
                 }
             }
         }
 
-        for (V_PublisherLink::iterator i = subtractions.begin(); i != subtractions.end(); ++i)
-        {
-            const ros::PublisherLinkPtr& link = *i;
-            if (link->getPublisherXMLRPCURI() != node_->xmlrpcManager->getServerURI())
-            {
+        for (V_PublisherLink::iterator i = subtractions.begin(); i != subtractions.end(); ++i) {
+            const ros::PublisherLinkPtr &link = *i;
+            if (link->getPublisherXMLRPCURI() != node_->xmlrpcManager->getServerURI()) {
                 ROSCPP_LOG_DEBUG("Disconnecting from publisher [%s] of topic [%s] at [%s]",
-                        link->getCallerID().c_str(), name_.c_str(), link->getPublisherXMLRPCURI().c_str());
+                                link->getCallerID().c_str(), name_.c_str(), link->getPublisherXMLRPCURI().c_str());
                 link->drop();
-            }
-            else
-            {
+            } else {
                 ROSCPP_LOG_DEBUG("Disconnect: skipping myself for topic [%s]", name_.c_str());
             }
         }
 
         for (V_string::iterator i = additions.begin();
-                i != additions.end(); ++i)
-        {
+            i != additions.end(); ++i) {
             // this function should never negotiate a self-subscription
-            if (node_->xmlrpcManager->getServerURI() != *i)
-            {
+            if (node_->xmlrpcManager->getServerURI() != *i) {
                 retval &= negotiateConnection(*i);
-            }
-            else
-            {
+            } else {
                 ROSCPP_LOG_DEBUG("Skipping myself (%s, %s)", name_.c_str(), node_->xmlrpcManager->getServerURI().c_str());
             }
         }
@@ -322,24 +274,20 @@ namespace roscan
         return retval;
     }
 
-    bool Subscription::negotiateConnection(const std::string& xmlrpc_uri)
-    {
+    bool Subscription::negotiateConnection(const std::string &xmlrpc_uri) {
         XmlRpcValue tcpros_array, protos_array, params;
         XmlRpcValue udpros_array;
         ros::TransportUDPPtr udp_transport;
         int protos = 0;
         V_string transports = transport_hints_.getTransports();
-        if (transports.empty())
-        {
+        if (transports.empty()) {
             transport_hints_.reliable();
             transports = transport_hints_.getTransports();
         }
         for (V_string::const_iterator it = transports.begin();
-                it != transports.end();
-                ++it)
-        {
-            if (*it == "UDP")
-            {
+            it != transports.end();
+            ++it) {
+            if (*it == "UDP") {
                 int max_datagram_size = transport_hints_.getMaxDatagramSize();
                 udp_transport = boost::make_shared<ros::TransportUDP>(&node_->pollManager->getPollSet());
                 if (!max_datagram_size)
@@ -361,14 +309,10 @@ namespace roscan
                 udpros_array[4] = max_datagram_size;
 
                 protos_array[protos++] = udpros_array;
-            }
-            else if (*it == "TCP")
-            {
+            } else if (*it == "TCP") {
                 tcpros_array[0] = std::string("TCPROS");
                 protos_array[protos++] = tcpros_array;
-            }
-            else
-            {
+            } else {
                 ROS_WARN("Unsupported transport type hinted: %s, skipping", it->c_str());
             }
         }
@@ -377,23 +321,20 @@ namespace roscan
         params[2] = protos_array;
         std::string peer_host;
         uint32_t peer_port;
-        if (!network::splitURI(xmlrpc_uri, peer_host, peer_port))
-        {
+        if (!network::splitURI(xmlrpc_uri, peer_host, peer_port)) {
             ROS_ERROR("Bad xml-rpc URI: [%s]", xmlrpc_uri.c_str());
             return false;
         }
 
-        XmlRpc::XmlRpcClient* c = new XmlRpc::XmlRpcClient(peer_host.c_str(),
-                peer_port, "/");
+        XmlRpc::XmlRpcClient *c = new XmlRpc::XmlRpcClient(peer_host.c_str(),
+                                                        peer_port, "/");
 
         // Initiate the negotiation.  We'll come back and check on it later.
-        if (!c->executeNonBlock("requestTopic", params))
-        {
+        if (!c->executeNonBlock("requestTopic", params)) {
             ROSCPP_LOG_DEBUG("Failed to contact publisher [%s:%d] for topic [%s]",
-                    peer_host.c_str(), peer_port, name_.c_str());
+                            peer_host.c_str(), peer_port, name_.c_str());
             delete c;
-            if (udp_transport)
-            {
+            if (udp_transport) {
                 udp_transport->close();
             }
 
@@ -416,19 +357,15 @@ namespace roscan
         return true;
     }
 
-    void closeTransport(const ros::TransportUDPPtr& trans)
-    {
-        if (trans)
-        {
+    void closeTransport(const ros::TransportUDPPtr &trans) {
+        if (trans) {
             trans->close();
         }
     }
 
-    void Subscription::pendingConnectionDone(const PendingConnectionPtr& conn, XmlRpcValue& result)
-    {
+    void Subscription::pendingConnectionDone(const PendingConnectionPtr &conn, XmlRpcValue &result) {
         boost::mutex::scoped_lock lock(shutdown_mutex_);
-        if (shutting_down_ || dropped_)
-        {
+        if (shutting_down_ || dropped_) {
             return;
         }
 
@@ -447,43 +384,37 @@ namespace roscan
         udp_transport = conn->getUDPTransport();
 
         XmlRpc::XmlRpcValue proto;
-        if(!node_->xmlrpcManager->validateXmlrpcResponse("requestTopic", result, proto))
-        {
+        if (!node_->xmlrpcManager->validateXmlrpcResponse("requestTopic", result, proto)) {
             ROSCPP_LOG_DEBUG("Failed to contact publisher [%s:%d] for topic [%s]",
-                    peer_host.c_str(), peer_port, name_.c_str());
+                            peer_host.c_str(), peer_port, name_.c_str());
             closeTransport(udp_transport);
             return;
         }
 
-        if (proto.size() == 0)
-        {
+        if (proto.size() == 0) {
             ROSCPP_LOG_DEBUG("Couldn't agree on any common protocols with [%s] for topic [%s]", xmlrpc_uri.c_str(), name_.c_str());
             closeTransport(udp_transport);
             return;
         }
 
-        if (proto.getType() != XmlRpcValue::TypeArray)
-        {
+        if (proto.getType() != XmlRpcValue::TypeArray) {
             ROSCPP_LOG_DEBUG("Available protocol info returned from %s is not a list.", xmlrpc_uri.c_str());
             closeTransport(udp_transport);
             return;
         }
-        if (proto[0].getType() != XmlRpcValue::TypeString)
-        {
+        if (proto[0].getType() != XmlRpcValue::TypeString) {
             ROSCPP_LOG_DEBUG("Available protocol info list doesn't have a string as its first element.");
             closeTransport(udp_transport);
             return;
         }
 
         std::string proto_name = proto[0];
-        if (proto_name == "TCPROS")
-        {
+        if (proto_name == "TCPROS") {
             if (proto.size() != 3 ||
-                    proto[1].getType() != XmlRpcValue::TypeString ||
-                    proto[2].getType() != XmlRpcValue::TypeInt)
-            {
-                ROSCPP_LOG_DEBUG("publisher implements TCPROS, but the " \
-                        "parameters aren't string,int");
+                proto[1].getType() != XmlRpcValue::TypeString ||
+                proto[2].getType() != XmlRpcValue::TypeInt) {
+                ROSCPP_LOG_DEBUG("publisher implements TCPROS, but the "
+                                "parameters aren't string,int");
                 return;
             }
             std::string pub_host = proto[1];
@@ -491,8 +422,7 @@ namespace roscan
             ROSCPP_CONN_LOG_DEBUG("Connecting via tcpros to topic [%s] at host [%s:%d]", name_.c_str(), pub_host.c_str(), pub_port);
 
             ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&node_->pollManager->getPollSet()));
-            if (transport->connect(pub_host, pub_port))
-            {
+            if (transport->connect(pub_host, pub_port)) {
                 ros::ConnectionPtr connection(boost::make_shared<ros::Connection>());
                 ros::TransportPublisherLinkPtr pub_link(boost::make_shared<ros::TransportPublisherLink>(shared_from_this(), xmlrpc_uri, transport_hints_));
 
@@ -505,23 +435,18 @@ namespace roscan
                 addPublisherLink(pub_link);
 
                 ROSCPP_CONN_LOG_DEBUG("Connected to publisher of topic [%s] at [%s:%d]", name_.c_str(), pub_host.c_str(), pub_port);
-            }
-            else
-            {
+            } else {
                 ROSCPP_CONN_LOG_DEBUG("Failed to connect to publisher of topic [%s] at [%s:%d]", name_.c_str(), pub_host.c_str(), pub_port);
             }
-        }
-        else if (proto_name == "UDPROS")
-        {
+        } else if (proto_name == "UDPROS") {
             if (proto.size() != 6 ||
-                    proto[1].getType() != XmlRpcValue::TypeString ||
-                    proto[2].getType() != XmlRpcValue::TypeInt ||
-                    proto[3].getType() != XmlRpcValue::TypeInt ||
-                    proto[4].getType() != XmlRpcValue::TypeInt ||
-                    proto[5].getType() != XmlRpcValue::TypeBase64)
-            {
-                ROSCPP_LOG_DEBUG("publisher implements UDPROS, but the " \
-                        "parameters aren't string,int,int,int,base64");
+                proto[1].getType() != XmlRpcValue::TypeString ||
+                proto[2].getType() != XmlRpcValue::TypeInt ||
+                proto[3].getType() != XmlRpcValue::TypeInt ||
+                proto[4].getType() != XmlRpcValue::TypeInt ||
+                proto[5].getType() != XmlRpcValue::TypeBase64) {
+                ROSCPP_LOG_DEBUG("publisher implements UDPROS, but the "
+                                "parameters aren't string,int,int,int,base64");
                 closeTransport(udp_transport);
                 return;
             }
@@ -534,8 +459,7 @@ namespace roscan
             memcpy(buffer.get(), &header_bytes[0], header_bytes.size());
             ros::Header h;
             std::string err;
-            if (!h.parse(buffer, header_bytes.size(), err))
-            {
+            if (!h.parse(buffer, header_bytes.size(), err)) {
                 ROSCPP_LOG_DEBUG("Unable to parse UDPROS connection header: %s", err.c_str());
                 closeTransport(udp_transport);
                 return;
@@ -543,16 +467,14 @@ namespace roscan
             ROSCPP_LOG_DEBUG("Connecting via udpros to topic [%s] at host [%s:%d] connection id [%08x] max_datagram_size [%d]", name_.c_str(), pub_host.c_str(), pub_port, conn_id, max_datagram_size);
 
             std::string error_msg;
-            if (h.getValue("error", error_msg))
-            {
+            if (h.getValue("error", error_msg)) {
                 ROSCPP_LOG_DEBUG("Received error message in header for connection to [%s]: [%s]", xmlrpc_uri.c_str(), error_msg.c_str());
                 closeTransport(udp_transport);
                 return;
             }
 
             ros::TransportPublisherLinkPtr pub_link(boost::make_shared<ros::TransportPublisherLink>(shared_from_this(), xmlrpc_uri, transport_hints_));
-            if (pub_link->setHeader(h))
-            {
+            if (pub_link->setHeader(h)) {
                 ros::ConnectionPtr connection(boost::make_shared<ros::Connection>());
                 connection->initialize(udp_transport, false, NULL);
                 connection->setHeader(h);
@@ -564,22 +486,17 @@ namespace roscan
                 addPublisherLink(pub_link);
 
                 ROSCPP_LOG_DEBUG("Connected to publisher of topic [%s] at [%s:%d]", name_.c_str(), pub_host.c_str(), pub_port);
-            }
-            else
-            {
+            } else {
                 ROSCPP_LOG_DEBUG("Failed to connect to publisher of topic [%s] at [%s:%d]", name_.c_str(), pub_host.c_str(), pub_port);
                 closeTransport(udp_transport);
                 return;
             }
-        }
-        else
-        {
+        } else {
             ROSCPP_LOG_DEBUG("Publisher offered unsupported transport [%s]", proto_name.c_str());
         }
     }
 
-    uint32_t Subscription::handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy, const boost::shared_ptr<M_string>& connection_header, const ros::PublisherLinkPtr& link)
-    {
+    uint32_t Subscription::handleMessage(const ros::SerializedMessage &m, bool ser, bool nocopy, const boost::shared_ptr<M_string> &connection_header, const ros::PublisherLinkPtr &link) {
         boost::mutex::scoped_lock lock(callbacks_mutex_);
 
         uint32_t drops = 0;
@@ -592,50 +509,41 @@ namespace roscan
         ros::Time receipt_time = ros::Time::now();
 
         for (V_CallbackInfo::iterator cb = callbacks_.begin();
-                cb != callbacks_.end(); ++cb)
-        {
-            const CallbackInfoPtr& info = *cb;
+            cb != callbacks_.end(); ++cb) {
+            const CallbackInfoPtr &info = *cb;
 
             ROS_ASSERT(info->callback_queue_);
 
-            const std::type_info* ti = &info->helper_->getTypeInfo();
+            const std::type_info *ti = &info->helper_->getTypeInfo();
 
-            if ((nocopy && m.type_info && *ti == *m.type_info) || (ser && (!m.type_info || *ti != *m.type_info)))
-            {
+            if ((nocopy && m.type_info && *ti == *m.type_info) || (ser && (!m.type_info || *ti != *m.type_info))) {
                 ros::MessageDeserializerPtr deserializer;
 
                 V_TypeAndDeserializer::iterator des_it = cached_deserializers_.begin();
                 V_TypeAndDeserializer::iterator des_end = cached_deserializers_.end();
-                for (; des_it != des_end; ++des_it)
-                {
-                    if (*des_it->first == *ti)
-                    {
+                for (; des_it != des_end; ++des_it) {
+                    if (*des_it->first == *ti) {
                         deserializer = des_it->second;
                         break;
                     }
                 }
 
-                if (!deserializer)
-                {
+                if (!deserializer) {
                     deserializer = boost::make_shared<ros::MessageDeserializer>(info->helper_, m, connection_header);
                     cached_deserializers_.push_back(std::make_pair(ti, deserializer));
                 }
 
                 bool was_full = false;
                 bool nonconst_need_copy = false;
-                if (callbacks_.size() > 1)
-                {
+                if (callbacks_.size() > 1) {
                     nonconst_need_copy = true;
                 }
 
                 info->subscription_queue_->push(info->helper_, deserializer, info->has_tracked_object_, info->tracked_object_, nonconst_need_copy, receipt_time, &was_full);
 
-                if (was_full)
-                {
+                if (was_full) {
                     ++drops;
-                }
-                else
-                {
+                } else {
                     info->callback_queue_->addCallback(info->subscription_queue_, (uint64_t)info.get());
                 }
             }
@@ -645,8 +553,7 @@ namespace roscan
         statistics_.callback(connection_header, name_, link->getCallerID(), m, link->getStats().bytes_received_, receipt_time, drops > 0);
 
         // If this link is latched, store off the message so we can immediately pass it to new subscribers later
-        if (link->isLatched())
-        {
+        if (link->isLatched()) {
             LatchInfo li;
             li.connection_header = connection_header;
             li.link = link;
@@ -660,8 +567,7 @@ namespace roscan
         return drops;
     }
 
-    bool Subscription::addCallback(const ros::SubscriptionCallbackHelperPtr& helper, const std::string& md5sum, ros::CallbackQueueInterface* queue, int32_t queue_size, const ros::VoidConstPtr& tracked_object, bool allow_concurrent_callbacks)
-    {
+    bool Subscription::addCallback(const ros::SubscriptionCallbackHelperPtr &helper, const std::string &md5sum, ros::CallbackQueueInterface *queue, int32_t queue_size, const ros::VoidConstPtr &tracked_object, bool allow_concurrent_callbacks) {
         ROS_ASSERT(helper);
         ROS_ASSERT(queue);
 
@@ -670,15 +576,13 @@ namespace roscan
         // Decay to a real type as soon as we have a subscriber with a real type
         {
             boost::mutex::scoped_lock lock(md5sum_mutex_);
-            if (md5sum_ == "*" && md5sum != "*")
-            {
+            if (md5sum_ == "*" && md5sum != "*") {
 
                 md5sum_ = md5sum;
             }
         }
 
-        if (md5sum != "*" && md5sum != this->md5sum())
-        {
+        if (md5sum != "*" && md5sum != this->md5sum()) {
             return false;
         }
 
@@ -691,13 +595,11 @@ namespace roscan
             info->subscription_queue_ = boost::make_shared<ros::SubscriptionQueue>(name_, queue_size, allow_concurrent_callbacks);
             info->tracked_object_ = tracked_object;
             info->has_tracked_object_ = false;
-            if (tracked_object)
-            {
+            if (tracked_object) {
                 info->has_tracked_object_ = true;
             }
 
-            if (!helper->isConst())
-            {
+            if (!helper->isConst()) {
                 ++nonconst_callbacks_;
             }
 
@@ -705,27 +607,22 @@ namespace roscan
             cached_deserializers_.reserve(callbacks_.size());
 
             // if we have any latched links, we need to immediately schedule callbacks
-            if (!latched_messages_.empty())
-            {
+            if (!latched_messages_.empty()) {
                 boost::mutex::scoped_lock lock(publisher_links_mutex_);
 
                 V_PublisherLink::iterator it = publisher_links_.begin();
                 V_PublisherLink::iterator end = publisher_links_.end();
-                for (; it != end;++it)
-                {
-                    const ros::PublisherLinkPtr& link = *it;
-                    if (link->isLatched())
-                    {
+                for (; it != end; ++it) {
+                    const ros::PublisherLinkPtr &link = *it;
+                    if (link->isLatched()) {
                         M_PublisherLinkToLatchInfo::iterator des_it = latched_messages_.find(link);
-                        if (des_it != latched_messages_.end())
-                        {
-                            const LatchInfo& latch_info = des_it->second;
+                        if (des_it != latched_messages_.end()) {
+                            const LatchInfo &latch_info = des_it->second;
 
                             ros::MessageDeserializerPtr des(boost::make_shared<ros::MessageDeserializer>(helper, latch_info.message, latch_info.connection_header));
                             bool was_full = false;
                             info->subscription_queue_->push(info->helper_, des, info->has_tracked_object_, info->tracked_object_, true, latch_info.receipt_time, &was_full);
-                            if (!was_full)
-                            {
+                            if (!was_full) {
                                 info->callback_queue_->addCallback(info->subscription_queue_, (uint64_t)info.get());
                             }
                         }
@@ -737,21 +634,17 @@ namespace roscan
         return true;
     }
 
-    void Subscription::removeCallback(const ros::SubscriptionCallbackHelperPtr& helper)
-    {
+    void Subscription::removeCallback(const ros::SubscriptionCallbackHelperPtr &helper) {
         CallbackInfoPtr info;
         {
             boost::mutex::scoped_lock cbs_lock(callbacks_mutex_);
             for (V_CallbackInfo::iterator it = callbacks_.begin();
-                    it != callbacks_.end(); ++it)
-            {
-                if ((*it)->helper_ == helper)
-                {
+                it != callbacks_.end(); ++it) {
+                if ((*it)->helper_ == helper) {
                     info = *it;
                     callbacks_.erase(it);
 
-                    if (!helper->isConst())
-                    {
+                    if (!helper->isConst()) {
                         --nonconst_callbacks_;
                     }
 
@@ -760,74 +653,59 @@ namespace roscan
             }
         }
 
-        if (info)
-        {
+        if (info) {
             info->subscription_queue_->clear();
             info->callback_queue_->removeByID((uint64_t)info.get());
         }
     }
 
-    void Subscription::headerReceived(const ros::PublisherLinkPtr& link, const ros::Header& h)
-    {
+    void Subscription::headerReceived(const ros::PublisherLinkPtr &link, const ros::Header &h) {
         (void)h;
         boost::mutex::scoped_lock lock(md5sum_mutex_);
-        if (md5sum_ == "*")
-        {
+        if (md5sum_ == "*") {
             md5sum_ = link->getMD5Sum();
         }
     }
 
-    void Subscription::addPublisherLink(const ros::PublisherLinkPtr& link)
-    {
+    void Subscription::addPublisherLink(const ros::PublisherLinkPtr &link) {
         publisher_links_.push_back(link);
     }
 
-    void Subscription::removePublisherLink(const ros::PublisherLinkPtr& pub_link)
-    {
+    void Subscription::removePublisherLink(const ros::PublisherLinkPtr &pub_link) {
         boost::mutex::scoped_lock lock(publisher_links_mutex_);
 
         V_PublisherLink::iterator it = std::find(publisher_links_.begin(), publisher_links_.end(), pub_link);
-        if (it != publisher_links_.end())
-        {
+        if (it != publisher_links_.end()) {
             publisher_links_.erase(it);
         }
 
-        if (pub_link->isLatched())
-        {
+        if (pub_link->isLatched()) {
             latched_messages_.erase(pub_link);
         }
     }
 
-    void Subscription::getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti)
-    {
+    void Subscription::getPublishTypes(bool &ser, bool &nocopy, const std::type_info &ti) {
         boost::mutex::scoped_lock lock(callbacks_mutex_);
         for (V_CallbackInfo::iterator cb = callbacks_.begin();
-                cb != callbacks_.end(); ++cb)
-        {
-            const CallbackInfoPtr& info = *cb;
-            if (info->helper_->getTypeInfo() == ti)
-            {
+            cb != callbacks_.end(); ++cb) {
+            const CallbackInfoPtr &info = *cb;
+            if (info->helper_->getTypeInfo() == ti) {
                 nocopy = true;
-            }
-            else
-            {
+            } else {
                 ser = true;
             }
 
-            if (nocopy && ser)
-            {
+            if (nocopy && ser) {
                 return;
             }
         }
     }
 
-    const std::string Subscription::datatype()
-    {
+    const std::string Subscription::datatype() {
         return datatype_;
     }
 
-    const std::string Subscription::md5sum()
-    {
+    const std::string Subscription::md5sum() {
         boost::mutex::scoped_lock lock(md5sum_mutex_);
         return md5sum_;
     }

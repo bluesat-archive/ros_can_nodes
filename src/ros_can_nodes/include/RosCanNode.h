@@ -1,15 +1,12 @@
 #ifndef ROSCANNODE_H
 #define ROSCANNODE_H
 
-#include "xmlrpc_manager.h"
-#include "poll_manager.h"
 #include "connection_manager.h"
+#include "poll_manager.h"
 #include "topic_manager.h"
-
+#include "xmlrpc_manager.h"
 #include <boost/enable_shared_from_this.hpp>
-
 #include <std_msgs/String.h>
-
 #include <ros/callback_queue.h>
 #include <ros/callback_queue_interface.h>
 
@@ -17,10 +14,12 @@
 
 //#include"subscriber.h"
 
-namespace roscan
-{
-    //class Subscriber;
+namespace roscan {
 
+    class RosCanNode;
+    typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
+
+    //class Subscriber;
     /*
     class NodeBackingCollection
     {
@@ -47,9 +46,7 @@ namespace roscan
             ConnectionManagerPtr connectionManager;
             TopicManagerPtr topicManager;
 
-            inline const std::string getName() {
-                return name_;
-            }
+            inline const std::string getName() { return name_; }
 
             //Subscriber subscribe(ros::SubscribeOptions& ops);
 
@@ -59,11 +56,10 @@ namespace roscan
 
         private:
             std::string name_;
-            ros::CallbackQueueInterface* callback_queue_;
+            ros::CallbackQueueInterface *callback_queue_;
             //NodeBackingCollection* collection_;
     };
 
-    typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
 } // namespace roscan
 
 #endif // ROSCANNODE_H
