@@ -28,8 +28,7 @@
 #ifndef ROSCAN_NETWORK_H
 #define ROSCAN_NETWORK_H
 
-//#include "forwards.h"
-#include "ros/common.h"
+#include <ros/common.h>
 
 namespace roscan
 {
@@ -47,6 +46,6 @@ void init();
 
 } // namespace network
 
-} // namespace ros
+} // namespace roscan
 
-#endif
+#endif // ROSCAN_NETWORK_H

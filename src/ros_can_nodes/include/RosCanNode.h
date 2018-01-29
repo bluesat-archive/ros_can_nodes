@@ -1,17 +1,17 @@
-#ifndef ROSCANNODE_H_
-#define ROSCANNODE_H_
+#ifndef ROSCANNODE_H
+#define ROSCANNODE_H
 
-#include<xmlrpc_manager.h>
-#include<poll_manager.h>
-#include<connection_manager.h>
-#include<topic_manager.h>
+#include "xmlrpc_manager.h"
+#include "poll_manager.h"
+#include "connection_manager.h"
+#include "topic_manager.h"
 
 #include <boost/enable_shared_from_this.hpp>
 
-#include "std_msgs/String.h"
+#include <std_msgs/String.h>
 
-#include<ros/callback_queue.h>
-#include<ros/callback_queue_interface.h>
+#include <ros/callback_queue.h>
+#include <ros/callback_queue_interface.h>
 
 //#include<ros/subscribe_options.h>
 
@@ -64,6 +64,6 @@ namespace roscan
     };
 
     typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
-}
+} // namespace roscan
 
-#endif
+#endif // ROSCANNODE_H

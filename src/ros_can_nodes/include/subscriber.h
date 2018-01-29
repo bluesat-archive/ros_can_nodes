@@ -28,9 +28,9 @@
 #ifndef ROSCPP_SUBSCRIBER_HANDLE_H
 #define ROSCPP_SUBSCRIBER_HANDLE_H
 
-#include "ros/common.h"
-#include "ros/forwards.h"
-#include "ros/subscription_callback_helper.h"
+#include <ros/common.h>
+#include <ros/forwards.h>
+#include <ros/subscription_callback_helper.h>
 #include "RosCanNode.h"
 
 namespace roscan
@@ -80,8 +80,6 @@ namespace roscan
     };
     typedef std::vector<Subscriber> V_Subscriber;
 
-}
+} // namespace roscan
 
-#endif // ROSCPP_PUBLISHER_HANDLE_H
-
-
+#endif // ROSCPP_SUBSCRIBER_HANDLE_H

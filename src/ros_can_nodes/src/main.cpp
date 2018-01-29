@@ -75,7 +75,7 @@ namespace roscan
         ((ros::CallbackQueue*)callback_queue_)->callAvailable(ros::WallDuration());
     }
     */
-}
+} // namespace roscan
 
 using namespace roscan;
 

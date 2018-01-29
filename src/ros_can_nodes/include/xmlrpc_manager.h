@@ -35,9 +35,9 @@
 #include <boost/thread/thread.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-#include "ros/common.h"
-#include "XmlRpc.h"
-#include "XmlRpcValue.h"
+#include <ros/common.h>
+#include <XmlRpc.h>
+#include <XmlRpcValue.h>
 //#include "ros/forwards.h"
 
 #include <ros/time.h>
@@ -223,10 +223,6 @@ namespace roscan
             int port_;
             boost::thread server_thread_;
 
-#if defined(__APPLE__)
-            // OSX has problems with lots of concurrent xmlrpc calls
-            boost::mutex xmlrpc_call_mutex_;
-#endif
             XmlRpc::XmlRpcServer server_;
             typedef std::vector<CachedXmlRpcClient> V_CachedXmlRpcClient;
             V_CachedXmlRpcClient clients_;
@@ -257,6 +253,6 @@ namespace roscan
             volatile bool unbind_requested_;
     };
 
-}
+} // namespace roscan
 
-#endif
+#endif // ROSCAN_XMLRPC_MANAGER_H

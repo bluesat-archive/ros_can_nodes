@@ -28,15 +28,15 @@
 #ifndef ROSCAN_POLL_MANAGER_H
 #define ROSCAN_POLL_MANAGER_H
 
-#include "ros/forwards.h"
-#include "ros/common.h"
+#include <ros/forwards.h>
+#include <ros/common.h>
 
 #include <boost/signals2.hpp>
 
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 
-#include "ros/poll_set.h"
+#include <ros/poll_set.h>
 
 namespace roscan
 {
@@ -71,6 +71,6 @@ namespace roscan
             boost::thread thread_;
     };
 
-}
+} // namespace roscan
 
-#endif
+#endif // ROSCAN_POLL_MANAGER_H

@@ -28,9 +28,9 @@
 #ifndef ROSCAN_CONNECTION_MANAGER_H
 #define ROSCAN_CONNECTION_MANAGER_H
 
-#include "ros/forwards.h"
-#include "ros/common.h"
-#include "ros/connection.h"
+#include <ros/forwards.h>
+#include <ros/common.h>
+#include <ros/connection.h>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/signals2/connection.hpp>
@@ -112,4 +112,4 @@ namespace roscan
 
 }
 
-#endif
+#endif // ROSCAN_CONNECTION_MANAGER_H

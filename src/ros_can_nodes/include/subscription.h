@@ -29,12 +29,12 @@
 #define ROSCAN_SUBSCRIPTION_H
 
 #include <queue>
-#include "ros/common.h"
-#include "ros/header.h"
-#include "ros/forwards.h"
-#include "ros/transport_hints.h"
-#include "ros/statistics.h"
-#include "XmlRpc.h"
+#include <ros/common.h>
+#include <ros/header.h>
+#include <ros/forwards.h>
+#include <ros/transport_hints.h>
+#include <ros/statistics.h>
+#include <XmlRpc.h>
 
 #include "xmlrpc_manager.h"
 
@@ -253,7 +253,6 @@ namespace roscan {
             V_TypeAndDeserializer cached_deserializers_;
     };
 
-}
+} // namespace roscan
 
-#endif
-
+#endif // ROSCAN_SUBSCRIPTION_H

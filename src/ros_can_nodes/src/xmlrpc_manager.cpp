@@ -27,11 +27,11 @@
 
 #include "xmlrpc_manager.h"
 #include "network.h"
-#include "ros/param.h"
-#include "ros/assert.h"
-#include "ros/common.h"
-#include "ros/file_log.h"
-#include "ros/io.h"
+#include <ros/param.h>
+#include <ros/assert.h>
+#include <ros/common.h>
+#include <ros/file_log.h>
+#include <ros/io.h>
 
 //#include "ros/this_node.h"
 //#include "ros/network.h"
@@ -39,7 +39,7 @@
 #include <ros/console.h>
 #include <ros/assert.h>
 
-#include "XmlRpc.h"
+#include <XmlRpc.h>
 
 
 using namespace XmlRpc;
@@ -126,12 +126,7 @@ namespace roscan
 
         if (g_uri.empty())
         {
-            char *master_uri_env = NULL;
-#ifdef _MSC_VER
-            _dupenv_s(&master_uri_env, NULL, "ROS_MASTER_URI");
-#else
-            master_uri_env = getenv("ROS_MASTER_URI");
-#endif
+            char *master_uri_env = getenv("ROS_MASTER_URI");
             if (!master_uri_env)
             {
                 ROS_FATAL( "ROS_MASTER_URI is not defined in the environment. Either " \
@@ -145,11 +140,6 @@ namespace roscan
             }
 
             g_uri = master_uri_env;
-
-#ifdef _MSC_VER
-            // http://msdn.microsoft.com/en-us/library/ms175774(v=vs.80).aspx
-            free(master_uri_env);
-#endif
         }
 
         // Split URI into
@@ -550,10 +540,6 @@ namespace roscan
         return true;
     }
 
-#if defined(__APPLE__)
-    boost::mutex g_xmlrpc_call_mutex;
-#endif
-
     bool XMLRPCManager::callMaster(const std::string& method, const XmlRpc::XmlRpcValue& request, XmlRpc::XmlRpcValue& response, XmlRpc::XmlRpcValue& payload, bool wait_for_master)
     {
         ros::WallTime start_time = ros::WallTime::now();
@@ -567,14 +553,7 @@ namespace roscan
         bool b = false;
         do
         {
-            {
-#if defined(__APPLE__)
-                boost::mutex::scoped_lock lock(g_xmlrpc_call_mutex);
-#endif
-
-                b = c->execute(method.c_str(), request, response);
-            }
-
+            b = c->execute(method.c_str(), request, response);
             ok = !isShuttingDown();
 
             if (!b && ok)

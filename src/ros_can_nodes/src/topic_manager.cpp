@@ -30,19 +30,19 @@
 #include "xmlrpc_manager.h"
 #include "connection_manager.h"
 #include "poll_manager.h"
-
 #include "network.h"
-#include "ros/transport/transport_tcp.h"
-#include "ros/transport/transport_udp.h"
-#include "ros/rosout_appender.h"
 
-#include "ros/publication.h"
-#include "ros/subscription.h"
+#include <ros/transport/transport_tcp.h>
+#include <ros/transport/transport_udp.h>
+#include <ros/rosout_appender.h>
 
-#include "ros/file_log.h"
-#include "ros/subscribe_options.h"
+#include <ros/publication.h>
+#include <ros/subscription.h>
 
-#include "XmlRpc.h"
+#include <ros/file_log.h>
+#include <ros/subscribe_options.h>
+
+#include <XmlRpc.h>
 
 #include <ros/console.h>
 
@@ -1063,4 +1063,4 @@ namespace roscan
         result[2] = response;
     }
 
-} // namespace ros
+} // namespace roscan

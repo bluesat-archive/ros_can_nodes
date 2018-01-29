@@ -29,12 +29,12 @@
 #include "connection_manager.h"
 #include "poll_manager.h"
 #include "network.h"
-#include "ros/connection.h"
-#include "ros/transport_subscriber_link.h"
-#include "ros/service_client_link.h"
-#include "ros/transport/transport_tcp.h"
-#include "ros/transport/transport_udp.h"
-#include "ros/file_log.h"
+#include <ros/connection.h>
+#include <ros/transport_subscriber_link.h>
+#include <ros/service_client_link.h>
+#include <ros/transport/transport_tcp.h>
+#include <ros/transport/transport_udp.h>
+#include <ros/file_log.h>
 
 #include <ros/assert.h>
 
@@ -220,4 +220,4 @@ namespace roscan
         return ret;
     }
 
-}
+} // namespace roscan

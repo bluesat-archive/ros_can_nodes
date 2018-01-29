@@ -28,12 +28,12 @@
 #ifndef ROSCAN_TOPIC_MANAGER_H
 #define ROSCAN_TOPIC_MANAGER_H
 
-#include "ros/forwards.h"
-#include "ros/common.h"
-#include "ros/serialization.h"
-#include "ros/rosout_appender.h"
+#include <ros/forwards.h>
+#include <ros/common.h>
+#include <ros/serialization.h>
+#include <ros/rosout_appender.h>
 
-#include "XmlRpcValue.h"
+#include <XmlRpcValue.h>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/recursive_mutex.hpp>
@@ -243,6 +243,6 @@ namespace roscan
             XMLRPCManagerPtr xmlrpc_manager_;
     };
 
-} // namespace ros
+} // namespace roscan
 
 #endif // ROSCAN_TOPIC_MANAGER_H
