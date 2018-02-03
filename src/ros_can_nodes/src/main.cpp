@@ -89,27 +89,30 @@ int main() {
     while (1) {
         std::cout << "$ ";
         std::string s;
-        std::cin >> s;
+        getline(std::cin, s);
         if (s == "exit") {
             break;
         } else if (s == "checkMaster") {
-            std::cout << node->xmlrpcManager->checkMaster("yo") << std::endl;
+            std::cout << node->xmlrpcManager->checkMaster() << std::endl;
         } else if (s == "getMasterURI") {
             std::cout << node->xmlrpcManager->getMasterURI() << std::endl;
         } else if (s == "getAllNodes") {
             std::vector<std::string> nodes;
-            if (node->xmlrpcManager->getAllNodes("yo", nodes)) {
-                for (unsigned i = 0; i < nodes.size(); ++i) {
-                    std::cout << nodes[i] << std::endl;
+            if (node->xmlrpcManager->getAllNodes(nodes)) {
+                for (std::string& node : nodes) {
+                    std::cout << node << std::endl;
                 }
             } else {
                 std::cout << "getAllNodes() failed!" << std::endl;
             }
         } else if (s == "getAllTopics") {
+            std::cout << "subgraph: ";
+            std::string subgraph;
+            getline(std::cin, subgraph);
             std::vector<XMLRPCManager::TopicInfo> topics;
-            if (node->xmlrpcManager->getAllTopics("yo", topics)) {
-                for (unsigned i = 0; i < topics.size(); ++i) {
-                    std::cout << topics[i].name << " (" << topics[i].datatype << ")" << std::endl;
+            if (node->xmlrpcManager->getAllTopics(subgraph, topics)) {
+                for (XMLRPCManager::TopicInfo& topic : topics) {
+                    std::cout << topic.name << " (" << topic.datatype << ")" << std::endl;
                 }
             } else {
                 std::cout << "getAllTopics() failed!" << std::endl;

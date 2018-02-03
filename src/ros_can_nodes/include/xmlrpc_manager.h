@@ -118,6 +118,7 @@ namespace roscan {
             // @param payload [out] The payload that was received.
             // @param wait_for_master Whether or not this call should loop until it can contact the master
             // Returns true if call succeeds, false otherwise.
+            // Relevant reading: http://wiki.ros.org/ROS/Master_API
             bool callMaster(const std::string &method, const XmlRpc::XmlRpcValue &request, XmlRpc::XmlRpcValue &response, XmlRpc::XmlRpcValue &payload, bool wait_for_master);
 
             // Get the hostname where the master runs.
@@ -135,7 +136,7 @@ namespace roscan {
             // whether the master is up before trying to make other requests
             // (subscriptions, advertisements, etc.).
             // Returns true if the master is available, false otherwise.
-            bool checkMaster(std::string nodeName);
+            bool checkMaster();
 
             // Contains information retrieved from the master about a topic
             struct TopicInfo {
@@ -149,15 +150,16 @@ namespace roscan {
             // Get the list of topics that are being published by all nodes.
             // This method communicates with the master to retrieve the list of all
             // currently advertised topics.
+            // @param subgraph The name of the subgraph to restrict topic search space, "" for all topics
             // @param topics A place to store the resulting list.  Each item in the
             // list is a pair <string topic, string type>.  The type is represented
             // in the format "package_name/MessageName", and is also retrievable
             // through message.__getDataType() or MessageName::__s_getDataType().
             // Return true on success, false otherwise (topics not filled in)
-            bool getAllTopics(std::string nodeName, V_TopicInfo &topics);
+            bool getAllTopics(std::string subgraph, V_TopicInfo &topics);
 
             // Retreives the currently-known list of nodes from the master
-            bool getAllNodes(std::string nodeName, std::vector<std::string> &nodes);
+            bool getAllNodes(std::vector<std::string> &nodes);
 
             // Set the max time this node should spend looping trying to connect to the master
             // @param The timeout.  A negative value means infinite

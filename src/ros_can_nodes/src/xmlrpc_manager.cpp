@@ -290,13 +290,10 @@ namespace roscan {
 
         boost::mutex::scoped_lock lock(clients_mutex_);
 
-        for (V_CachedXmlRpcClient::iterator i = clients_.begin();
-            !c && i != clients_.end();) {
+        for (V_CachedXmlRpcClient::iterator i = clients_.begin(); !c && i != clients_.end();) {
             if (!i->in_use_) {
                 // see where it's pointing
-                if (i->client_->getHost() == host &&
-                    i->client_->getPort() == port &&
-                    i->client_->getUri() == uri) {
+                if (i->client_->getHost() == host && i->client_->getPort() == port && i->client_->getUri() == uri) {
                     // hooray, it's pointing at our destination. re-use it.
                     c = i->client_;
                     i->in_use_ = true;
@@ -331,8 +328,7 @@ namespace roscan {
     void XMLRPCManager::releaseXMLRPCClient(XmlRpcClient *c) {
         boost::mutex::scoped_lock lock(clients_mutex_);
 
-        for (V_CachedXmlRpcClient::iterator i = clients_.begin();
-            i != clients_.end(); ++i) {
+        for (V_CachedXmlRpcClient::iterator i = clients_.begin(); i != clients_.end(); ++i) {
             if (c == i->client_) {
                 if (shutting_down_) {
                     // if we are shutting down we won't be re-using the client
@@ -399,16 +395,16 @@ namespace roscan {
         g_retry_timeout = timeout;
     }
 
-    bool XMLRPCManager::checkMaster(std::string nodeName) {
+    bool XMLRPCManager::checkMaster() {
         XmlRpc::XmlRpcValue args, result, payload;
-        args[0] = nodeName;
+        args[0] = "";
         return callMaster("getPid", args, result, payload, false);
     }
 
-    bool XMLRPCManager::getAllTopics(std::string nodeName, V_TopicInfo &topics) {
+    bool XMLRPCManager::getAllTopics(std::string subgraph, V_TopicInfo &topics) {
         XmlRpc::XmlRpcValue args, result, payload;
-        args[0] = nodeName;
-        args[1] = ""; //TODO: Fix this
+        args[0] = ""; // caller_id
+        args[1] = subgraph;
 
         if (!callMaster("getPublishedTopics", args, result, payload, true)) {
             return false;
@@ -422,9 +418,9 @@ namespace roscan {
         return true;
     }
 
-    bool XMLRPCManager::getAllNodes(std::string nodeName, std::vector<std::string> &nodes) {
+    bool XMLRPCManager::getAllNodes(std::vector<std::string> &nodes) {
         XmlRpc::XmlRpcValue args, result, payload;
-        args[0] = nodeName;
+        args[0] = ""; // caller_id
 
         if (!callMaster("getSystemState", args, result, payload, true)) {
             return false;
@@ -433,15 +429,14 @@ namespace roscan {
         std::set<std::string> node_set;
         for (int i = 0; i < payload.size(); ++i) {
             for (int j = 0; j < payload[i].size(); ++j) {
-                XmlRpc::XmlRpcValue val = payload[i][j][1];
-                for (int k = 0; k < val.size(); ++k) {
-                    std::string name = payload[i][j][1][k];
-                    node_set.insert(name);
+                for (int k = 0; k < payload[i][j][1].size(); ++k) {
+                    node_set.insert(std::string(payload[i][j][1][k]));
                 }
             }
         }
 
-        nodes.insert(nodes.end(), node_set.begin(), node_set.end());
+        nodes.clear();
+        std::copy(node_set.begin(), node_set.end(), std::back_inserter(nodes));
 
         return true;
     }
