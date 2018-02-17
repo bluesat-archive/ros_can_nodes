@@ -28,44 +28,44 @@
 #ifndef ROSCAN_POLL_MANAGER_H
 #define ROSCAN_POLL_MANAGER_H
 
-#include <ros/common.h>
-#include <ros/forwards.h>
 #include <boost/signals2.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
+#include <ros/common.h>
+#include <ros/forwards.h>
 #include <ros/poll_set.h>
 
 namespace roscan {
 
-    class PollManager;
-    typedef boost::shared_ptr<PollManager> PollManagerPtr;
-    typedef boost::signals2::signal<void(void)> VoidSignal;
-    typedef boost::function<void(void)> VoidFunc;
+class PollManager;
+typedef boost::shared_ptr<PollManager> PollManagerPtr;
+typedef boost::signals2::signal<void(void)> VoidSignal;
+typedef boost::function<void(void)> VoidFunc;
 
-    class PollManager {
-        public:
-            PollManager() : shutting_down_(false) {}
-            ~PollManager() { shutdown(); }
+class PollManager {
+    public:
+        PollManager() : shutting_down_(false) {}
+        ~PollManager() { shutdown(); }
 
-            ros::PollSet &getPollSet() { return poll_set_; }
+        ros::PollSet& getPollSet() { return poll_set_; }
 
-            boost::signals2::connection addPollThreadListener(const VoidFunc &func);
-            void removePollThreadListener(boost::signals2::connection c);
+        boost::signals2::connection addPollThreadListener(const VoidFunc& func);
+        void removePollThreadListener(boost::signals2::connection c);
 
-            void start();
-            void shutdown();
+        void start();
+        void shutdown();
 
-        private:
-            void threadFunc();
+    private:
+        void threadFunc();
 
-            ros::PollSet poll_set_;
-            volatile bool shutting_down_;
+        ros::PollSet poll_set_;
+        volatile bool shutting_down_;
 
-            VoidSignal poll_signal_;
-            boost::recursive_mutex signal_mutex_;
+        VoidSignal poll_signal_;
+        boost::recursive_mutex signal_mutex_;
 
-            boost::thread thread_;
-    };
+        boost::thread thread_;
+};
 
 } // namespace roscan
 

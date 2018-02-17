@@ -112,7 +112,8 @@ include_directories(
 # add_dependencies(ros_can_nodes ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(ros_can_nodes 
+add_executable(ros_can_nodes
+    src/RosCanNode.cpp
     src/main.cpp
     src/xmlrpc_manager.cpp
     src/network.cpp
@@ -121,6 +122,7 @@ add_executable(ros_can_nodes
     src/topic_manager.cpp
     #src/subscriber.cpp
     #src/subscription.cpp
+    #src/transport_publisher_link.cpp
     )
 
 ## Add cmake target dependencies of the executable

@@ -30,39 +30,34 @@
 
 namespace roscan {
 
-    Subscriber::Subscriber(const std::string &topic, const RosCanNodePtr &node,
-                        const ros::SubscriptionCallbackHelperPtr &helper) {
-        topic_ = topic;
-        helper_ = helper;
-        node_ = node;
-        unsubscribed_ = false;
-    }
+Subscriber::Subscriber(const std::string& topic, const RosCanNodePtr& node, const ros::SubscriptionCallbackHelperPtr& helper) {
+    topic_ = topic;
+    helper_ = helper;
+    node_ = node;
+    unsubscribed_ = false;
+}
 
-    Subscriber::~Subscriber() {
+void Subscriber::shutdown() {
+    if (!unsubscribed_) {
         unsubscribed_ = true;
+        node_->topicManager->unsubscribe(topic_, helper_);
+        node_.reset();
+        helper_.reset();
     }
+}
 
-    void Subscriber::shutdown() {
-        if (!unsubscribed_) {
-            unsubscribed_ = true;
-            node_->topicManager->unsubscribe(topic_, helper_);
-            node_.reset();
-            helper_.reset();
-        }
+std::string Subscriber::getTopic() const {
+    if (!unsubscribed_) {
+        return topic_;
     }
+    return std::string();
+}
 
-    std::string Subscriber::getTopic() const {
-        if (!unsubscribed_) {
-            return topic_;
-        }
-        return std::string();
+uint32_t Subscriber::getNumPublishers() const {
+    if (!unsubscribed_) {
+        return node_->topicManager->getNumPublishers(topic_);
     }
-
-    uint32_t Subscriber::getNumPublishers() const {
-        if (!unsubscribed_) {
-            return node_->topicManager->getNumPublishers(topic_);
-        }
-        return 0;
-    }
+    return 0;
+}
 
 } // namespace roscan

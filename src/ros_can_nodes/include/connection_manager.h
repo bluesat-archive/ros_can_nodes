@@ -28,81 +28,83 @@
 #ifndef ROSCAN_CONNECTION_MANAGER_H
 #define ROSCAN_CONNECTION_MANAGER_H
 
+#include "RosCanNode.h"
+#include "poll_manager.h"
+#include <boost/signals2/connection.hpp>
+#include <boost/thread/mutex.hpp>
 #include <ros/common.h>
 #include <ros/connection.h>
 #include <ros/forwards.h>
-#include <boost/signals2/connection.hpp>
-#include <boost/thread/mutex.hpp>
 
 #define ROSCPP_CONN_LOG_DEBUG(...) ROS_DEBUG_NAMED("roscpp_internal.connections", __VA_ARGS__)
 
 namespace roscan {
 
-    class RosCanNode;
+class RosCanNode;
 
-    typedef std::set<ros::ConnectionPtr> S_Connection;
-    typedef std::vector<ros::ConnectionPtr> V_Connection;
+typedef std::set<ros::ConnectionPtr> S_Connection;
+typedef std::vector<ros::ConnectionPtr> V_Connection;
 
-    class PollManager;
-    typedef boost::shared_ptr<PollManager> PollManagerPtr;
+class PollManager;
+typedef boost::shared_ptr<PollManager> PollManagerPtr;
 
-    class ConnectionManager;
-    typedef boost::shared_ptr<ConnectionManager> ConnectionManagerPtr;
+class ConnectionManager;
+typedef boost::shared_ptr<ConnectionManager> ConnectionManagerPtr;
 
-    class ConnectionManager {
-        public:
-            ConnectionManager() : connection_id_counter_(0) {}
-            ~ConnectionManager() { shutdown(); }
+class ConnectionManager {
+    public:
+        ConnectionManager() : connection_id_counter_(0) {}
+        ~ConnectionManager() { shutdown(); }
 
-            // Get a new connection ID
-            uint32_t getNewConnectionID();
+        // Get a new connection ID
+        uint32_t getNewConnectionID();
 
-            // Add a connection to be tracked by the node.  Will automatically remove them if they've been dropped, but from inside the ros thread
-            void addConnection(const ros::ConnectionPtr &connection);
+        // Add a connection to be tracked by the node.  Will automatically remove them if they've been dropped, but from inside the ros thread
+        void addConnection(const ros::ConnectionPtr& connection);
 
-            void clear(ros::Connection::DropReason reason);
+        void clear(ros::Connection::DropReason reason);
 
-            uint32_t getTCPPort();
-            uint32_t getUDPPort();
+        uint32_t getTCPPort();
+        uint32_t getUDPPort();
 
-            const ros::TransportTCPPtr &getTCPServerTransport() { return tcpserver_transport_; }
-            const ros::TransportUDPPtr &getUDPServerTransport() { return udpserver_transport_; }
+        const ros::TransportTCPPtr& getTCPServerTransport() { return tcpserver_transport_; }
+        const ros::TransportUDPPtr& getUDPServerTransport() { return udpserver_transport_; }
 
-            void udprosIncomingConnection(const ros::TransportUDPPtr &transport, ros::Header &header);
+        void udprosIncomingConnection(const ros::TransportUDPPtr& transport, ros::Header& header);
 
-            void start(const RosCanNode &node);
-            void shutdown();
+        void start(const RosCanNode& node);
+        void shutdown();
 
-        private:
-            void onConnectionDropped(const ros::ConnectionPtr &conn);
+    private:
+        void onConnectionDropped(const ros::ConnectionPtr& conn);
 
-            // Remove any dropped connections from our list, causing them to be destroyed
-            // They can't just be removed immediately when they're dropped because the ros
-            // thread may still be using them (or more likely their transport)
-            void removeDroppedConnections();
+        // Remove any dropped connections from our list, causing them to be destroyed
+        // They can't just be removed immediately when they're dropped because the ros
+        // thread may still be using them (or more likely their transport)
+        void removeDroppedConnections();
 
-            bool onConnectionHeaderReceived(const ros::ConnectionPtr &conn, const ros::Header &header);
-            void tcprosAcceptConnection(const ros::TransportTCPPtr &transport);
+        bool onConnectionHeaderReceived(const ros::ConnectionPtr& conn, const ros::Header& header);
+        void tcprosAcceptConnection(const ros::TransportTCPPtr& transport);
 
-            PollManagerPtr poll_manager_;
+        PollManagerPtr poll_manager_;
 
-            S_Connection connections_;
-            V_Connection dropped_connections_;
-            boost::mutex connections_mutex_;
-            boost::mutex dropped_connections_mutex_;
+        S_Connection connections_;
+        V_Connection dropped_connections_;
+        boost::mutex connections_mutex_;
+        boost::mutex dropped_connections_mutex_;
 
-            // The connection ID counter, used to assign unique ID to each inbound or
-            // outbound connection.  Access via getNewConnectionID()
-            uint32_t connection_id_counter_;
-            boost::mutex connection_id_counter_mutex_;
+        // The connection ID counter, used to assign unique ID to each inbound or
+        // outbound connection.  Access via getNewConnectionID()
+        uint32_t connection_id_counter_;
+        boost::mutex connection_id_counter_mutex_;
 
-            boost::signals2::connection poll_conn_;
+        boost::signals2::connection poll_conn_;
 
-            ros::TransportTCPPtr tcpserver_transport_;
-            ros::TransportUDPPtr udpserver_transport_;
+        ros::TransportTCPPtr tcpserver_transport_;
+        ros::TransportUDPPtr udpserver_transport_;
 
-            const static int MAX_TCPROS_CONN_QUEUE = 100; // magic
-    };
+        const static int MAX_TCPROS_CONN_QUEUE = 100; // magic
+};
 
 } // namespace roscan
 

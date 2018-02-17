@@ -35,39 +35,38 @@
 
 namespace roscan {
 
-    class Subscriber;
-    typedef std::vector<Subscriber> V_Subscriber;
+class Subscriber;
+typedef std::vector<Subscriber> V_Subscriber;
 
-    // Manages an subscription callback on a specific topic.
-    // A Subscriber should always be created through a call to NodeHandle::subscribe(), or copied from one
-    // that was. Once all copies of a specific
-    // Subscriber go out of scope, the subscription callback associated with that handle will stop
-    // being called.  Once all Subscriber for a given topic go out of scope the topic will be unsubscribed.
-    class Subscriber {
-        public:
-            Subscriber(){};
-            ~Subscriber();
+// Manages an subscription callback on a specific topic.
+// A Subscriber should always be created through a call to NodeHandle::subscribe(), or copied from one
+// that was. Once all copies of a specific
+// Subscriber go out of scope, the subscription callback associated with that handle will stop
+// being called.  Once all Subscriber for a given topic go out of scope the topic will be unsubscribed.
+class Subscriber {
+    public:
+        Subscriber() {}
+        Subscriber(const std::string& topic, const RosCanNodePtr& node, const ros::SubscriptionCallbackHelperPtr& helper);
+        ~Subscriber() { unsubscribed_ = true; }
 
-            Subscriber(const std::string &topic, const RosCanNodePtr &node, const ros::SubscriptionCallbackHelperPtr &helper);
+        // Unsubscribe the callback associated with this Subscriber
+        // This method usually does not need to be explicitly called, as automatic shutdown happens when
+        // all copies of this Subscriber go out of scope
+        // This method overrides the automatic reference counted unsubscribe, and immediately
+        // unsubscribes the callback associated with this Subscriber
+        void shutdown();
 
-            // Unsubscribe the callback associated with this Subscriber
-            // This method usually does not need to be explicitly called, as automatic shutdown happens when
-            // all copies of this Subscriber go out of scope
-            // This method overrides the automatic reference counted unsubscribe, and immediately
-            // unsubscribes the callback associated with this Subscriber
-            void shutdown();
+        std::string getTopic() const;
 
-            std::string getTopic() const;
+        // Returns the number of publishers this subscriber is connected to
+        uint32_t getNumPublishers() const;
 
-            // Returns the number of publishers this subscriber is connected to
-            uint32_t getNumPublishers() const;
-
-        private:
-            std::string topic_;
-            RosCanNodePtr node_;
-            ros::SubscriptionCallbackHelperPtr helper_;
-            bool unsubscribed_;
-    };
+    private:
+        std::string topic_;
+        RosCanNodePtr node_;
+        ros::SubscriptionCallbackHelperPtr helper_;
+        bool unsubscribed_;
+};
 
 } // namespace roscan
 
