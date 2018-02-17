@@ -6,9 +6,7 @@
 
 namespace roscan {
 
-RosCanNode::RosCanNode(std::string name) {
-    name_ = name;
-
+RosCanNode::RosCanNode(std::string name) : name_(name) {
     std::cout << "  Creating xmlrpc manager\n";
     xmlrpcManager.reset(new XMLRPCManager);
 
@@ -38,37 +36,37 @@ RosCanNode::RosCanNode(std::string name) {
 }
 
 /*
-    void RosCanNode::subChatterCallback(const boost::shared_ptr<std_msgs::String const>& msg) {
-        std::cout << "received " << msg->data << std::endl;
+void RosCanNode::subChatterCallback(const boost::shared_ptr<std_msgs::String const>& msg) {
+    std::cout << "received " << msg->data << std::endl;
+}
+
+Subscriber RosCanNode::subscribe(ros::SubscribeOptions& ops) {
+    if (ops.callback_queue == 0) {
+        if (callback_queue_) {
+            ops.callback_queue = callback_queue_;
+        } else {
+            std::cout << "argh no callback queue\n";
+            return Subscriber();
+        }
     }
 
-    Subscriber RosCanNode::subscribe(ros::SubscribeOptions& ops) {
-        if (ops.callback_queue == 0) {
-            if (callback_queue_) {
-                ops.callback_queue = callback_queue_;
-            } else {
-                std::cout << "argh no callback queue\n";
-                return Subscriber();
-            }
+    if (topicManager->subscribe(ops)) {
+        Subscriber sub(ops.topic, boost::make_shared<RosCanNode>(*this), ops.helper);
+
+        {
+            boost::mutex::scoped_lock lock(collection_->mutex_);
+            collection_->subs_.push_back(sub);
         }
 
-        if (topicManager->subscribe(ops)) {
-            Subscriber sub(ops.topic, boost::make_shared<RosCanNode>(*this), ops.helper);
-
-            {
-                boost::mutex::scoped_lock lock(collection_->mutex_);
-                collection_->subs_.push_back(sub);
-            }
-
-            return sub;
-        }
-
-        return Subscriber();
+        return sub;
     }
 
-    void RosCanNode::spinOnce() {
-        ((ros::CallbackQueue*)callback_queue_)->callAvailable(ros::WallDuration());
-    }
-    */
+    return Subscriber();
+}
+
+void RosCanNode::spinOnce() {
+    ((ros::CallbackQueue*)callback_queue_)->callAvailable(ros::WallDuration());
+}
+*/
 
 } // namespace roscan

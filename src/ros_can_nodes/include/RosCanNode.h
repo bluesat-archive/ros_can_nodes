@@ -5,17 +5,30 @@
 #include "poll_manager.h"
 #include "topic_manager.h"
 #include "xmlrpc_manager.h"
+#include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <ros/callback_queue.h>
 #include <ros/callback_queue_interface.h>
 #include <std_msgs/String.h>
-//#include<ros/subscribe_options.h>
-//#include"subscriber.h"
+//#include <ros/subscribe_options.h>
+//#include "subscriber.h"
 
 namespace roscan {
 
 class RosCanNode;
 typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
+
+class TopicManager;
+typedef boost::shared_ptr<TopicManager> TopicManagerPtr;
+
+class PollManager;
+typedef boost::shared_ptr<PollManager> PollManagerPtr;
+
+class XMLRPCManager;
+typedef boost::shared_ptr<XMLRPCManager> XMLRPCManagerPtr;
+
+class ConnectionManager;
+typedef boost::shared_ptr<ConnectionManager> ConnectionManagerPtr;
 
 class NodeBackingCollection {
     public:

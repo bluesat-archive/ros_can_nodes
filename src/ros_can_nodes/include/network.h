@@ -28,7 +28,8 @@
 #ifndef ROSCAN_NETWORK_H
 #define ROSCAN_NETWORK_H
 
-#include <ros/common.h>
+#include <string>
+#include <cstdint>
 
 namespace roscan {
 

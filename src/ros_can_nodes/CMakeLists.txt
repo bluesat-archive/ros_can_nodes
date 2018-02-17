@@ -120,7 +120,7 @@ add_executable(ros_can_nodes
     src/poll_manager.cpp
     src/connection_manager.cpp
     src/topic_manager.cpp
-    #src/subscriber.cpp
+    src/subscriber.cpp
     #src/subscription.cpp
     #src/transport_publisher_link.cpp
     )

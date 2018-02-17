@@ -29,11 +29,15 @@
 #define ROSCPP_SUBSCRIBER_HANDLE_H
 
 #include "RosCanNode.h"
-#include <ros/common.h>
-#include <ros/forwards.h>
 #include <ros/subscription_callback_helper.h>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace roscan {
+
+class RosCanNode;
+typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
 
 class Subscriber;
 typedef std::vector<Subscriber> V_Subscriber;
@@ -46,7 +50,8 @@ typedef std::vector<Subscriber> V_Subscriber;
 class Subscriber {
     public:
         Subscriber() {}
-        Subscriber(const std::string& topic, const RosCanNodePtr& node, const ros::SubscriptionCallbackHelperPtr& helper);
+        Subscriber(const std::string& topic, const RosCanNodePtr& node, const ros::SubscriptionCallbackHelperPtr& helper)
+            : topic_(topic), node_(node), helper_(helper), unsubscribed_(false) {}
         ~Subscriber() { unsubscribed_ = true; }
 
         // Unsubscribe the callback associated with this Subscriber
