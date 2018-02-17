@@ -111,8 +111,7 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
         uint32_t getNumCallbacks() const { return callbacks_.size(); }
         uint32_t getNumPublishers();
 
-        // We'll keep a list of these objects, representing in-progress XMLRPC
-        // connections to other nodes.
+        // We'll keep a list of these objects, representing in-progress XMLRPC connections to other nodes.
         class PendingConnection : public ASyncXMLRPCConnection {
             public:
                 PendingConnection(XmlRpc::XmlRpcClient* client, ros::TransportUDPPtr udp_transport, const SubscriptionWPtr& parent, const std::string& remote_uri)
@@ -134,13 +133,13 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
                 virtual bool check() {
                     SubscriptionPtr parent = parent_.lock();
                     if (!parent) {
-                            return true;
+                        return true;
                     }
 
                     XmlRpc::XmlRpcValue result;
                     if (client_->executeCheckDone(result)) {
-                            parent->pendingConnectionDone(boost::dynamic_pointer_cast<PendingConnection>(shared_from_this()), result);
-                            return true;
+                        parent->pendingConnectionDone(boost::dynamic_pointer_cast<PendingConnection>(shared_from_this()), result);
+                        return true;
                     }
 
                     return false;

@@ -53,7 +53,7 @@ class RosCanNode {
         ConnectionManagerPtr connectionManager;
         TopicManagerPtr topicManager;
 
-        inline const std::string getName() { return name_; }
+        inline const std::string getName() const { return name_; }
 
         //Subscriber subscribe(ros::SubscribeOptions& ops);
 

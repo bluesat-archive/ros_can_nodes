@@ -472,7 +472,7 @@ void Subscription::pendingConnectionDone(const PendingConnectionPtr& conn, XmlRp
             return;
         }
 
-        ros::TransportPublisherLinkPtr pub_link(boost::make_shared<roscan::TransportPublisherLink>(shared_from_this(), xmlrpc_uri, transport_hints_));
+        roscan::TransportPublisherLinkPtr pub_link(boost::make_shared<roscan::TransportPublisherLink>(shared_from_this(), xmlrpc_uri, transport_hints_));
         if (pub_link->setHeader(h)) {
             ros::ConnectionPtr connection(boost::make_shared<ros::Connection>());
             connection->initialize(udp_transport, false, NULL);
