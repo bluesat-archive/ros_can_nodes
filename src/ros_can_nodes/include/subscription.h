@@ -30,6 +30,7 @@
 
 #include "RosCanNode.h"
 #include "xmlrpc_manager.h"
+#include "publisher_link.h"
 #include <XmlRpc.h>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
@@ -42,9 +43,6 @@
 #include <ros/transport_hints.h>
 
 namespace ros {
-
-class PublisherLink;
-typedef boost::shared_ptr<PublisherLink> PublisherLinkPtr;
 
 class SubscriptionCallback;
 typedef boost::shared_ptr<SubscriptionCallback> SubscriptionCallbackPtr;
@@ -61,6 +59,9 @@ typedef boost::shared_ptr<SubscriptionCallbackHelper> SubscriptionCallbackHelper
 } // namespace ros
 
 namespace roscan {
+
+class PublisherLink;
+typedef boost::shared_ptr<PublisherLink> PublisherLinkPtr;
 
 class Subscription;
 typedef boost::shared_ptr<Subscription> SubscriptionPtr;
@@ -99,13 +100,13 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
 
         // Called to notify that a new message has arrived from a publisher.
         // Schedules the callback for invokation with the callback queue
-        uint32_t handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy, const boost::shared_ptr<M_string>& connection_header, const ros::PublisherLinkPtr& link);
+        uint32_t handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy, const boost::shared_ptr<M_string>& connection_header, const PublisherLinkPtr& link);
 
         const std::string datatype();
         const std::string md5sum();
 
         // Removes a subscriber from our list
-        void removePublisherLink(const ros::PublisherLinkPtr& pub_link);
+        void removePublisherLink(const PublisherLinkPtr& pub_link);
 
         const std::string& getName() const { return name_; }
         uint32_t getNumCallbacks() const { return callbacks_.size(); }
@@ -159,7 +160,7 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
 
         void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti);
 
-        void headerReceived(const ros::PublisherLinkPtr& link, const ros::Header& h);
+        void headerReceived(const PublisherLinkPtr& link, const ros::Header& h);
 
     private:
         Subscription(const Subscription&);            // not copyable
@@ -167,7 +168,7 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
 
         void dropAllConnections();
 
-        void addPublisherLink(const ros::PublisherLinkPtr& link);
+        void addPublisherLink(const PublisherLinkPtr& link);
 
         struct CallbackInfo {
             ros::CallbackQueueInterface* callback_queue_;
@@ -197,7 +198,7 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
         S_PendingConnection pending_connections_;
         boost::mutex pending_connections_mutex_;
 
-        typedef std::vector<ros::PublisherLinkPtr> V_PublisherLink;
+        typedef std::vector<PublisherLinkPtr> V_PublisherLink;
         V_PublisherLink publisher_links_;
         boost::mutex publisher_links_mutex_;
 
@@ -209,12 +210,12 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
 
         struct LatchInfo {
             ros::SerializedMessage message;
-            ros::PublisherLinkPtr link;
+            PublisherLinkPtr link;
             boost::shared_ptr<std::map<std::string, std::string>> connection_header;
             ros::Time receipt_time;
         };
 
-        typedef std::map<ros::PublisherLinkPtr, LatchInfo> M_PublisherLinkToLatchInfo;
+        typedef std::map<PublisherLinkPtr, LatchInfo> M_PublisherLinkToLatchInfo;
         M_PublisherLinkToLatchInfo latched_messages_;
 
         typedef std::vector<std::pair<const std::type_info*, ros::MessageDeserializerPtr>> V_TypeAndDeserializer;

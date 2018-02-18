@@ -81,9 +81,7 @@ void ConnectionManager::clear(ros::Connection::DropReason reason) {
         local_connections.swap(connections_);
     }
 
-    for (S_Connection::iterator itr = local_connections.begin();
-         itr != local_connections.end();
-         itr++) {
+    for (S_Connection::iterator itr = local_connections.begin(); itr != local_connections.end(); itr++) {
         const ros::ConnectionPtr& conn = *itr;
         conn->drop(reason);
     }

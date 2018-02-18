@@ -121,8 +121,9 @@ add_executable(ros_can_nodes
     src/connection_manager.cpp
     src/topic_manager.cpp
     src/subscriber.cpp
-    #src/subscription.cpp
-    #src/transport_publisher_link.cpp
+    src/publisher_link.cpp
+    src/subscription.cpp
+    src/transport_publisher_link.cpp
     )
 
 ## Add cmake target dependencies of the executable

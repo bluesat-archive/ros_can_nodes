@@ -94,7 +94,7 @@ class ConnectionManager {
         boost::mutex dropped_connections_mutex_;
 
         // The connection ID counter, used to assign unique ID to each inbound or
-        // outbound connection.  Access via getNewConnectionID()
+        // outbound connection. Access via getNewConnectionID()
         uint32_t connection_id_counter_;
         boost::mutex connection_id_counter_mutex_;
 

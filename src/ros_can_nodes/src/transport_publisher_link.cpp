@@ -32,6 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "RosCanNode.h"
+#include "publisher_link.h"
 #include "transport_publisher_link.h"
 #include "connection_manager.h"
 #include "poll_manager.h"
@@ -52,8 +54,8 @@
 
 namespace roscan {
 
-TransportPublisherLink::TransportPublisherLink(const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
-    : ros::PublisherLink(parent, xmlrpc_uri, transport_hints), retry_timer_handle_(-1), needs_retry_(false), dropping_(false) {}
+TransportPublisherLink::TransportPublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
+    : PublisherLink(node, parent, xmlrpc_uri, transport_hints), retry_timer_handle_(-1), needs_retry_(false), dropping_(false) {}
 
 TransportPublisherLink::~TransportPublisherLink() {
     dropping_ = true;
@@ -194,13 +196,15 @@ void TransportPublisherLink::onRetryTimer(const ros::SteadyTimerEvent&) {
 
             ROSCPP_CONN_LOG_DEBUG("Retrying connection to [%s:%d] for topic [%s]", host.c_str(), port, topic.c_str());
 
-            ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&PollManager::instance()->getPollSet()));
+            //ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&PollManager::instance()->getPollSet()));
+            ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&node_->pollManager->getPollSet()));
             if (transport->connect(host, port)) {
                 ros::ConnectionPtr connection(boost::make_shared<ros::Connection>());
                 connection->initialize(transport, false, ros::HeaderReceivedFunc());
                 initialize(connection);
 
-                ConnectionManager::instance()->addConnection(connection);
+                //ConnectionManager::instance()->addConnection(connection);
+                node_->connectionManager->addConnection(connection);
             } else {
                 ROSCPP_CONN_LOG_DEBUG("connect() failed when retrying connection to [%s:%d] for topic [%s]", host.c_str(), port, topic.c_str());
             }

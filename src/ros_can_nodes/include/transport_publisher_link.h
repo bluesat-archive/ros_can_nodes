@@ -28,14 +28,13 @@
 #ifndef ROSCAN_TRANSPORT_PUBLISHER_LINK_H
 #define ROSCAN_TRANSPORT_PUBLISHER_LINK_H
 
+#include "RosCanNode.h"
+#include "publisher_link.h"
 #include <ros/common.h>
 #include <ros/connection.h>
-#include <ros/publisher_link.h>
 
 namespace ros {
 
-class Header;
-class Message;
 class Connection;
 typedef boost::shared_ptr<ros::Connection> ConnectionPtr;
 
@@ -43,20 +42,26 @@ typedef boost::shared_ptr<ros::Connection> ConnectionPtr;
 
 namespace roscan {
 
+class RosCanNode;
+typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
+
 class Subscription;
 typedef boost::shared_ptr<Subscription> SubscriptionPtr;
 typedef boost::weak_ptr<Subscription> SubscriptionWPtr;
 
 struct SteadyTimerEvent;
 
+class PublisherLink;
+typedef boost::shared_ptr<PublisherLink> PublisherLinkPtr;
+
 class TransportPublisherLink;
 typedef boost::shared_ptr<TransportPublisherLink> TransportPublisherLinkPtr;
 
 // Handles a connection to a single publisher on a given topic.  Receives messages from a publisher
 // and hands them off to its parent Subscription
-class TransportPublisherLink : public ros::PublisherLink {
+class TransportPublisherLink : public PublisherLink {
     public:
-        TransportPublisherLink(const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints);
+        TransportPublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints);
         virtual ~TransportPublisherLink();
 
         bool initialize(const ros::ConnectionPtr& connection);

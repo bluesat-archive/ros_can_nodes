@@ -33,22 +33,17 @@
  */
 
 #include "publisher_link.h"
-#include "ros/connection_manager.h"
+#include "connection_manager.h"
 #include "subscription.h"
 #include <ros/connection.h>
 #include <ros/file_log.h>
 #include <ros/header.h>
 #include <ros/this_node.h>
 #include <ros/transport/transport.h>
-
 #include <boost/bind.hpp>
-
 #include <sstream>
 
 namespace roscan {
-
-PublisherLink::PublisherLink(const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
-    : parent_(parent), connection_id_(0), publisher_xmlrpc_uri_(xmlrpc_uri), transport_hints_(transport_hints), latched_(false) {}
 
 bool PublisherLink::setHeader(const ros::Header& header) {
     header.getValue("callerid", caller_id_);
@@ -73,7 +68,8 @@ bool PublisherLink::setHeader(const ros::Header& header) {
         }
     }
 
-    connection_id_ = ConnectionManager::instance()->getNewConnectionID();
+    //connection_id_ = ConnectionManager::instance()->getNewConnectionID();
+    connection_id_ = node_->connectionManager->getNewConnectionID();
     header_ = header;
 
     if (SubscriptionPtr parent = parent_.lock()) {
@@ -81,10 +77,6 @@ bool PublisherLink::setHeader(const ros::Header& header) {
     }
 
     return true;
-}
-
-const std::string& PublisherLink::getPublisherXMLRPCURI() {
-    return publisher_xmlrpc_uri_;
 }
 
 const std::string& PublisherLink::getMD5Sum() {
