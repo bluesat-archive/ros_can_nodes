@@ -26,8 +26,6 @@
  */
 
 #include "poll_manager.h"
-#include <ros/common.h>
-#include <signal.h>
 
 namespace roscan {
 

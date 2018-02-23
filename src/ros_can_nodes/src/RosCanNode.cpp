@@ -1,12 +1,15 @@
 #include "RosCanNode.h"
+#include "common.h"
+#include <iostream>
 //#include "subscriber.h"
-#include <boost/make_shared.hpp>
 //#include <ros/subscribe_options.h>
 #include <unistd.h>
 
 namespace roscan {
 
 RosCanNode::RosCanNode(std::string name) : name_(name) {
+    RosCanNodePtr nodeptr = boost::make_shared<RosCanNode>(*this);
+
     std::cout << "  Creating xmlrpc manager\n";
     xmlrpcManager.reset(new XMLRPCManager);
 
@@ -18,10 +21,9 @@ RosCanNode::RosCanNode(std::string name) : name_(name) {
     std::cout << "  Creating connection manager\n";
     connectionManager.reset(new ConnectionManager);
     std::cout << "  Starting connection manager\n";
-    connectionManager->start(*this);
+    connectionManager->start(nodeptr);
 
     std::cout << "  Creating topic manager\n";
-    RosCanNodePtr nodeptr = boost::make_shared<RosCanNode>(*this);
     topicManager.reset(new TopicManager);
     std::cout << "  Starting topic manager\n";
     topicManager->start(nodeptr);

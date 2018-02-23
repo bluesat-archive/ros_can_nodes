@@ -30,7 +30,9 @@
 
 #include "RosCanNode.h"
 #include "publisher_link.h"
-#include <ros/common.h>
+#include "subscription.h"
+#include <cstdint>
+#include <string>
 #include <ros/connection.h>
 
 namespace ros {

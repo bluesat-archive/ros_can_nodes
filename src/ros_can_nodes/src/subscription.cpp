@@ -39,12 +39,11 @@
 #include "poll_manager.h"
 #include "publisher_link.h"
 #include "transport_publisher_link.h"
-#include <boost/make_shared.hpp>
+#include "common.h"
+#include <typeinfo>
 #include <cerrno>
-#include <cstring>
 #include <fcntl.h>
 #include <ros/callback_queue_interface.h>
-#include <ros/common.h>
 #include <ros/connection.h>
 #include <ros/file_log.h>
 #include <ros/intraprocess_publisher_link.h>
@@ -57,8 +56,6 @@
 #include <ros/transport/transport_tcp.h>
 #include <ros/transport/transport_udp.h>
 #include <ros/transport_hints.h>
-#include <sstream>
-#include <typeinfo>
 
 using XmlRpc::XmlRpcValue;
 
@@ -90,8 +87,7 @@ XmlRpcValue Subscription::getStats() {
     boost::mutex::scoped_lock lock(publisher_links_mutex_);
 
     uint32_t cidx = 0;
-    for (V_PublisherLink::iterator c = publisher_links_.begin();
-         c != publisher_links_.end(); ++c) {
+    for (V_PublisherLink::iterator c = publisher_links_.begin(); c != publisher_links_.end(); ++c) {
         const PublisherLink::Stats& s = (*c)->getStats();
         conn_data[cidx][0] = (*c)->getConnectionID();
         conn_data[cidx][1] = (int)s.bytes_received_;
@@ -130,7 +126,6 @@ uint32_t Subscription::getNumPublishers() {
 void Subscription::drop() {
     if (!dropped_) {
         dropped_ = true;
-
         dropAllConnections();
     }
 }
@@ -142,7 +137,6 @@ void Subscription::dropAllConnections() {
 
     {
         boost::mutex::scoped_lock lock(publisher_links_mutex_);
-
         localsubscribers.swap(publisher_links_);
     }
 
@@ -151,6 +145,23 @@ void Subscription::dropAllConnections() {
     for (; it != end; ++it) {
         (*it)->drop();
     }
+}
+
+void Subscription::addLocalConnection(const ros::PublicationPtr& pub) {
+    boost::mutex::scoped_lock lock(publisher_links_mutex_);
+    if (dropped_) {
+        return;
+    }
+
+    ROSCPP_LOG_DEBUG("Creating intraprocess link for topic [%s]", name_.c_str());
+
+    ros::IntraProcessPublisherLinkPtr pub_link(boost::make_shared<ros::IntraProcessPublisherLink>(shared_from_this(), node_->xmlrpcManager->getServerURI(), transport_hints_));
+    ros::IntraProcessSubscriberLinkPtr sub_link(boost::make_shared<ros::IntraProcessSubscriberLink>(pub));
+    pub_link->setPublisher(sub_link);
+    sub_link->setSubscriber(pub_link);
+
+    addPublisherLink(pub_link);
+    pub->addSubscriberLink(sub_link);
 }
 
 bool urisEqual(const std::string& uri1, const std::string& uri2) {
@@ -173,16 +184,14 @@ bool Subscription::pubUpdate(const V_string& new_pubs) {
     {
         std::stringstream ss;
 
-        for (V_string::const_iterator up_i = new_pubs.begin();
-             up_i != new_pubs.end(); ++up_i) {
+        for (V_string::const_iterator up_i = new_pubs.begin(); up_i != new_pubs.end(); ++up_i) {
             ss << *up_i << ", ";
         }
 
         ss << " already have these connections: ";
         {
             boost::mutex::scoped_lock lock(publisher_links_mutex_);
-            for (V_PublisherLink::iterator spc = publisher_links_.begin();
-                 spc != publisher_links_.end(); ++spc) {
+            for (V_PublisherLink::iterator spc = publisher_links_.begin(); spc != publisher_links_.end(); ++spc) {
                 ss << (*spc)->getPublisherXMLRPCURI() << ", ";
             }
         }
@@ -205,11 +214,9 @@ bool Subscription::pubUpdate(const V_string& new_pubs) {
     {
         boost::mutex::scoped_lock lock(publisher_links_mutex_);
 
-        for (V_PublisherLink::iterator spc = publisher_links_.begin();
-             spc != publisher_links_.end(); ++spc) {
+        for (V_PublisherLink::iterator spc = publisher_links_.begin(); spc != publisher_links_.end(); ++spc) {
             bool found = false;
-            for (V_string::const_iterator up_i = new_pubs.begin();
-                 !found && up_i != new_pubs.end(); ++up_i) {
+            for (V_string::const_iterator up_i = new_pubs.begin(); !found && up_i != new_pubs.end(); ++up_i) {
                 if (urisEqual((*spc)->getPublisherXMLRPCURI(), *up_i)) {
                     found = true;
                     break;
@@ -223,8 +230,7 @@ bool Subscription::pubUpdate(const V_string& new_pubs) {
 
         for (V_string::const_iterator up_i = new_pubs.begin(); up_i != new_pubs.end(); ++up_i) {
             bool found = false;
-            for (V_PublisherLink::iterator spc = publisher_links_.begin();
-                 !found && spc != publisher_links_.end(); ++spc) {
+            for (V_PublisherLink::iterator spc = publisher_links_.begin(); !found && spc != publisher_links_.end(); ++spc) {
                 if (urisEqual(*up_i, (*spc)->getPublisherXMLRPCURI())) {
                     found = true;
                     break;
@@ -260,8 +266,7 @@ bool Subscription::pubUpdate(const V_string& new_pubs) {
         }
     }
 
-    for (V_string::iterator i = additions.begin();
-         i != additions.end(); ++i) {
+    for (V_string::iterator i = additions.begin(); i != additions.end(); ++i) {
         // this function should never negotiate a self-subscription
         if (node_->xmlrpcManager->getServerURI() != *i) {
             retval &= negotiateConnection(*i);
@@ -283,9 +288,7 @@ bool Subscription::negotiateConnection(const std::string& xmlrpc_uri) {
         transport_hints_.reliable();
         transports = transport_hints_.getTransports();
     }
-    for (V_string::const_iterator it = transports.begin();
-         it != transports.end();
-         ++it) {
+    for (V_string::const_iterator it = transports.begin(); it != transports.end(); ++it) {
         if (*it == "UDP") {
             int max_datagram_size = transport_hints_.getMaxDatagramSize();
             udp_transport = boost::make_shared<ros::TransportUDP>(&node_->pollManager->getPollSet());
@@ -384,8 +387,7 @@ void Subscription::pendingConnectionDone(const PendingConnectionPtr& conn, XmlRp
 
     XmlRpc::XmlRpcValue proto;
     if (!node_->xmlrpcManager->validateXmlrpcResponse("requestTopic", result, proto)) {
-        ROSCPP_LOG_DEBUG("Failed to contact publisher [%s:%d] for topic [%s]",
-                         peer_host.c_str(), peer_port, name_.c_str());
+        ROSCPP_LOG_DEBUG("Failed to contact publisher [%s:%d] for topic [%s]", peer_host.c_str(), peer_port, name_.c_str());
         closeTransport(udp_transport);
         return;
     }
@@ -423,7 +425,7 @@ void Subscription::pendingConnectionDone(const PendingConnectionPtr& conn, XmlRp
         ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&node_->pollManager->getPollSet()));
         if (transport->connect(pub_host, pub_port)) {
             ros::ConnectionPtr connection(boost::make_shared<ros::Connection>());
-            TransportPublisherLinkPtr pub_link(boost::make_shared<TransportPublisherLink>(shared_from_this(), xmlrpc_uri, transport_hints_));
+            TransportPublisherLinkPtr pub_link(boost::make_shared<TransportPublisherLink>(node_, shared_from_this(), xmlrpc_uri, transport_hints_));
 
             connection->initialize(transport, false, ros::HeaderReceivedFunc());
             pub_link->initialize(connection);
@@ -472,7 +474,7 @@ void Subscription::pendingConnectionDone(const PendingConnectionPtr& conn, XmlRp
             return;
         }
 
-        TransportPublisherLinkPtr pub_link(boost::make_shared<TransportPublisherLink>(shared_from_this(), xmlrpc_uri, transport_hints_));
+        TransportPublisherLinkPtr pub_link(boost::make_shared<TransportPublisherLink>(node_, shared_from_this(), xmlrpc_uri, transport_hints_));
         if (pub_link->setHeader(h)) {
             ros::ConnectionPtr connection(boost::make_shared<ros::Connection>());
             connection->initialize(udp_transport, false, NULL);
@@ -507,8 +509,7 @@ uint32_t Subscription::handleMessage(const ros::SerializedMessage& m, bool ser, 
 
     ros::Time receipt_time = ros::Time::now();
 
-    for (V_CallbackInfo::iterator cb = callbacks_.begin();
-         cb != callbacks_.end(); ++cb) {
+    for (V_CallbackInfo::iterator cb = callbacks_.begin(); cb != callbacks_.end(); ++cb) {
         const CallbackInfoPtr& info = *cb;
 
         ROS_ASSERT(info->callback_queue_);
@@ -576,7 +577,6 @@ bool Subscription::addCallback(const ros::SubscriptionCallbackHelperPtr& helper,
     {
         boost::mutex::scoped_lock lock(md5sum_mutex_);
         if (md5sum_ == "*" && md5sum != "*") {
-
             md5sum_ = md5sum;
         }
     }
@@ -637,8 +637,7 @@ void Subscription::removeCallback(const ros::SubscriptionCallbackHelperPtr& help
     CallbackInfoPtr info;
     {
         boost::mutex::scoped_lock cbs_lock(callbacks_mutex_);
-        for (V_CallbackInfo::iterator it = callbacks_.begin();
-             it != callbacks_.end(); ++it) {
+        for (V_CallbackInfo::iterator it = callbacks_.begin(); it != callbacks_.end(); ++it) {
             if ((*it)->helper_ == helper) {
                 info = *it;
                 callbacks_.erase(it);
@@ -685,8 +684,7 @@ void Subscription::removePublisherLink(const PublisherLinkPtr& pub_link) {
 
 void Subscription::getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti) {
     boost::mutex::scoped_lock lock(callbacks_mutex_);
-    for (V_CallbackInfo::iterator cb = callbacks_.begin();
-         cb != callbacks_.end(); ++cb) {
+    for (V_CallbackInfo::iterator cb = callbacks_.begin(); cb != callbacks_.end(); ++cb) {
         const CallbackInfoPtr& info = *cb;
         if (info->helper_->getTypeInfo() == ti) {
             nocopy = true;

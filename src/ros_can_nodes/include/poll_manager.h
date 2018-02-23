@@ -31,8 +31,6 @@
 #include <boost/signals2.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
-#include <ros/common.h>
-#include <ros/forwards.h>
 #include <ros/poll_set.h>
 
 namespace roscan {

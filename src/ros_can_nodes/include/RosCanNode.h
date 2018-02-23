@@ -5,8 +5,7 @@
 #include "poll_manager.h"
 #include "topic_manager.h"
 #include "xmlrpc_manager.h"
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+#include "common.h"
 #include <ros/callback_queue.h>
 #include <ros/callback_queue_interface.h>
 #include <std_msgs/String.h>

@@ -25,14 +25,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCPP_SUBSCRIBER_HANDLE_H
-#define ROSCPP_SUBSCRIBER_HANDLE_H
+#ifndef ROSCAN_SUBSCRIBER_HANDLE_H
+#define ROSCAN_SUBSCRIBER_HANDLE_H
 
 #include "RosCanNode.h"
+#include "common.h"
 #include <ros/subscription_callback_helper.h>
-#include <cstdint>
-#include <string>
-#include <vector>
 
 namespace roscan {
 
@@ -75,4 +73,4 @@ class Subscriber {
 
 } // namespace roscan
 
-#endif // ROSCPP_SUBSCRIBER_HANDLE_H
+#endif // ROSCAN_SUBSCRIBER_HANDLE_H

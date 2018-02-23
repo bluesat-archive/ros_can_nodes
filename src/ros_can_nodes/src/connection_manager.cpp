@@ -29,6 +29,7 @@
 #include "RosCanNode.h"
 #include "network.h"
 #include "poll_manager.h"
+#include "common.h"
 #include <ros/assert.h>
 #include <ros/connection.h>
 #include <ros/file_log.h>
@@ -39,8 +40,8 @@
 
 namespace roscan {
 
-void ConnectionManager::start(const RosCanNode& node) {
-    poll_manager_ = node.pollManager;
+void ConnectionManager::start(const RosCanNodePtr& node) {
+    poll_manager_ = node->pollManager;
     poll_conn_ = poll_manager_->addPollThreadListener(boost::bind(&ConnectionManager::removeDroppedConnections, this));
 
     // Bring up the TCP listener socket

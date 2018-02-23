@@ -32,17 +32,16 @@
 #include "connection_manager.h"
 #include "poll_manager.h"
 #include "xmlrpc_manager.h"
+#include "subscription.h"
+#include "common.h"
 #include <XmlRpcValue.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/recursive_mutex.hpp>
-#include <ros/common.h>
-#include <ros/forwards.h>
 #include <ros/rosout_appender.h>
 #include <ros/serialization.h>
 
 namespace ros {
 
-class Message;
 struct SubscribeOptions;
 struct AdvertiseOptions;
 
@@ -69,8 +68,11 @@ class ConnectionManager;
 typedef boost::shared_ptr<ConnectionManager> ConnectionManagerPtr;
 
 typedef std::vector<std::string> V_string;
-typedef std::list<ros::SubscriptionPtr> L_Subscription;
-typedef std::vector<ros::SubscriptionPtr> V_Subscription;
+
+class Subscription;
+typedef boost::shared_ptr<Subscription> SubscriptionPtr;
+typedef std::list<SubscriptionPtr> L_Subscription;
+typedef std::vector<SubscriptionPtr> V_Subscription;
 typedef std::vector<ros::PublicationPtr> V_Publication;
 
 class TopicManager {
@@ -137,7 +139,7 @@ class TopicManager {
         // Must lock the advertised topics mutex before calling this function
         bool isTopicAdvertised(const std::string& topic);
 
-        bool registerSubscriber(const ros::SubscriptionPtr& s, const std::string& datatype);
+        bool registerSubscriber(const SubscriptionPtr& s, const std::string& datatype);
         bool unregisterSubscriber(const std::string& topic);
         bool unregisterPublisher(const std::string& topic);
 

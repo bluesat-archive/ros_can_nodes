@@ -30,13 +30,12 @@
 
 #include "RosCanNode.h"
 #include "subscription.h"
-#include <ros/common.h>
+#include "common.h"
+#include <ros/connection.h>
 #include <ros/header.h>
 #include <ros/transport_hints.h>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/weak_ptr.hpp>
 
 namespace ros {
 

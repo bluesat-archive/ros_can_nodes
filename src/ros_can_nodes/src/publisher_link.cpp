@@ -35,13 +35,13 @@
 #include "publisher_link.h"
 #include "connection_manager.h"
 #include "subscription.h"
+#include "common.h"
 #include <ros/connection.h>
 #include <ros/file_log.h>
 #include <ros/header.h>
 #include <ros/this_node.h>
 #include <ros/transport/transport.h>
 #include <boost/bind.hpp>
-#include <sstream>
 
 namespace roscan {
 

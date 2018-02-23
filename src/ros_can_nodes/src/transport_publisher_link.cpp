@@ -38,6 +38,7 @@
 #include "connection_manager.h"
 #include "poll_manager.h"
 #include "subscription.h"
+#include "common.h"
 #include <boost/bind.hpp>
 #include <ros/callback_queue.h>
 #include <ros/connection.h>
@@ -45,12 +46,10 @@
 #include <ros/header.h>
 #include <ros/internal_timer_manager.h>
 #include <ros/platform.h> // platform dependendant requirements
-#include <ros/publisher_link.h>
 #include <ros/this_node.h>
 #include <ros/timer_manager.h>
 #include <ros/transport/transport.h>
 #include <ros/transport/transport_tcp.h>
-#include <sstream>
 
 namespace roscan {
 

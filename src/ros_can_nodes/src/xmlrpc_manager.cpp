@@ -27,10 +27,9 @@
 
 #include "xmlrpc_manager.h"
 #include "network.h"
+#include "common.h"
 #include <XmlRpc.h>
 #include <ros/assert.h>
-#include <ros/assert.h>
-#include <ros/common.h>
 #include <ros/console.h>
 #include <ros/file_log.h>
 #include <ros/io.h>
@@ -70,16 +69,16 @@ XmlRpc::XmlRpcValue responseBool(int code, const std::string& msg, bool response
 
 class XMLRPCCallWrapper : public XmlRpcServerMethod {
     public:
-    XMLRPCCallWrapper(const std::string& function_name, const XMLRPCFunc& cb, XmlRpcServer* s)
-        : XmlRpcServerMethod(function_name, s), name_(function_name), func_(cb) {}
+        XMLRPCCallWrapper(const std::string& function_name, const XMLRPCFunc& cb, XmlRpcServer* s)
+            : XmlRpcServerMethod(function_name, s), name_(function_name), func_(cb) {}
 
-    void execute(XmlRpcValue& params, XmlRpcValue& result) {
-        func_(params, result);
-    }
+        void execute(XmlRpcValue& params, XmlRpcValue& result) {
+            func_(params, result);
+        }
 
     private:
-    std::string name_;
-    XMLRPCFunc func_;
+        std::string name_;
+        XMLRPCFunc func_;
 };
 
 void getPid(const XmlRpcValue& params, XmlRpcValue& result) {
@@ -193,30 +192,25 @@ void XMLRPCManager::shutdown() {
 
 bool XMLRPCManager::validateXmlrpcResponse(const std::string& method, XmlRpcValue& response, XmlRpcValue& payload) {
     if (response.getType() != XmlRpcValue::TypeArray) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return an array",
-                         method.c_str());
+        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return an array", method.c_str());
         return false;
     }
     if (response.size() != 2 && response.size() != 3) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a 2 or 3-element array",
-                         method.c_str());
+        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a 2 or 3-element array", method.c_str());
         return false;
     }
     if (response[0].getType() != XmlRpcValue::TypeInt) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a int as the 1st element",
-                         method.c_str());
+        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a int as the 1st element", method.c_str());
         return false;
     }
     int status_code = response[0];
     if (response[1].getType() != XmlRpcValue::TypeString) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a string as the 2nd element",
-                         method.c_str());
+        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a string as the 2nd element", method.c_str());
         return false;
     }
     std::string status_string = response[1];
     if (status_code != 1) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] returned an error (%d): [%s]",
-                         method.c_str(), status_code, status_string.c_str());
+        ROSCPP_LOG_DEBUG("XML-RPC call [%s] returned an error (%d): [%s]", method.c_str(), status_code, status_string.c_str());
         return false;
     }
     if (response.size() > 2) {

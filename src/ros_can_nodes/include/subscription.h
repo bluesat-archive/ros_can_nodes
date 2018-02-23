@@ -31,13 +31,9 @@
 #include "RosCanNode.h"
 #include "xmlrpc_manager.h"
 #include "publisher_link.h"
+#include "common.h"
 #include <XmlRpc.h>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
-#include <queue>
-#include <ros/common.h>
-#include <ros/forwards.h>
 #include <ros/header.h>
 #include <ros/statistics.h>
 #include <ros/transport_hints.h>
@@ -59,6 +55,9 @@ typedef boost::shared_ptr<SubscriptionCallbackHelper> SubscriptionCallbackHelper
 } // namespace ros
 
 namespace roscan {
+
+class RosCanNode;
+typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
 
 class PublisherLink;
 typedef boost::shared_ptr<PublisherLink> PublisherLinkPtr;

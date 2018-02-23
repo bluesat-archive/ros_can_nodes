@@ -30,26 +30,34 @@
 
 #include "RosCanNode.h"
 #include "poll_manager.h"
+#include "common.h"
 #include <boost/signals2/connection.hpp>
 #include <boost/thread/mutex.hpp>
-#include <ros/common.h>
 #include <ros/connection.h>
-#include <ros/forwards.h>
+#include <ros/header.h>
 
 #define ROSCPP_CONN_LOG_DEBUG(...) ROS_DEBUG_NAMED("roscpp_internal.connections", __VA_ARGS__)
+
+namespace ros {
+
+class Connection;
+typedef boost::shared_ptr<Connection> ConnectionPtr;
+
+} // namespace ros
 
 namespace roscan {
 
 class RosCanNode;
-
-typedef std::set<ros::ConnectionPtr> S_Connection;
-typedef std::vector<ros::ConnectionPtr> V_Connection;
+typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
 
 class PollManager;
 typedef boost::shared_ptr<PollManager> PollManagerPtr;
 
 class ConnectionManager;
 typedef boost::shared_ptr<ConnectionManager> ConnectionManagerPtr;
+
+typedef std::set<ros::ConnectionPtr> S_Connection;
+typedef std::vector<ros::ConnectionPtr> V_Connection;
 
 class ConnectionManager {
     public:
@@ -72,7 +80,7 @@ class ConnectionManager {
 
         void udprosIncomingConnection(const ros::TransportUDPPtr& transport, ros::Header& header);
 
-        void start(const RosCanNode& node);
+        void start(const RosCanNodePtr& node);
         void shutdown();
 
     private:

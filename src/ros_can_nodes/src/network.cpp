@@ -26,8 +26,9 @@
  */
 
 #include "network.h"
-#include <boost/lexical_cast.hpp>
+#include "common.h"
 #include <ifaddrs.h>
+#include <boost/lexical_cast.hpp>
 #include <ros/assert.h>
 #include <ros/console.h>
 #include <ros/exceptions.h>
