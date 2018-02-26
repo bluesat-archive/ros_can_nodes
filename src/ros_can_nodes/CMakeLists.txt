@@ -121,6 +121,7 @@ add_executable(ros_can_nodes
     src/connection_manager.cpp
     src/topic_manager.cpp
     src/publication.cpp
+    src/publisher.cpp
     src/publisher_link.cpp
     src/transport_publisher_link.cpp
     src/intraprocess_publisher_link.cpp

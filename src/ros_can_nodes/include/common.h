@@ -79,6 +79,10 @@ typedef std::map<std::string, std::string> M_string;
 class RosCanNode;
 typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
 
+class Publisher;
+typedef boost::shared_ptr<Publisher> PublisherPtr;
+typedef std::vector<Publisher> V_Publisher;
+
 class Publication;
 typedef boost::shared_ptr<Publication> PublicationPtr;
 typedef boost::weak_ptr<Publication> PublicationWPtr;
@@ -93,6 +97,10 @@ typedef boost::shared_ptr<TransportPublisherLink> TransportPublisherLinkPtr;
 
 class IntraProcessPublisherLink;
 typedef boost::shared_ptr<IntraProcessPublisherLink> IntraProcessPublisherLinkPtr;
+
+class Subscriber;
+typedef boost::shared_ptr<Subscriber> SubscriberPtr;
+typedef std::vector<Subscriber> V_Subscriber;
 
 class Subscription;
 typedef boost::shared_ptr<Subscription> SubscriptionPtr;
