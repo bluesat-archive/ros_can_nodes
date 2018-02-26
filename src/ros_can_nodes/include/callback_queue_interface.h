@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2008, Willow Garage, Inc.
+ *  Copyright (c) 2009, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,53 +32,50 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef ROSCAN_CALLBACK_QUEUE_INTERFACE_H
+#define ROSCAN_CALLBACK_QUEUE_INTERFACE_H
+
 #include "common.h"
-#include "publisher_link.h"
-#include "connection_manager.h"
-#include "subscription.h"
-#include <ros/connection.h>
-#include <ros/file_log.h>
-#include <ros/header.h>
-#include <ros/transport/transport.h>
+#include <ros/types.h>
 
 namespace roscan {
 
-bool PublisherLink::setHeader(const ros::Header& header) {
-    header.getValue("callerid", caller_id_);
+// Abstract interface for items which can be added to a CallbackQueueInterface
+class CallbackInterface {
+    public:
+        // Possible results for the call() method
+        enum CallResult {
+            Success,  ///< Call succeeded
+            TryAgain, ///< Call not ready, try again later
+            Invalid,  ///< Call no longer valid
+        };
 
-    std::string md5sum, type, latched_str;
-    if (!header.getValue("md5sum", md5sum)) {
-        ROS_ERROR("Publisher header did not have required element: md5sum");
-        return false;
-    }
+        virtual ~CallbackInterface() {}
 
-    md5sum_ = md5sum;
+        // Call this callback
+        // Returns The result of the call
+        virtual CallResult call() = 0;
 
-    if (!header.getValue("type", type)) {
-        ROS_ERROR("Publisher header did not have required element: type");
-        return false;
-    }
+        // Provides the opportunity for specifying that a callback is not ready to be called
+        // before call() actually takes place.
+        virtual bool ready() { return true; }
+};
 
-    latched_ = false;
-    if (header.getValue("latching", latched_str)) {
-        if (latched_str == "1") {
-            latched_ = true;
-        }
-    }
+// Abstract interface for a queue used to handle all callbacks within roscpp.
+// Allows you to inherit and provide your own implementation that can be used instead of our
+// default CallbackQueue
+class CallbackQueueInterface {
+    public:
+        virtual ~CallbackQueueInterface() {}
 
-    connection_id_ = node_->connectionManager->getNewConnectionID();
-    header_ = header;
+        // Add a callback, with an optional owner id.  The owner id can be used to
+        // remove a set of callbacks from this queue.
+        virtual void addCallback(const CallbackInterfacePtr& callback, uint64_t owner_id = 0) = 0;
 
-    if (SubscriptionPtr parent = parent_.lock()) {
-        parent->headerReceived(shared_from_this(), header);
-    }
-
-    return true;
-}
-
-const std::string& PublisherLink::getMD5Sum() {
-    ROS_ASSERT(!md5sum_.empty());
-    return md5sum_;
-}
+        // Remove all callbacks associated with an owner id
+        virtual void removeByID(uint64_t owner_id) = 0;
+};
 
 } // namespace roscan
+
+#endif // ROSCAN_CALLBACK_QUEUE_INTERFACE_H

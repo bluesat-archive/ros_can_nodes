@@ -28,12 +28,14 @@
 #ifndef ROSCAN_SUBSCRIPTION_H
 #define ROSCAN_SUBSCRIPTION_H
 
+#include "common.h"
 #include "RosCanNode.h"
 #include "xmlrpc_manager.h"
+#include "publication.h"
 #include "publisher_link.h"
-#include "common.h"
+#include "callback_queue_interface.h"
+#include "subscription_queue.h"
 #include <XmlRpc.h>
-#include <boost/thread.hpp>
 #include <ros/header.h>
 #include <ros/statistics.h>
 #include <ros/transport_hints.h>
@@ -42,9 +44,6 @@ namespace ros {
 
 class SubscriptionCallback;
 typedef boost::shared_ptr<SubscriptionCallback> SubscriptionCallbackPtr;
-
-class SubscriptionQueue;
-typedef boost::shared_ptr<SubscriptionQueue> SubscriptionQueuePtr;
 
 class MessageDeserializer;
 typedef boost::shared_ptr<MessageDeserializer> MessageDeserializerPtr;
@@ -55,16 +54,6 @@ typedef boost::shared_ptr<SubscriptionCallbackHelper> SubscriptionCallbackHelper
 } // namespace ros
 
 namespace roscan {
-
-class RosCanNode;
-typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
-
-class PublisherLink;
-typedef boost::shared_ptr<PublisherLink> PublisherLinkPtr;
-
-class Subscription;
-typedef boost::shared_ptr<Subscription> SubscriptionPtr;
-typedef boost::weak_ptr<Subscription> SubscriptionWPtr;
 
 // Manages a subscription on a single topic.
 class Subscription : public boost::enable_shared_from_this<Subscription> {
@@ -85,14 +74,14 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
         // Negotiates a connection with a publisher
         bool negotiateConnection(const std::string& xmlrpc_uri);
 
-        void addLocalConnection(const ros::PublicationPtr& pub);
+        void addLocalConnection(const PublicationPtr& pub);
 
         // Returns whether this Subscription has been dropped or not
         bool isDropped() { return dropped_; }
         XmlRpc::XmlRpcValue getStats();
         void getInfo(XmlRpc::XmlRpcValue& info);
 
-        bool addCallback(const ros::SubscriptionCallbackHelperPtr& helper, const std::string& md5sum, ros::CallbackQueueInterface* queue, int32_t queue_size, const ros::VoidConstPtr& tracked_object, bool allow_concurrent_callbacks);
+        bool addCallback(const ros::SubscriptionCallbackHelperPtr& helper, const std::string& md5sum, CallbackQueueInterface* queue, int32_t queue_size, const ros::VoidConstPtr& tracked_object, bool allow_concurrent_callbacks);
         void removeCallback(const ros::SubscriptionCallbackHelperPtr& helper);
 
         typedef std::map<std::string, std::string> M_string;
@@ -170,11 +159,11 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
         void addPublisherLink(const PublisherLinkPtr& link);
 
         struct CallbackInfo {
-            ros::CallbackQueueInterface* callback_queue_;
+            CallbackQueueInterface* callback_queue_;
 
             // Only used if callback_queue_ is non-NULL (NodeHandle API)
             ros::SubscriptionCallbackHelperPtr helper_;
-            ros::SubscriptionQueuePtr subscription_queue_;
+            SubscriptionQueuePtr subscription_queue_;
             bool has_tracked_object_;
             ros::VoidConstWPtr tracked_object_;
         };
@@ -197,7 +186,6 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
         S_PendingConnection pending_connections_;
         boost::mutex pending_connections_mutex_;
 
-        typedef std::vector<PublisherLinkPtr> V_PublisherLink;
         V_PublisherLink publisher_links_;
         boost::mutex publisher_links_mutex_;
 

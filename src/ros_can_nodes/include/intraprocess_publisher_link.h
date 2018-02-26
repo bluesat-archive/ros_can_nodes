@@ -25,55 +25,41 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCAN_TRANSPORT_PUBLISHER_LINK_H
-#define ROSCAN_TRANSPORT_PUBLISHER_LINK_H
+#ifndef ROSCAN_INTRAPROCESS_PUBLISHER_LINK_H
+#define ROSCAN_INTRAPROCESS_PUBLISHER_LINK_H
 
 #include "common.h"
 #include "RosCanNode.h"
-#include "publisher_link.h"
 #include "subscription.h"
-#include <ros/connection.h>
+#include "publisher_link.h"
 
 namespace roscan {
 
 // Handles a connection to a single publisher on a given topic. Receives messages from a publisher
 // and hands them off to its parent Subscription
-class TransportPublisherLink : public PublisherLink {
+class IntraProcessPublisherLink : public PublisherLink {
     public:
-        TransportPublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
-            : PublisherLink(node, parent, xmlrpc_uri, transport_hints), retry_timer_handle_(-1), needs_retry_(false), dropping_(false) {}
-        virtual ~TransportPublisherLink();
+        IntraProcessPublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
+            : PublisherLink(node, parent, xmlrpc_uri, transport_hints), dropped_(false) {}
+        virtual ~IntraProcessPublisherLink() {}
 
-        bool initialize(const ros::ConnectionPtr& connection);
+        void setPublisher(const IntraProcessSubscriberLinkPtr& publisher);
 
-        const ros::ConnectionPtr& getConnection() { return connection_; }
-
-        virtual std::string getTransportType();
-        virtual std::string getTransportInfo();
+        virtual std::string getTransportType() { return std::string("INTRAPROCESS"); }
+        virtual std::string getTransportInfo() { return getTransportType(); }
         virtual void drop();
-
-    private:
-        void onConnectionDropped(const ros::ConnectionPtr& conn, ros::Connection::DropReason reason);
-        bool onHeaderReceived(const ros::ConnectionPtr& conn, const ros::Header& header);
 
         // Handles handing off a received message to the subscription, where it will be deserialized and called back
         virtual void handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy);
 
-        void onHeaderWritten(const ros::ConnectionPtr& conn);
-        void onMessageLength(const ros::ConnectionPtr& conn, const boost::shared_array<uint8_t>& buffer, uint32_t size, bool success);
-        void onMessage(const ros::ConnectionPtr& conn, const boost::shared_array<uint8_t>& buffer, uint32_t size, bool success);
+        void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti);
 
-        void onRetryTimer(const ros::SteadyTimerEvent&);
-
-        ros::ConnectionPtr connection_;
-
-        int32_t retry_timer_handle_;
-        bool needs_retry_;
-        ros::WallDuration retry_period_;
-        ros::SteadyTime next_retry_;
-        bool dropping_;
+    private:
+        IntraProcessSubscriberLinkPtr publisher_;
+        bool dropped_;
+        boost::recursive_mutex drop_mutex_;
 };
 
 } // namespace roscan
 
-#endif // ROSCAN_TRANSPORT_PUBLISHER_LINK_H
+#endif // ROSCAN_INTRAPROCESS_PUBLISHER_LINK_H

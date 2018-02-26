@@ -28,36 +28,16 @@
 #ifndef ROSCAN_CONNECTION_MANAGER_H
 #define ROSCAN_CONNECTION_MANAGER_H
 
+#include "common.h"
 #include "RosCanNode.h"
 #include "poll_manager.h"
-#include "common.h"
 #include <boost/signals2/connection.hpp>
-#include <boost/thread/mutex.hpp>
 #include <ros/connection.h>
 #include <ros/header.h>
 
 #define ROSCPP_CONN_LOG_DEBUG(...) ROS_DEBUG_NAMED("roscpp_internal.connections", __VA_ARGS__)
 
-namespace ros {
-
-class Connection;
-typedef boost::shared_ptr<Connection> ConnectionPtr;
-
-} // namespace ros
-
 namespace roscan {
-
-class RosCanNode;
-typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
-
-class PollManager;
-typedef boost::shared_ptr<PollManager> PollManagerPtr;
-
-class ConnectionManager;
-typedef boost::shared_ptr<ConnectionManager> ConnectionManagerPtr;
-
-typedef std::set<ros::ConnectionPtr> S_Connection;
-typedef std::vector<ros::ConnectionPtr> V_Connection;
 
 class ConnectionManager {
     public:
@@ -96,8 +76,8 @@ class ConnectionManager {
 
         PollManagerPtr poll_manager_;
 
-        S_Connection connections_;
-        V_Connection dropped_connections_;
+        ros::S_Connection connections_;
+        ros::V_Connection dropped_connections_;
         boost::mutex connections_mutex_;
         boost::mutex dropped_connections_mutex_;
 

@@ -25,66 +25,61 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCAN_PUBLISHER_LINK_H
-#define ROSCAN_PUBLISHER_LINK_H
+#ifndef ROSCAN_SUBSCRIBER_LINK_H
+#define ROSCAN_SUBSCRIBER_LINK_H
 
 #include "common.h"
-#include "RosCanNode.h"
-#include "subscription.h"
-#include <ros/connection.h>
-#include <ros/header.h>
-#include <ros/transport_hints.h>
+#include <ros/serialized_message.h>
 
 namespace roscan {
 
-// Handles a connection to a single publisher on a given topic. Receives messages from a publisher
-// and hands them off to its parent Subscription
-class PublisherLink : public boost::enable_shared_from_this<PublisherLink> {
+class SubscriberLink : public boost::enable_shared_from_this<SubscriberLink> {
     public:
         class Stats {
             public:
-                uint64_t bytes_received_, messages_received_, drops_;
-                Stats() : bytes_received_(0), messages_received_(0), drops_(0) {}
+                uint64_t bytes_sent_, message_data_sent_, messages_sent_;
+                Stats() : bytes_sent_(0), message_data_sent_(0), messages_sent_(0) {}
         };
 
-        PublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
-            : node_(node), parent_(parent), connection_id_(0), publisher_xmlrpc_uri_(xmlrpc_uri), transport_hints_(transport_hints), latched_(false) {}
-        
-        virtual ~PublisherLink() {}
+        SubscriberLink(const RosCanNodePtr& node) : node_(node), connection_id_(0) {}
+        virtual ~SubscriberLink() {}
 
+        const std::string& getTopic() const { return topic_; }
         const Stats& getStats() { return stats_; }
-        const std::string& getPublisherXMLRPCURI() { return publisher_xmlrpc_uri_; }
+        const std::string& getDestinationCallerID() const { return destination_caller_id_; }
         int getConnectionID() const { return connection_id_; }
-        const std::string& getCallerID() { return caller_id_; }
-        bool isLatched() { return latched_; }
 
-        bool setHeader(const ros::Header& header);
+        // Queue up a message for publication.  Throws out old messages if we've reached our Publication's max queue size
+        virtual void enqueueMessage(const ros::SerializedMessage& m, bool ser, bool nocopy) = 0;
 
-        // Handles handing off a received message to the subscription, where it will be deserialized and called back
-        virtual void handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy) = 0;
-        virtual std::string getTransportType() = 0;
-        virtual std::string getTransportInfo() = 0;
         virtual void drop() = 0;
 
+        virtual std::string getTransportType() = 0;
+        virtual std::string getTransportInfo() = 0;
+
+        virtual bool isIntraprocess() { return false; }
+        virtual void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti) {
+            (void)ti;
+            ser = true;
+            nocopy = false;
+        }
+
         const std::string& getMD5Sum();
+        const std::string& getDataType();
+        const std::string& getMessageDefinition();
 
     protected:
+        bool verifyDatatype(const std::string& datatype);
+
         RosCanNodePtr node_;
 
-        SubscriptionWPtr parent_;
+        PublicationWPtr parent_;
         unsigned int connection_id_;
-        std::string publisher_xmlrpc_uri_;
-
+        std::string destination_caller_id_;
         Stats stats_;
-
-        ros::TransportHints transport_hints_;
-
-        bool latched_;
-        std::string caller_id_;
-        ros::Header header_;
-        std::string md5sum_;
+        std::string topic_;
 };
 
 } // namespace roscan
 
-#endif // ROSCAN_PUBLISHER_LINK_H
+#endif // ROSCAN_SUBSCRIBER_LINK_H

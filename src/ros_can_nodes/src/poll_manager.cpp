@@ -25,6 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "common.h"
 #include "poll_manager.h"
 
 namespace roscan {
@@ -64,7 +65,7 @@ void PollManager::threadFunc() {
     }
 }
 
-boost::signals2::connection PollManager::addPollThreadListener(const VoidFunc& func) {
+boost::signals2::connection PollManager::addPollThreadListener(const ros::VoidFunc& func) {
     boost::recursive_mutex::scoped_lock lock(signal_mutex_);
     return poll_signal_.connect(func);
 }

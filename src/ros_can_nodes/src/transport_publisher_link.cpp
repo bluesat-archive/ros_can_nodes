@@ -32,14 +32,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "common.h"
 #include "RosCanNode.h"
 #include "publisher_link.h"
 #include "transport_publisher_link.h"
 #include "connection_manager.h"
 #include "poll_manager.h"
 #include "subscription.h"
-#include "common.h"
-#include <boost/bind.hpp>
 #include <ros/callback_queue.h>
 #include <ros/connection.h>
 #include <ros/file_log.h>
@@ -52,9 +51,6 @@
 #include <ros/transport/transport_tcp.h>
 
 namespace roscan {
-
-TransportPublisherLink::TransportPublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
-    : PublisherLink(node, parent, xmlrpc_uri, transport_hints), retry_timer_handle_(-1), needs_retry_(false), dropping_(false) {}
 
 TransportPublisherLink::~TransportPublisherLink() {
     dropping_ = true;
@@ -82,7 +78,7 @@ bool TransportPublisherLink::initialize(const ros::ConnectionPtr& connection) {
         ros::M_string header;
         header["topic"] = parent->getName();
         header["md5sum"] = parent->md5sum();
-        header["callerid"] = ros::this_node::getName();
+        header["callerid"] = "transport publisher_link";//this_node::getName();// TODO this_node
         header["type"] = parent->datatype();
         header["tcp_nodelay"] = transport_hints_.getTCPNoDelay() ? "1" : "0";
         connection_->writeHeader(header, boost::bind(&TransportPublisherLink::onHeaderWritten, this, _1));

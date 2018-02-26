@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, Willow Garage, Inc.
+ * Copyright (C) 2008, Morgan Quigley and Willow Garage, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -8,7 +8,7 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the names of Willow Garage, Inc. nor the names of its
+ *   * Neither the names of Stanford University or Willow Garage, Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived from
  *     this software without specific prior written permission.
  *
@@ -25,39 +25,44 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCAN_POLL_MANAGER_H
-#define ROSCAN_POLL_MANAGER_H
-
 #include "common.h"
-#include <ros/poll_set.h>
+#include "subscriber_link.h"
+#include "publication.h"
 
 namespace roscan {
 
-class PollManager {
-    public:
-        PollManager() : shutting_down_(false) {}
-        ~PollManager() { shutdown(); }
+bool SubscriberLink::verifyDatatype(const std::string& datatype) {
+    PublicationPtr parent = parent_.lock();
+    if (!parent) {
+        ROS_ERROR("Trying to verify the datatype on a publisher without a parent");
+        ROS_BREAK();
 
-        ros::PollSet& getPollSet() { return poll_set_; }
+        return false;
+    }
 
-        boost::signals2::connection addPollThreadListener(const ros::VoidFunc& func);
-        void removePollThreadListener(boost::signals2::connection c);
+    if (datatype != parent->getDataType()) {
+        ROS_ERROR("tried to send a message with type %s on a "
+                  "TransportSubscriberLink that has datatype %s",
+                  datatype.c_str(), parent->getDataType().c_str());
+        return false; // todo: figure out a way to log this error
+    }
 
-        void start();
-        void shutdown();
+    return true;
+}
 
-    private:
-        void threadFunc();
+const std::string& SubscriberLink::getMD5Sum() {
+    PublicationPtr parent = parent_.lock();
+    return parent->getMD5Sum();
+}
 
-        ros::PollSet poll_set_;
-        volatile bool shutting_down_;
+const std::string& SubscriberLink::getDataType() {
+    PublicationPtr parent = parent_.lock();
+    return parent->getDataType();
+}
 
-        ros::VoidSignal poll_signal_;
-        boost::recursive_mutex signal_mutex_;
-
-        boost::thread thread_;
-};
+const std::string& SubscriberLink::getMessageDefinition() {
+    PublicationPtr parent = parent_.lock();
+    return parent->getMessageDefinition();
+}
 
 } // namespace roscan
-
-#endif // ROSCAN_POLL_MANAGER_H

@@ -25,11 +25,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "common.h"
 #include "connection_manager.h"
 #include "RosCanNode.h"
 #include "network.h"
 #include "poll_manager.h"
-#include "common.h"
 #include <ros/assert.h>
 #include <ros/connection.h>
 #include <ros/file_log.h>
@@ -76,13 +76,13 @@ void ConnectionManager::shutdown() {
 }
 
 void ConnectionManager::clear(ros::Connection::DropReason reason) {
-    S_Connection local_connections;
+    ros::S_Connection local_connections;
     {
         boost::mutex::scoped_lock conn_lock(connections_mutex_);
         local_connections.swap(connections_);
     }
 
-    for (S_Connection::iterator itr = local_connections.begin(); itr != local_connections.end(); itr++) {
+    for (ros::S_Connection::iterator itr = local_connections.begin(); itr != local_connections.end(); itr++) {
         const ros::ConnectionPtr& conn = *itr;
         conn->drop(reason);
     }
@@ -118,7 +118,7 @@ void ConnectionManager::onConnectionDropped(const ros::ConnectionPtr& conn) {
 }
 
 void ConnectionManager::removeDroppedConnections() {
-    V_Connection local_dropped;
+    ros::V_Connection local_dropped;
     {
         boost::mutex::scoped_lock dropped_lock(dropped_connections_mutex_);
         dropped_connections_.swap(local_dropped);
@@ -126,8 +126,8 @@ void ConnectionManager::removeDroppedConnections() {
 
     boost::mutex::scoped_lock conn_lock(connections_mutex_);
 
-    V_Connection::iterator conn_it = local_dropped.begin();
-    V_Connection::iterator conn_end = local_dropped.end();
+    ros::V_Connection::iterator conn_it = local_dropped.begin();
+    ros::V_Connection::iterator conn_end = local_dropped.end();
     for (; conn_it != conn_end; ++conn_it) {
         const ros::ConnectionPtr& conn = *conn_it;
         connections_.erase(conn);

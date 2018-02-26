@@ -25,9 +25,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "common.h"
 #include "xmlrpc_manager.h"
 #include "network.h"
-#include "common.h"
 #include <XmlRpc.h>
 #include <ros/assert.h>
 #include <ros/console.h>

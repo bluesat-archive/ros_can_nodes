@@ -120,10 +120,16 @@ add_executable(ros_can_nodes
     src/poll_manager.cpp
     src/connection_manager.cpp
     src/topic_manager.cpp
-    src/subscriber.cpp
+    src/publication.cpp
     src/publisher_link.cpp
-    src/subscription.cpp
     src/transport_publisher_link.cpp
+    src/intraprocess_publisher_link.cpp
+    src/subscription.cpp
+    src/subscriber.cpp
+    src/subscriber_link.cpp
+    src/intraprocess_subscriber_link.cpp
+    src/single_subscriber_publisher.cpp
+    src/subscription_queue.cpp
     )
 
 ## Add cmake target dependencies of the executable

@@ -25,8 +25,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "subscriber.h"
 #include "common.h"
+#include "subscriber.h"
 
 namespace roscan {
 

@@ -28,52 +28,22 @@
 #ifndef ROSCAN_TOPIC_MANAGER_H
 #define ROSCAN_TOPIC_MANAGER_H
 
+#include "common.h"
 #include "RosCanNode.h"
 #include "connection_manager.h"
 #include "poll_manager.h"
 #include "xmlrpc_manager.h"
 #include "subscription.h"
-#include "common.h"
+#include "publication.h"
+#include "subscribe_options.h"
 #include <XmlRpcValue.h>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/recursive_mutex.hpp>
 #include <ros/rosout_appender.h>
 #include <ros/serialization.h>
-
-namespace ros {
-
-struct SubscribeOptions;
-struct AdvertiseOptions;
-
-class SubscriptionCallbackHelper;
-typedef boost::shared_ptr<SubscriptionCallbackHelper> SubscriptionCallbackHelperPtr;
-
-} // namespace ros
+#include <ros/advertise_options.h>
 
 namespace roscan {
 
-class RosCanNode;
-typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
-
-class TopicManager;
-typedef boost::shared_ptr<TopicManager> TopicManagerPtr;
-
-class PollManager;
-typedef boost::shared_ptr<PollManager> PollManagerPtr;
-
-class XMLRPCManager;
-typedef boost::shared_ptr<XMLRPCManager> XMLRPCManagerPtr;
-
-class ConnectionManager;
-typedef boost::shared_ptr<ConnectionManager> ConnectionManagerPtr;
-
 typedef std::vector<std::string> V_string;
-
-class Subscription;
-typedef boost::shared_ptr<Subscription> SubscriptionPtr;
-typedef std::list<SubscriptionPtr> L_Subscription;
-typedef std::vector<SubscriptionPtr> V_Subscription;
-typedef std::vector<ros::PublicationPtr> V_Publication;
 
 class TopicManager {
     public:
@@ -83,11 +53,11 @@ class TopicManager {
         void start(const RosCanNodePtr& node);
         void shutdown();
 
-        bool subscribe(const ros::SubscribeOptions& ops);
+        bool subscribe(const SubscribeOptions& ops);
         bool unsubscribe(const std::string& _topic, const ros::SubscriptionCallbackHelperPtr& helper);
 
-        bool advertise(const ros::AdvertiseOptions& ops, const ros::SubscriberCallbacksPtr& callbacks);
-        bool unadvertise(const std::string& topic, const ros::SubscriberCallbacksPtr& callbacks);
+        bool advertise(const ros::AdvertiseOptions& ops, const SubscriberCallbacksPtr& callbacks);
+        bool unadvertise(const std::string& topic, const SubscriberCallbacksPtr& callbacks);
 
         // Get the list of topics advertised by this node
         void getAdvertisedTopics(V_string& topics);
@@ -100,7 +70,7 @@ class TopicManager {
         // matching the given topic name.  The advertised_topics_mutex is locked
         // during this search.  This method is only used internally.
         // Returns pointer to the matching Publication, NULL if none is found.
-        ros::PublicationPtr lookupPublication(const std::string& topic);
+        PublicationPtr lookupPublication(const std::string& topic);
 
         // Return the number of subscribers a node has for a particular topic
         size_t getNumSubscribers(const std::string& _topic);
@@ -125,7 +95,7 @@ class TopicManager {
         // same message type, it appends the Functor to the callback vector for
         // that subscription. otherwise, it returns false, indicating that a new
         // subscription needs to be created.
-        bool addSubCallback(const ros::SubscribeOptions& ops);
+        bool addSubCallback(const SubscribeOptions& ops);
 
         // Request a topic
         // Negotiate a subscriber connection on a topic.
@@ -143,7 +113,7 @@ class TopicManager {
         bool unregisterSubscriber(const std::string& topic);
         bool unregisterPublisher(const std::string& topic);
 
-        ros::PublicationPtr lookupPublicationWithoutLock(const std::string& topic);
+        PublicationPtr lookupPublicationWithoutLock(const std::string& topic);
 
         void processPublishQueues();
 

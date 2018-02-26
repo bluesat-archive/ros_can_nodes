@@ -28,17 +28,9 @@
 #ifndef ROSCAN_XMLRPC_MANAGER_H
 #define ROSCAN_XMLRPC_MANAGER_H
 
-#include <cstdint>
-#include <set>
-#include <string>
-#include <vector>
-#include <map>
+#include "common.h"
 #include <XmlRpc.h>
 #include <XmlRpcValue.h>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/function.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/thread.hpp>
 #include <ros/time.h>
 
 namespace roscan {

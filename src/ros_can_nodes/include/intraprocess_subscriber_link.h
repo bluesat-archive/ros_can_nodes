@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009, Willow Garage, Inc.
+ * Copyright (C) 2008, Morgan Quigley and Willow Garage, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -8,7 +8,7 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the names of Willow Garage, Inc. nor the names of its
+ *   * Neither the names of Stanford University or Willow Garage, Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived from
  *     this software without specific prior written permission.
  *
@@ -25,39 +25,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCAN_POLL_MANAGER_H
-#define ROSCAN_POLL_MANAGER_H
+#ifndef ROSCAN_INTRAPROCESS_SUBSCRIBER_LINK_H
+#define ROSCAN_INTRAPROCESS_SUBSCRIBER_LINK_H
 
 #include "common.h"
-#include <ros/poll_set.h>
+#include "RosCanNode.h"
+#include "subscriber_link.h"
 
 namespace roscan {
 
-class PollManager {
+// SubscriberLink handles broadcasting messages to a single subscriber on a single topic
+class IntraProcessSubscriberLink : public SubscriberLink {
     public:
-        PollManager() : shutting_down_(false) {}
-        ~PollManager() { shutdown(); }
+        IntraProcessSubscriberLink(const RosCanNodePtr& node, const PublicationPtr& parent);
+        virtual ~IntraProcessSubscriberLink() {}
 
-        ros::PollSet& getPollSet() { return poll_set_; }
+        void setSubscriber(const IntraProcessPublisherLinkPtr& subscriber);
+        bool isLatching();
 
-        boost::signals2::connection addPollThreadListener(const ros::VoidFunc& func);
-        void removePollThreadListener(boost::signals2::connection c);
-
-        void start();
-        void shutdown();
+        virtual void enqueueMessage(const ros::SerializedMessage& m, bool ser, bool nocopy);
+        virtual void drop();
+        virtual std::string getTransportType() { return std::string("INTRAPROCESS"); }
+        virtual std::string getTransportInfo() { return getTransportType(); }
+        virtual bool isIntraprocess() { return true; }
+        virtual void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti);
 
     private:
-        void threadFunc();
-
-        ros::PollSet poll_set_;
-        volatile bool shutting_down_;
-
-        ros::VoidSignal poll_signal_;
-        boost::recursive_mutex signal_mutex_;
-
-        boost::thread thread_;
+        RosCanNodePtr node_;
+        IntraProcessPublisherLinkPtr subscriber_;
+        bool dropped_;
+        boost::recursive_mutex drop_mutex_;
 };
 
 } // namespace roscan
 
-#endif // ROSCAN_POLL_MANAGER_H
+#endif // ROSCAN_INTRAPROCESS_SUBSCRIBER_LINK_H

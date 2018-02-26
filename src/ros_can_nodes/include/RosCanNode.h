@@ -1,13 +1,13 @@
 #ifndef ROSCANNODE_H
 #define ROSCANNODE_H
 
+#include "common.h"
 #include "connection_manager.h"
 #include "poll_manager.h"
 #include "topic_manager.h"
 #include "xmlrpc_manager.h"
-#include "common.h"
+#include "callback_queue_interface.h"
 #include <ros/callback_queue.h>
-#include <ros/callback_queue_interface.h>
 #include <std_msgs/String.h>
 //#include <ros/subscribe_options.h>
 //#include "subscriber.h"
@@ -62,7 +62,7 @@ class RosCanNode {
 
     private:
         std::string name_;
-        ros::CallbackQueueInterface* callback_queue_;
+        //ros::CallbackQueueInterface* callback_queue_;
         //NodeBackingCollection* collection_;
 };
 

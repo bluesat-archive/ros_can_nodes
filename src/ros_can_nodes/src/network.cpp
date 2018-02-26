@@ -25,8 +25,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "network.h"
 #include "common.h"
+#include "network.h"
 #include <ifaddrs.h>
 #include <boost/lexical_cast.hpp>
 #include <ros/assert.h>

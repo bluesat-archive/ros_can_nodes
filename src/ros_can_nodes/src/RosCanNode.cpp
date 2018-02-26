@@ -1,5 +1,5 @@
-#include "RosCanNode.h"
 #include "common.h"
+#include "RosCanNode.h"
 #include <iostream>
 //#include "subscriber.h"
 //#include <ros/subscribe_options.h>
@@ -34,7 +34,7 @@ RosCanNode::RosCanNode(std::string name) : name_(name) {
     xmlrpcManager->start();
 
     //collection_ = new NodeBackingCollection;
-    callback_queue_ = new ros::CallbackQueue;
+    //callback_queue_ = new ros::CallbackQueue;
 }
 
 /*

@@ -8,7 +8,7 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the names of Willow Garage, Inc. nor the names of its
+ *   * Neither the names of Stanford University or Willow Garage, Inc. nor the names of its
  *     contributors may be used to endorse or promote products derived from
  *     this software without specific prior written permission.
  *
@@ -25,39 +25,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCAN_POLL_MANAGER_H
-#define ROSCAN_POLL_MANAGER_H
-
 #include "common.h"
-#include <ros/poll_set.h>
+#include "single_subscriber_publisher.h"
+#include "subscriber_link.h"
 
 namespace roscan {
 
-class PollManager {
-    public:
-        PollManager() : shutting_down_(false) {}
-        ~PollManager() { shutdown(); }
+void SingleSubscriberPublisher::publish(const ros::SerializedMessage& m) const {
+    link_->enqueueMessage(m, true, true);
+}
 
-        ros::PollSet& getPollSet() { return poll_set_; }
+std::string SingleSubscriberPublisher::getTopic() const {
+    return link_->getTopic();
+}
 
-        boost::signals2::connection addPollThreadListener(const ros::VoidFunc& func);
-        void removePollThreadListener(boost::signals2::connection c);
-
-        void start();
-        void shutdown();
-
-    private:
-        void threadFunc();
-
-        ros::PollSet poll_set_;
-        volatile bool shutting_down_;
-
-        ros::VoidSignal poll_signal_;
-        boost::recursive_mutex signal_mutex_;
-
-        boost::thread thread_;
-};
+std::string SingleSubscriberPublisher::getSubscriberName() const {
+    return link_->getDestinationCallerID();
+}
 
 } // namespace roscan
-
-#endif // ROSCAN_POLL_MANAGER_H

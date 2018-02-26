@@ -32,27 +32,26 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "common.h"
 #include "subscription.h"
 #include "RosCanNode.h"
 #include "connection_manager.h"
 #include "network.h"
 #include "poll_manager.h"
+#include "publication.h"
 #include "publisher_link.h"
 #include "transport_publisher_link.h"
-#include "common.h"
-#include <typeinfo>
+#include "intraprocess_publisher_link.h"
+#include "intraprocess_subscriber_link.h"
+#include "callback_queue_interface.h"
+#include "subscription_queue.h"
 #include <cerrno>
 #include <fcntl.h>
-#include <ros/callback_queue_interface.h>
 #include <ros/connection.h>
 #include <ros/file_log.h>
-#include <ros/intraprocess_publisher_link.h>
-#include <ros/intraprocess_subscriber_link.h>
 #include <ros/io.h>
 #include <ros/message_deserializer.h>
-#include <ros/publication.h>
 #include <ros/subscription_callback_helper.h>
-#include <ros/subscription_queue.h>
 #include <ros/transport/transport_tcp.h>
 #include <ros/transport/transport_udp.h>
 #include <ros/transport_hints.h>
@@ -147,7 +146,7 @@ void Subscription::dropAllConnections() {
     }
 }
 
-void Subscription::addLocalConnection(const ros::PublicationPtr& pub) {
+void Subscription::addLocalConnection(const PublicationPtr& pub) {
     boost::mutex::scoped_lock lock(publisher_links_mutex_);
     if (dropped_) {
         return;
@@ -155,8 +154,8 @@ void Subscription::addLocalConnection(const ros::PublicationPtr& pub) {
 
     ROSCPP_LOG_DEBUG("Creating intraprocess link for topic [%s]", name_.c_str());
 
-    ros::IntraProcessPublisherLinkPtr pub_link(boost::make_shared<ros::IntraProcessPublisherLink>(shared_from_this(), node_->xmlrpcManager->getServerURI(), transport_hints_));
-    ros::IntraProcessSubscriberLinkPtr sub_link(boost::make_shared<ros::IntraProcessSubscriberLink>(pub));
+    IntraProcessPublisherLinkPtr pub_link(boost::make_shared<IntraProcessPublisherLink>(node_, shared_from_this(), node_->xmlrpcManager->getServerURI(), transport_hints_));
+    IntraProcessSubscriberLinkPtr sub_link(boost::make_shared<IntraProcessSubscriberLink>(node_, pub));
     pub_link->setPublisher(sub_link);
     sub_link->setSubscriber(pub_link);
 
@@ -567,7 +566,7 @@ uint32_t Subscription::handleMessage(const ros::SerializedMessage& m, bool ser, 
     return drops;
 }
 
-bool Subscription::addCallback(const ros::SubscriptionCallbackHelperPtr& helper, const std::string& md5sum, ros::CallbackQueueInterface* queue, int32_t queue_size, const ros::VoidConstPtr& tracked_object, bool allow_concurrent_callbacks) {
+bool Subscription::addCallback(const ros::SubscriptionCallbackHelperPtr& helper, const std::string& md5sum, CallbackQueueInterface* queue, int32_t queue_size, const ros::VoidConstPtr& tracked_object, bool allow_concurrent_callbacks) {
     ROS_ASSERT(helper);
     ROS_ASSERT(queue);
 
@@ -591,7 +590,7 @@ bool Subscription::addCallback(const ros::SubscriptionCallbackHelperPtr& helper,
         CallbackInfoPtr info(boost::make_shared<CallbackInfo>());
         info->helper_ = helper;
         info->callback_queue_ = queue;
-        info->subscription_queue_ = boost::make_shared<ros::SubscriptionQueue>(name_, queue_size, allow_concurrent_callbacks);
+        info->subscription_queue_ = boost::make_shared<SubscriptionQueue>(name_, queue_size, allow_concurrent_callbacks);
         info->tracked_object_ = tracked_object;
         info->has_tracked_object_ = false;
         if (tracked_object) {

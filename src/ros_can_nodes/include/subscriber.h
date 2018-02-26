@@ -28,17 +28,11 @@
 #ifndef ROSCAN_SUBSCRIBER_HANDLE_H
 #define ROSCAN_SUBSCRIBER_HANDLE_H
 
-#include "RosCanNode.h"
 #include "common.h"
+#include "RosCanNode.h"
 #include <ros/subscription_callback_helper.h>
 
 namespace roscan {
-
-class RosCanNode;
-typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
-
-class Subscriber;
-typedef std::vector<Subscriber> V_Subscriber;
 
 // Manages an subscription callback on a specific topic.
 // A Subscriber should always be created through a call to NodeHandle::subscribe(), or copied from one
