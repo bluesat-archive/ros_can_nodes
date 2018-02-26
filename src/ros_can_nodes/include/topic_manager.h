@@ -43,8 +43,6 @@
 
 namespace roscan {
 
-typedef std::vector<std::string> V_string;
-
 class TopicManager {
     public:
         TopicManager() : shutting_down_(false) {}

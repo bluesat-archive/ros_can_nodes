@@ -74,6 +74,7 @@ class ConnectionManager {
         bool onConnectionHeaderReceived(const ros::ConnectionPtr& conn, const ros::Header& header);
         void tcprosAcceptConnection(const ros::TransportTCPPtr& transport);
 
+        RosCanNodePtr node_;
         PollManagerPtr poll_manager_;
 
         ros::S_Connection connections_;

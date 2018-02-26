@@ -30,17 +30,18 @@
 #include "RosCanNode.h"
 #include "network.h"
 #include "poll_manager.h"
+#include "transport_subscriber_link.h"
 #include <ros/assert.h>
 #include <ros/connection.h>
 #include <ros/file_log.h>
 #include <ros/service_client_link.h>
 #include <ros/transport/transport_tcp.h>
 #include <ros/transport/transport_udp.h>
-#include <ros/transport_subscriber_link.h>
 
 namespace roscan {
 
 void ConnectionManager::start(const RosCanNodePtr& node) {
+    node_ = node;
     poll_manager_ = node->pollManager;
     poll_conn_ = poll_manager_->addPollThreadListener(boost::bind(&ConnectionManager::removeDroppedConnections, this));
 
@@ -161,7 +162,7 @@ bool ConnectionManager::onConnectionHeaderReceived(const ros::ConnectionPtr& con
     if (header.getValue("topic", val)) {
         ROSCPP_CONN_LOG_DEBUG("Connection: Creating TransportSubscriberLink for topic [%s] connected to [%s]", val.c_str(), conn->getRemoteString().c_str());
 
-        ros::TransportSubscriberLinkPtr sub_link(boost::make_shared<ros::TransportSubscriberLink>());
+        TransportSubscriberLinkPtr sub_link(boost::make_shared<TransportSubscriberLink>(node_));
         sub_link->initialize(conn);
         ret = sub_link->handleHeader(header);
     } else if (header.getValue("service", val)) {

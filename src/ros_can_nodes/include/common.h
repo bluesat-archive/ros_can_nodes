@@ -16,6 +16,7 @@
 #include <boost/thread.hpp>
 #include <boost/function.hpp>
 #include <boost/signals2.hpp>
+#include <boost/signals2/connection.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_array.hpp>
@@ -71,6 +72,9 @@ class CallbackQueue;
 } // namespace ros
 
 namespace roscan {
+
+typedef std::vector<std::string> V_string;
+typedef std::map<std::string, std::string> M_string;
 
 class RosCanNode;
 typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;

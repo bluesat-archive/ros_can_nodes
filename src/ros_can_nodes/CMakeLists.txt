@@ -127,6 +127,7 @@ add_executable(ros_can_nodes
     src/subscription.cpp
     src/subscriber.cpp
     src/subscriber_link.cpp
+    src/transport_subscriber_link.cpp
     src/intraprocess_subscriber_link.cpp
     src/single_subscriber_publisher.cpp
     src/subscription_queue.cpp
