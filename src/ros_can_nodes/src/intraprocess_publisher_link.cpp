@@ -40,7 +40,6 @@
 #include <ros/connection.h>
 #include <ros/file_log.h>
 #include <ros/header.h>
-#include <ros/this_node.h>
 #include <ros/transport/transport.h>
 
 namespace roscan {

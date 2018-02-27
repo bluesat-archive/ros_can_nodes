@@ -3,15 +3,20 @@
 #include <iostream>
 //#include "subscriber.h"
 //#include <ros/subscribe_options.h>
+#include <ros/callback_queue.h>
 #include <unistd.h>
 
 namespace roscan {
 
 RosCanNode::RosCanNode(std::string name) : name_(name) {
-    RosCanNodePtr nodeptr = boost::make_shared<RosCanNode>(*this);
+    g_internal_callback_queue.reset(new ros::CallbackQueue);
 
-    std::cout << "  Creating xmlrpc manager\n";
-    xmlrpcManager.reset(new XMLRPCManager);
+    //collection_ = new NodeBackingCollection;
+    //callback_queue_ = new ros::CallbackQueue;
+}
+
+void RosCanNode::start() {
+    RosCanNodePtr nodeptr = shared_from_this();
 
     std::cout << "  Creating poll manager\n";
     pollManager.reset(new PollManager);
@@ -23,18 +28,11 @@ RosCanNode::RosCanNode(std::string name) : name_(name) {
     std::cout << "  Starting connection manager\n";
     connectionManager->start(nodeptr);
 
-    std::cout << "  Creating topic manager\n";
-    topicManager.reset(new TopicManager);
-    std::cout << "  Starting topic manager\n";
-    topicManager->start(nodeptr);
-    std::cout << "  Done!\n";
-
+    std::cout << "  Creating xmlrpc manager\n";
+    xmlrpcManager.reset(new XMLRPCManager);
     // xmlrpc manager must be started _after_ all functions are bound to it
     std::cout << "  Starting xmlrpc manager\n";
     xmlrpcManager->start();
-
-    //collection_ = new NodeBackingCollection;
-    //callback_queue_ = new ros::CallbackQueue;
 }
 
 /*

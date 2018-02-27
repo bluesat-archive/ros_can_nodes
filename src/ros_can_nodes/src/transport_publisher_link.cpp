@@ -44,8 +44,6 @@
 #include <ros/file_log.h>
 #include <ros/header.h>
 #include <ros/internal_timer_manager.h>
-#include <ros/platform.h> // platform dependendant requirements
-#include <ros/this_node.h>
 #include <ros/timer_manager.h>
 #include <ros/transport/transport.h>
 #include <ros/transport/transport_tcp.h>
@@ -209,8 +207,6 @@ void TransportPublisherLink::onRetryTimer(const ros::SteadyTimerEvent&) {
     }
 }
 
-ros::CallbackQueuePtr getInternalCallbackQueue();
-
 void TransportPublisherLink::onConnectionDropped(const ros::ConnectionPtr& conn, ros::Connection::DropReason reason) {
     (void)conn;
     if (dropping_) {
@@ -236,7 +232,7 @@ void TransportPublisherLink::onConnectionDropped(const ros::ConnectionPtr& conn,
             // shared_from_this() shared_ptr is used to ensure TransportPublisherLink is not
             // destroyed in the middle of onRetryTimer execution
             retry_timer_handle_ = ros::getInternalTimerManager()->add(ros::WallDuration(retry_period_),
-                                                                 boost::bind(&TransportPublisherLink::onRetryTimer, this, _1), getInternalCallbackQueue().get(),
+                                                                 boost::bind(&TransportPublisherLink::onRetryTimer, this, _1), node_->getInternalCallbackQueue().get(),
                                                                  shared_from_this(), false);
         } else {
             ros::getInternalTimerManager()->setPeriod(retry_timer_handle_, retry_period_);

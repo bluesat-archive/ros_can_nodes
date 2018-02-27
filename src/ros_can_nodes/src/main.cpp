@@ -9,6 +9,7 @@ int main() {
     std::cout << "Creating new node\n";
     RosCanNodePtr node;
     node.reset(new RosCanNode("bob"));
+    node->start();
     std::cout << node->xmlrpcManager->getServerURI() << std::endl;
 
     // mini shell for testing lel

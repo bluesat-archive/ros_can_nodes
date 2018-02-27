@@ -14,21 +14,6 @@
 
 namespace roscan {
 
-class RosCanNode;
-typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
-
-class TopicManager;
-typedef boost::shared_ptr<TopicManager> TopicManagerPtr;
-
-class PollManager;
-typedef boost::shared_ptr<PollManager> PollManagerPtr;
-
-class XMLRPCManager;
-typedef boost::shared_ptr<XMLRPCManager> XMLRPCManagerPtr;
-
-class ConnectionManager;
-typedef boost::shared_ptr<ConnectionManager> ConnectionManagerPtr;
-
 class NodeBackingCollection {
     public:
         //typedef std::vector<Publisher::ImplWPtr> V_PubImpl;
@@ -43,7 +28,7 @@ class NodeBackingCollection {
         boost::mutex mutex_;
 };
 
-class RosCanNode {
+class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
     public:
         RosCanNode(std::string name);
         ~RosCanNode() { xmlrpcManager->shutdown(); }
@@ -60,10 +45,18 @@ class RosCanNode {
 
         //void subChatterCallback(const boost::shared_ptr<std_msgs::String const>&);
 
+        ros::CallbackQueuePtr getInternalCallbackQueue() { return g_internal_callback_queue; }
+
+        void start();
+
     private:
         std::string name_;
         //ros::CallbackQueueInterface* callback_queue_;
         //NodeBackingCollection* collection_;
+
+        ros::CallbackQueuePtr g_global_queue;
+        //ROSOutAppender* g_rosout_appender;
+        ros::CallbackQueuePtr g_internal_callback_queue;
 };
 
 } // namespace roscan
