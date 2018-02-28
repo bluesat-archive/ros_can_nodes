@@ -45,7 +45,7 @@ IntraProcessSubscriberLink::IntraProcessSubscriberLink(const RosCanNodePtr& node
 void IntraProcessSubscriberLink::setSubscriber(const IntraProcessPublisherLinkPtr& subscriber) {
     subscriber_ = subscriber;
     connection_id_ = node_->connection_manager()->getNewConnectionID();
-    destination_caller_id_ = "intraname";//this_node::getName(); // TODO this_node
+    destination_caller_id_ = node_->getName();
 }
 
 bool IntraProcessSubscriberLink::isLatching() {

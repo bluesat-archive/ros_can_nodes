@@ -87,7 +87,7 @@ bool TransportSubscriberLink::handleHeader(const ros::Header& header) {
     m["type"] = pt->getDataType();
     m["md5sum"] = pt->getMD5Sum();
     m["message_definition"] = pt->getMessageDefinition();
-    m["callerid"] = std::string("transport_subscriber_link");//this_node::getName(); TODO this_node
+    m["callerid"] = node_->getName();
     m["latching"] = pt->isLatching() ? "1" : "0";
     m["topic"] = topic_;
     connection_->writeHeader(m, boost::bind(&TransportSubscriberLink::onHeaderWritten, this, _1));

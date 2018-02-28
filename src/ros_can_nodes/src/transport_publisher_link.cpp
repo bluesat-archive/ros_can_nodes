@@ -76,7 +76,7 @@ bool TransportPublisherLink::initialize(const ros::ConnectionPtr& connection) {
         ros::M_string header;
         header["topic"] = parent->getName();
         header["md5sum"] = parent->md5sum();
-        header["callerid"] = "transport publisher_link";//this_node::getName();// TODO this_node
+        header["callerid"] = node_->getName();
         header["type"] = parent->datatype();
         header["tcp_nodelay"] = transport_hints_.getTCPNoDelay() ? "1" : "0";
         connection_->writeHeader(header, boost::bind(&TransportPublisherLink::onHeaderWritten, this, _1));

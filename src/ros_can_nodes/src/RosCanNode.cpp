@@ -17,7 +17,6 @@ RosCanNode::RosCanNode(std::string name) : name_(name) {
 
 const TopicManagerPtr& RosCanNode::topic_manager() {
     if (!topicManager) {
-        std::cout << "  Creating topic manager\n";
         topicManager.reset(new TopicManager(shared_from_this()));
     }
     return topicManager;
@@ -25,7 +24,6 @@ const TopicManagerPtr& RosCanNode::topic_manager() {
 
 const ConnectionManagerPtr& RosCanNode::connection_manager() {
     if (!connectionManager) {
-        std::cout << "  Creating connection manager\n";
         connectionManager.reset(new ConnectionManager(shared_from_this()));
     }
     return connectionManager;
@@ -33,7 +31,6 @@ const ConnectionManagerPtr& RosCanNode::connection_manager() {
 
 const PollManagerPtr& RosCanNode::poll_manager() {
     if (!pollManager) {
-        std::cout << "  Creating poll manager\n";
         pollManager.reset(new PollManager());
     }
     return pollManager;
@@ -41,7 +38,6 @@ const PollManagerPtr& RosCanNode::poll_manager() {
 
 const XMLRPCManagerPtr& RosCanNode::xmlrpc_manager() {
     if (!xmlrpcManager) {
-        std::cout << "  Creating xmlrpc manager\n";
         xmlrpcManager.reset(new XMLRPCManager());
     }
     return xmlrpcManager;

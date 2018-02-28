@@ -52,7 +52,7 @@ void IntraProcessPublisherLink::setPublisher(const IntraProcessSubscriberLinkPtr
 
     ros::Header header;
     ros::M_stringPtr values = header.getValues();
-    (*values)["callerid"] = "intraname";//this_node::getName(); // TODO this_node
+    (*values)["callerid"] = node_->getName();
     (*values)["topic"] = parent->getName();
     (*values)["type"] = publisher->getDataType();
     (*values)["md5sum"] = publisher->getMD5Sum();

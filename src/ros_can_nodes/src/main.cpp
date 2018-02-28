@@ -8,7 +8,8 @@ int main() {
 
     std::cout << "Creating new node\n";
     RosCanNodePtr node;
-    node.reset(new RosCanNode("bob"));
+    node.reset(new RosCanNode("mynode1"));
+    std::cout << "Created node \"" << node->getName() << "\"\n";
     node->start();
     std::cout << node->xmlrpc_manager()->getServerURI() << std::endl;
 
