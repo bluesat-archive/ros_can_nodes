@@ -41,7 +41,7 @@ Publisher::~Publisher() {
 void Publisher::unadvertise() {
     if (!unadvertised_) {
         unadvertised_ = true;
-        node_->topicManager->unadvertise(topic_, callbacks_);
+        node_->topic_manager()->unadvertise(topic_, callbacks_);
         node_.reset();
         node_handle_.reset();
     }
@@ -52,12 +52,12 @@ void Publisher::publish(const boost::function<ros::SerializedMessage(void)>& ser
         ROS_ASSERT_MSG(false, "Call to publish() on an invalid Publisher (topic [%s])", topic_.c_str());
         return;
     }
-    node_->topicManager->publish(topic_, serfunc, m);
+    node_->topic_manager()->publish(topic_, serfunc, m);
 }
 
 void Publisher::incrementSequence() const {
     if (!unadvertised_) {
-        node_->topicManager->incrementSequence(topic_);
+        node_->topic_manager()->incrementSequence(topic_);
     }
 }
 
@@ -76,7 +76,7 @@ std::string Publisher::getTopic() const {
 
 uint32_t Publisher::getNumSubscribers() const {
     if (!unadvertised_) {
-        return node_->topicManager->getNumSubscribers(topic_);
+        return node_->topic_manager()->getNumSubscribers(topic_);
     }
     return 0;
 }
@@ -84,7 +84,7 @@ uint32_t Publisher::getNumSubscribers() const {
 bool Publisher::isLatched() const {
     PublicationPtr publication_ptr;
     if (!unadvertised_) {
-        publication_ptr = node_->topicManager->lookupPublication(topic_);
+        publication_ptr = node_->topic_manager()->lookupPublication(topic_);
     } else {
         ROS_ASSERT_MSG(false, "Call to isLatched() on an invalid Publisher");
         throw ros::Exception("Call to isLatched() on an invalid Publisher");

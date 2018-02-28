@@ -41,7 +41,7 @@ namespace roscan {
 
 class ConnectionManager {
     public:
-        ConnectionManager() : connection_id_counter_(0) {}
+        ConnectionManager(const RosCanNodePtr& node) : node_(node), connection_id_counter_(0) {}
         ~ConnectionManager() { shutdown(); }
 
         // Get a new connection ID
@@ -60,7 +60,7 @@ class ConnectionManager {
 
         void udprosIncomingConnection(const ros::TransportUDPPtr& transport, ros::Header& header);
 
-        void start(const RosCanNodePtr& node);
+        void start();
         void shutdown();
 
     private:

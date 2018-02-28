@@ -189,15 +189,13 @@ void TransportPublisherLink::onRetryTimer(const ros::SteadyTimerEvent&) {
 
             ROSCPP_CONN_LOG_DEBUG("Retrying connection to [%s:%d] for topic [%s]", host.c_str(), port, topic.c_str());
 
-            //ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&PollManager::instance()->getPollSet()));
-            ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&node_->pollManager->getPollSet()));
+            ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&node_->poll_manager()->getPollSet()));
             if (transport->connect(host, port)) {
                 ros::ConnectionPtr connection(boost::make_shared<ros::Connection>());
                 connection->initialize(transport, false, ros::HeaderReceivedFunc());
                 initialize(connection);
 
-                //ConnectionManager::instance()->addConnection(connection);
-                node_->connectionManager->addConnection(connection);
+                node_->connection_manager()->addConnection(connection);
             } else {
                 ROSCPP_CONN_LOG_DEBUG("connect() failed when retrying connection to [%s:%d] for topic [%s]", host.c_str(), port, topic.c_str());
             }

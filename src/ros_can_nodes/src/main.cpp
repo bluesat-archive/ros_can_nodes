@@ -10,7 +10,7 @@ int main() {
     RosCanNodePtr node;
     node.reset(new RosCanNode("bob"));
     node->start();
-    std::cout << node->xmlrpcManager->getServerURI() << std::endl;
+    std::cout << node->xmlrpc_manager()->getServerURI() << std::endl;
 
     // mini shell for testing lel
     while (1) {
@@ -20,12 +20,12 @@ int main() {
         if (s == "exit") {
             break;
         } else if (s == "checkMaster") {
-            std::cout << node->xmlrpcManager->checkMaster() << std::endl;
+            std::cout << node->xmlrpc_manager()->checkMaster() << std::endl;
         } else if (s == "getMasterURI") {
-            std::cout << node->xmlrpcManager->getMasterURI() << std::endl;
+            std::cout << node->xmlrpc_manager()->getMasterURI() << std::endl;
         } else if (s == "getAllNodes") {
             std::vector<std::string> nodes;
-            if (node->xmlrpcManager->getAllNodes(nodes)) {
+            if (node->xmlrpc_manager()->getAllNodes(nodes)) {
                 for (std::string& node : nodes) {
                     std::cout << node << std::endl;
                 }
@@ -37,7 +37,7 @@ int main() {
             std::string subgraph;
             getline(std::cin, subgraph);
             std::vector<XMLRPCManager::TopicInfo> topics;
-            if (node->xmlrpcManager->getAllTopics(subgraph, topics)) {
+            if (node->xmlrpc_manager()->getAllTopics(subgraph, topics)) {
                 for (XMLRPCManager::TopicInfo& topic : topics) {
                     std::cout << topic.name << " (" << topic.datatype << ")" << std::endl;
                 }

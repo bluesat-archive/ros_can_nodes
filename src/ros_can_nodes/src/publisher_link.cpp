@@ -66,7 +66,7 @@ bool PublisherLink::setHeader(const ros::Header& header) {
         }
     }
 
-    connection_id_ = node_->connectionManager->getNewConnectionID();
+    connection_id_ = node_->connection_manager()->getNewConnectionID();
     header_ = header;
 
     if (SubscriptionPtr parent = parent_.lock()) {

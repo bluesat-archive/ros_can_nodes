@@ -58,7 +58,7 @@ bool TransportSubscriberLink::handleHeader(const ros::Header& header) {
     // This will get validated by validateHeader below
     std::string client_callerid;
     header.getValue("callerid", client_callerid);
-    PublicationPtr pt = node_->topicManager->lookupPublication(topic);
+    PublicationPtr pt = node_->topic_manager()->lookupPublication(topic);
     if (!pt) {
         std::string msg = std::string("received a connection for a nonexistent topic [") +
                           topic + std::string("] from [" + connection_->getTransport()->getTransportInfo() + "] [" + client_callerid + "].");
@@ -78,7 +78,7 @@ bool TransportSubscriberLink::handleHeader(const ros::Header& header) {
     }
 
     destination_caller_id_ = client_callerid;
-    connection_id_ = node_->connectionManager->getNewConnectionID();
+    connection_id_ = node_->connection_manager()->getNewConnectionID();
     topic_ = pt->getName();
     parent_ = PublicationWPtr(pt);
 

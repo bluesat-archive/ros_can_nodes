@@ -40,9 +40,8 @@
 
 namespace roscan {
 
-void ConnectionManager::start(const RosCanNodePtr& node) {
-    node_ = node;
-    poll_manager_ = node->pollManager;
+void ConnectionManager::start() {
+    poll_manager_ = node_->poll_manager();
     poll_conn_ = poll_manager_->addPollThreadListener(boost::bind(&ConnectionManager::removeDroppedConnections, this));
 
     // Bring up the TCP listener socket

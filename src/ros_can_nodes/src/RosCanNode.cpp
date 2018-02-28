@@ -15,27 +15,48 @@ RosCanNode::RosCanNode(std::string name) : name_(name) {
     //callback_queue_ = new ros::CallbackQueue;
 }
 
+const TopicManagerPtr& RosCanNode::topic_manager() {
+    if (!topicManager) {
+        std::cout << "  Creating topic manager\n";
+        topicManager.reset(new TopicManager(shared_from_this()));
+    }
+    return topicManager;
+}
+
+const ConnectionManagerPtr& RosCanNode::connection_manager() {
+    if (!connectionManager) {
+        std::cout << "  Creating connection manager\n";
+        connectionManager.reset(new ConnectionManager(shared_from_this()));
+    }
+    return connectionManager;
+}
+
+const PollManagerPtr& RosCanNode::poll_manager() {
+    if (!pollManager) {
+        std::cout << "  Creating poll manager\n";
+        pollManager.reset(new PollManager());
+    }
+    return pollManager;
+}
+
+const XMLRPCManagerPtr& RosCanNode::xmlrpc_manager() {
+    if (!xmlrpcManager) {
+        std::cout << "  Creating xmlrpc manager\n";
+        xmlrpcManager.reset(new XMLRPCManager());
+    }
+    return xmlrpcManager;
+}
+
 void RosCanNode::start() {
-    RosCanNodePtr nodeptr = shared_from_this();
-
-    std::cout << "  Creating topic manager\n";
-    topicManager.reset(new TopicManager);
-    std::cout << "  Creating connection manager\n";
-    connectionManager.reset(new ConnectionManager);
-    std::cout << "  Creating poll manager\n";
-    pollManager.reset(new PollManager);
-    std::cout << "  Creating xmlrpc manager\n";
-    xmlrpcManager.reset(new XMLRPCManager);
-
     std::cout << "  Starting poll manager\n";
-    pollManager->start();
+    poll_manager()->start();
     std::cout << "  Starting connection manager\n";
-    connectionManager->start(nodeptr);
+    connection_manager()->start();
     std::cout << "  Starting topic manager\n";
-    topicManager->start(nodeptr);
+    topic_manager()->start();
     // xmlrpc manager must be started _after_ all functions are bound to it
     std::cout << "  Starting xmlrpc manager\n";
-    xmlrpcManager->start();
+    xmlrpc_manager()->start();
 }
 
 /*

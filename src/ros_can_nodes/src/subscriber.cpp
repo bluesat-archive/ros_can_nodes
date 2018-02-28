@@ -33,7 +33,7 @@ namespace roscan {
 void Subscriber::shutdown() {
     if (!unsubscribed_) {
         unsubscribed_ = true;
-        node_->topicManager->unsubscribe(topic_, helper_);
+        node_->topic_manager()->unsubscribe(topic_, helper_);
         node_.reset();
         helper_.reset();
     }
@@ -48,7 +48,7 @@ std::string Subscriber::getTopic() const {
 
 uint32_t Subscriber::getNumPublishers() const {
     if (!unsubscribed_) {
-        return node_->topicManager->getNumPublishers(topic_);
+        return node_->topic_manager()->getNumPublishers(topic_);
     }
     return 0;
 }

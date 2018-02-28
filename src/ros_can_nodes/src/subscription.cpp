@@ -154,7 +154,7 @@ void Subscription::addLocalConnection(const PublicationPtr& pub) {
 
     ROSCPP_LOG_DEBUG("Creating intraprocess link for topic [%s]", name_.c_str());
 
-    IntraProcessPublisherLinkPtr pub_link(boost::make_shared<IntraProcessPublisherLink>(node_, shared_from_this(), node_->xmlrpcManager->getServerURI(), transport_hints_));
+    IntraProcessPublisherLinkPtr pub_link(boost::make_shared<IntraProcessPublisherLink>(node_, shared_from_this(), node_->xmlrpc_manager()->getServerURI(), transport_hints_));
     IntraProcessSubscriberLinkPtr sub_link(boost::make_shared<IntraProcessSubscriberLink>(node_, pub));
     pub_link->setPublisher(sub_link);
     sub_link->setSubscriber(pub_link);
@@ -256,7 +256,7 @@ bool Subscription::pubUpdate(const V_string& new_pubs) {
 
     for (V_PublisherLink::iterator i = subtractions.begin(); i != subtractions.end(); ++i) {
         const PublisherLinkPtr& link = *i;
-        if (link->getPublisherXMLRPCURI() != node_->xmlrpcManager->getServerURI()) {
+        if (link->getPublisherXMLRPCURI() != node_->xmlrpc_manager()->getServerURI()) {
             ROSCPP_LOG_DEBUG("Disconnecting from publisher [%s] of topic [%s] at [%s]",
                              link->getCallerID().c_str(), name_.c_str(), link->getPublisherXMLRPCURI().c_str());
             link->drop();
@@ -267,10 +267,10 @@ bool Subscription::pubUpdate(const V_string& new_pubs) {
 
     for (V_string::iterator i = additions.begin(); i != additions.end(); ++i) {
         // this function should never negotiate a self-subscription
-        if (node_->xmlrpcManager->getServerURI() != *i) {
+        if (node_->xmlrpc_manager()->getServerURI() != *i) {
             retval &= negotiateConnection(*i);
         } else {
-            ROSCPP_LOG_DEBUG("Skipping myself (%s, %s)", name_.c_str(), node_->xmlrpcManager->getServerURI().c_str());
+            ROSCPP_LOG_DEBUG("Skipping myself (%s, %s)", name_.c_str(), node_->xmlrpc_manager()->getServerURI().c_str());
         }
     }
 
@@ -290,7 +290,7 @@ bool Subscription::negotiateConnection(const std::string& xmlrpc_uri) {
     for (V_string::const_iterator it = transports.begin(); it != transports.end(); ++it) {
         if (*it == "UDP") {
             int max_datagram_size = transport_hints_.getMaxDatagramSize();
-            udp_transport = boost::make_shared<ros::TransportUDP>(&node_->pollManager->getPollSet());
+            udp_transport = boost::make_shared<ros::TransportUDP>(&node_->poll_manager()->getPollSet());
             if (!max_datagram_size)
                 max_datagram_size = udp_transport->getMaxDatagramSize();
             udp_transport->createIncoming(0, false);
@@ -348,7 +348,7 @@ bool Subscription::negotiateConnection(const std::string& xmlrpc_uri) {
     // destruction.
     PendingConnectionPtr conn(boost::make_shared<PendingConnection>(c, udp_transport, shared_from_this(), xmlrpc_uri));
 
-    node_->xmlrpcManager->addASyncConnection(conn);
+    node_->xmlrpc_manager()->addASyncConnection(conn);
     // Put this connection on the list that we'll look at later.
     {
         boost::mutex::scoped_lock pending_connections_lock(pending_connections_mutex_);
@@ -385,7 +385,7 @@ void Subscription::pendingConnectionDone(const PendingConnectionPtr& conn, XmlRp
     udp_transport = conn->getUDPTransport();
 
     XmlRpc::XmlRpcValue proto;
-    if (!node_->xmlrpcManager->validateXmlrpcResponse("requestTopic", result, proto)) {
+    if (!node_->xmlrpc_manager()->validateXmlrpcResponse("requestTopic", result, proto)) {
         ROSCPP_LOG_DEBUG("Failed to contact publisher [%s:%d] for topic [%s]", peer_host.c_str(), peer_port, name_.c_str());
         closeTransport(udp_transport);
         return;
@@ -421,7 +421,7 @@ void Subscription::pendingConnectionDone(const PendingConnectionPtr& conn, XmlRp
         int pub_port = proto[2];
         ROSCPP_CONN_LOG_DEBUG("Connecting via tcpros to topic [%s] at host [%s:%d]", name_.c_str(), pub_host.c_str(), pub_port);
 
-        ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&node_->pollManager->getPollSet()));
+        ros::TransportTCPPtr transport(boost::make_shared<ros::TransportTCP>(&node_->poll_manager()->getPollSet()));
         if (transport->connect(pub_host, pub_port)) {
             ros::ConnectionPtr connection(boost::make_shared<ros::Connection>());
             TransportPublisherLinkPtr pub_link(boost::make_shared<TransportPublisherLink>(node_, shared_from_this(), xmlrpc_uri, transport_hints_));
@@ -429,7 +429,7 @@ void Subscription::pendingConnectionDone(const PendingConnectionPtr& conn, XmlRp
             connection->initialize(transport, false, ros::HeaderReceivedFunc());
             pub_link->initialize(connection);
 
-            node_->connectionManager->addConnection(connection);
+            node_->connection_manager()->addConnection(connection);
 
             boost::mutex::scoped_lock lock(publisher_links_mutex_);
             addPublisherLink(pub_link);
@@ -480,7 +480,7 @@ void Subscription::pendingConnectionDone(const PendingConnectionPtr& conn, XmlRp
             connection->setHeader(h);
             pub_link->initialize(connection);
 
-            node_->connectionManager->addConnection(connection);
+            node_->connection_manager()->addConnection(connection);
 
             boost::mutex::scoped_lock lock(publisher_links_mutex_);
             addPublisherLink(pub_link);

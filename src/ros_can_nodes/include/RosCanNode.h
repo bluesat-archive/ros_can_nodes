@@ -32,10 +32,6 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
     public:
         RosCanNode(std::string name);
         ~RosCanNode() { xmlrpcManager->shutdown(); }
-        XMLRPCManagerPtr xmlrpcManager;
-        PollManagerPtr pollManager;
-        ConnectionManagerPtr connectionManager;
-        TopicManagerPtr topicManager;
 
         inline const std::string getName() const { return name_; }
 
@@ -49,8 +45,19 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
 
         void start();
 
+        const TopicManagerPtr& topic_manager();
+        const ConnectionManagerPtr& connection_manager();
+        const PollManagerPtr& poll_manager();
+        const XMLRPCManagerPtr& xmlrpc_manager();
+
     private:
         std::string name_;
+
+        TopicManagerPtr topicManager;
+        ConnectionManagerPtr connectionManager;
+        PollManagerPtr pollManager;
+        XMLRPCManagerPtr xmlrpcManager;
+
         //ros::CallbackQueueInterface* callback_queue_;
         //NodeBackingCollection* collection_;
 

@@ -49,14 +49,13 @@ using namespace XmlRpc; // A battle to be fought later
 
 namespace roscan {
 
-void TopicManager::start(const RosCanNodePtr& node) {
+void TopicManager::start() {
     boost::mutex::scoped_lock shutdown_lock(shutting_down_mutex_);
     shutting_down_ = false;
 
-    node_ = node;
-    poll_manager_ = node_->pollManager;
-    connection_manager_ = node_->connectionManager;
-    xmlrpc_manager_ = node_->xmlrpcManager;
+    poll_manager_ = node_->poll_manager();
+    connection_manager_ = node_->connection_manager();
+    xmlrpc_manager_ = node_->xmlrpc_manager();
 
     xmlrpc_manager_->bind("publisherUpdate", boost::bind(&TopicManager::pubUpdateCallback, this, _1, _2));
     xmlrpc_manager_->bind("requestTopic", boost::bind(&TopicManager::requestTopicCallback, this, _1, _2));

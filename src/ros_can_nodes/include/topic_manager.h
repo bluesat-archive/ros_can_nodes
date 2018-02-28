@@ -45,10 +45,10 @@ namespace roscan {
 
 class TopicManager {
     public:
-        TopicManager() : shutting_down_(false) {}
+        TopicManager(const RosCanNodePtr& node) : node_(node), shutting_down_(false) {}
         ~TopicManager() { shutdown(); }
 
-        void start(const RosCanNodePtr& node);
+        void start();
         void shutdown();
 
         bool subscribe(const SubscribeOptions& ops);
@@ -156,6 +156,8 @@ class TopicManager {
 
         bool isShuttingDown() { return shutting_down_; }
 
+        RosCanNodePtr node_;
+
         boost::mutex subs_mutex_;
         L_Subscription subscriptions_;
 
@@ -166,8 +168,6 @@ class TopicManager {
 
         volatile bool shutting_down_;
         boost::mutex shutting_down_mutex_;
-
-        RosCanNodePtr node_;
 
         PollManagerPtr poll_manager_;
         ConnectionManagerPtr connection_manager_;
