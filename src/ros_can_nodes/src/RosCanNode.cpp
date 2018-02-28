@@ -18,18 +18,21 @@ RosCanNode::RosCanNode(std::string name) : name_(name) {
 void RosCanNode::start() {
     RosCanNodePtr nodeptr = shared_from_this();
 
-    std::cout << "  Creating poll manager\n";
-    pollManager.reset(new PollManager);
-    std::cout << "  Starting poll manager\n";
-    pollManager->start();
-
+    std::cout << "  Creating topic manager\n";
+    topicManager.reset(new TopicManager);
     std::cout << "  Creating connection manager\n";
     connectionManager.reset(new ConnectionManager);
-    std::cout << "  Starting connection manager\n";
-    connectionManager->start(nodeptr);
-
+    std::cout << "  Creating poll manager\n";
+    pollManager.reset(new PollManager);
     std::cout << "  Creating xmlrpc manager\n";
     xmlrpcManager.reset(new XMLRPCManager);
+
+    std::cout << "  Starting poll manager\n";
+    pollManager->start();
+    std::cout << "  Starting connection manager\n";
+    connectionManager->start(nodeptr);
+    std::cout << "  Starting topic manager\n";
+    topicManager->start(nodeptr);
     // xmlrpc manager must be started _after_ all functions are bound to it
     std::cout << "  Starting xmlrpc manager\n";
     xmlrpcManager->start();
