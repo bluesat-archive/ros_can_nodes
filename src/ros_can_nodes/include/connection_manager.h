@@ -31,7 +31,6 @@
 #include "common.h"
 #include "RosCanNode.h"
 #include "poll_manager.h"
-#include <boost/signals2/connection.hpp>
 #include <ros/connection.h>
 #include <ros/header.h>
 

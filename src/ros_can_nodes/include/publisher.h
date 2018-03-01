@@ -32,7 +32,6 @@
 #include "RosCanNode.h"
 #include <ros/message.h>
 #include <ros/serialization.h>
-#include <ros/node_handle.h>
 
 namespace roscan {
 
@@ -110,8 +109,8 @@ class Publisher {
         bool isLatched() const;
 
     private:
-        Publisher(const std::string& topic, const RosCanNodePtr& node, const std::string& md5sum, const std::string& datatype, const ros::NodeHandle& node_handle, const SubscriberCallbacksPtr& callbacks)
-            : topic_(topic), node_(node), md5sum_(md5sum), datatype_(datatype), node_handle_(boost::make_shared<ros::NodeHandle>(node_handle)), callbacks_(callbacks), unadvertised_(false) {}
+        Publisher(const std::string& topic, const RosCanNodePtr& node, const std::string& md5sum, const std::string& datatype, const SubscriberCallbacksPtr& callbacks)
+            : topic_(topic), node_(node), md5sum_(md5sum), datatype_(datatype), callbacks_(callbacks), unadvertised_(false) {}
 
         void publish(const boost::function<ros::SerializedMessage(void)>& serfunc, ros::SerializedMessage& m) const;
         void incrementSequence() const;
@@ -122,12 +121,8 @@ class Publisher {
         RosCanNodePtr node_;
         std::string md5sum_;
         std::string datatype_;
-        ros::NodeHandlePtr node_handle_;
         SubscriberCallbacksPtr callbacks_;
         bool unadvertised_;
-
-        friend class NodeHandle;
-        friend class NodeHandleBackingCollection;
 };
 
 } // namespace roscan

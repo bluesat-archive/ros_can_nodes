@@ -43,7 +43,6 @@ void Publisher::unadvertise() {
         unadvertised_ = true;
         node_->topic_manager()->unadvertise(topic_, callbacks_);
         node_.reset();
-        node_handle_.reset();
     }
 }
 

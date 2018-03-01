@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2009, Willow Garage, Inc.
+ *  Copyright (c) 2008, Willow Garage, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,49 +32,45 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ROSCAN_CALLBACK_QUEUE_INTERFACE_H
-#define ROSCAN_CALLBACK_QUEUE_INTERFACE_H
+#ifndef ROSCAN_ROSOUT_APPENDER_H
+#define ROSCAN_ROSOUT_APPENDER_H
 
 #include "common.h"
+#include "RosCanNode.h"
+#include <ros/message_forward.h>
+#include <ros/console.h>
+
+namespace rosgraph_msgs {
+ROS_DECLARE_MESSAGE(Log);
+}
 
 namespace roscan {
 
-// Abstract interface for items which can be added to a CallbackQueueInterface
-class CallbackInterface {
+class ROSOutAppender : public ros::console::LogAppender {
     public:
-        // Possible results for the call() method
-        enum CallResult {
-            Success,  ///< Call succeeded
-            TryAgain, ///< Call not ready, try again later
-            Invalid,  ///< Call no longer valid
-        };
+        ROSOutAppender(const RosCanNodePtr& node);
+        ~ROSOutAppender();
 
-        virtual ~CallbackInterface() {}
+        const std::string& getLastError() const { return last_error_; }
 
-        // Call this callback
-        // Returns The result of the call
-        virtual CallResult call() = 0;
+        virtual void log(::ros::console::Level level, const char* str, const char* file, const char* function, int line);
 
-        // Provides the opportunity for specifying that a callback is not ready to be called
-        // before call() actually takes place.
-        virtual bool ready() { return true; }
-};
+    protected:
+        void logThread();
 
-// Abstract interface for a queue used to handle all callbacks within roscpp.
-// Allows you to inherit and provide your own implementation that can be used instead of our
-// default CallbackQueue
-class CallbackQueueInterface {
-    public:
-        virtual ~CallbackQueueInterface() {}
+        RosCanNodePtr node_;
 
-        // Add a callback, with an optional owner id.  The owner id can be used to
-        // remove a set of callbacks from this queue.
-        virtual void addCallback(const CallbackInterfacePtr& callback, uint64_t owner_id = 0) = 0;
+        std::string last_error_;
 
-        // Remove all callbacks associated with an owner id
-        virtual void removeByID(uint64_t owner_id) = 0;
+        typedef std::vector<rosgraph_msgs::LogPtr> V_Log;
+        V_Log log_queue_;
+        boost::mutex queue_mutex_;
+        boost::condition_variable queue_condition_;
+        bool shutting_down_;
+
+        boost::thread publish_thread_;
 };
 
 } // namespace roscan
 
-#endif // ROSCAN_CALLBACK_QUEUE_INTERFACE_H
+#endif // ROSCAN_ROSOUT_APPENDER_H

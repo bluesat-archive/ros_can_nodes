@@ -174,7 +174,6 @@ bool ConnectionManager::onConnectionHeaderReceived(const ros::ConnectionPtr& con
         ROSCPP_LOG_DEBUG("Got a connection for a type other than 'topic' or 'service' from [%s].  Fail.", conn->getRemoteString().c_str());
         return false;
     }
-
     return ret;
 }
 

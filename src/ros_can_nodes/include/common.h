@@ -26,9 +26,6 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/bind.hpp>
 
-//#include "exceptions.h"
-//#include <ros/datatypes.h>
-//#include <ros/macros.h>
 //#include <ros/time.h>
 
 namespace ros {
@@ -66,9 +63,9 @@ typedef boost::shared_ptr<Transport> TransportPtr;
 
 class NodeHandle;
 typedef boost::shared_ptr<NodeHandle> NodeHandlePtr;
-
-class CallbackQueue;
 */
+class CallbackQueue;
+
 } // namespace ros
 
 namespace roscan {
@@ -127,6 +124,7 @@ class CallbackInterface;
 typedef boost::shared_ptr<CallbackInterface> CallbackInterfacePtr;
 
 struct SubscribeOptions;
+class ROSOutAppender;
 
 class SubscriptionQueue;
 typedef boost::shared_ptr<SubscriptionQueue> SubscriptionQueuePtr;

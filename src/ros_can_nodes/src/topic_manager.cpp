@@ -38,8 +38,6 @@
 #include <ros/console.h>
 #include <ros/header.h>
 #include <ros/file_log.h>
-#include <ros/rosout_appender.h>
-#include <ros/subscribe_options.h>
 #include <ros/transport/transport_tcp.h>
 #include <ros/transport/transport_udp.h>
 

@@ -1,18 +1,35 @@
 #include "common.h"
 #include "RosCanNode.h"
+#include "rosout_appender.h"
 #include <iostream>
-//#include "subscriber.h"
-//#include <ros/subscribe_options.h>
 #include <ros/callback_queue.h>
+#include <ros/console.h>
 #include <unistd.h>
 
 namespace roscan {
 
-RosCanNode::RosCanNode(std::string name) : name_(name) {
-    g_internal_callback_queue.reset(new ros::CallbackQueue);
+RosCanNode::RosCanNode(std::string name)
+    : name_("/" + name), callback_queue_(0), collection_(new NodeBackingCollection) {
+    g_global_queue.reset(new ros::CallbackQueue);
+}
 
-    //collection_ = new NodeBackingCollection;
-    //callback_queue_ = new ros::CallbackQueue;
+RosCanNode::~RosCanNode() {
+    delete collection_;
+}
+
+ros::CallbackQueuePtr RosCanNode::getInternalCallbackQueue() {
+    if (!g_internal_callback_queue) {
+        g_internal_callback_queue.reset(new ros::CallbackQueue());
+    }
+    return g_internal_callback_queue;
+}
+
+void RosCanNode::getAdvertisedTopics(V_string& topics) {
+    topic_manager()->getAdvertisedTopics(topics);
+}
+
+void RosCanNode::getSubscribedTopics(V_string& topics) {
+    topic_manager()->getSubscribedTopics(topics);
 }
 
 const TopicManagerPtr& RosCanNode::topic_manager() {
@@ -44,15 +61,14 @@ const XMLRPCManagerPtr& RosCanNode::xmlrpc_manager() {
 }
 
 void RosCanNode::start() {
-    std::cout << "  Starting poll manager\n";
     poll_manager()->start();
-    std::cout << "  Starting connection manager\n";
     connection_manager()->start();
-    std::cout << "  Starting topic manager\n";
     topic_manager()->start();
     // xmlrpc manager must be started _after_ all functions are bound to it
-    std::cout << "  Starting xmlrpc manager\n";
     xmlrpc_manager()->start();
+
+    g_rosout_appender = new ROSOutAppender(shared_from_this());
+    ros::console::register_appender(g_rosout_appender);
 }
 
 /*

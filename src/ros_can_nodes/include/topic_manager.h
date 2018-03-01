@@ -37,7 +37,6 @@
 #include "publication.h"
 #include "subscribe_options.h"
 #include <XmlRpcValue.h>
-#include <ros/rosout_appender.h>
 #include <ros/serialization.h>
 #include <ros/advertise_options.h>
 

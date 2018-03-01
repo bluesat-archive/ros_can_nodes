@@ -2,15 +2,14 @@
 #define ROSCANNODE_H
 
 #include "common.h"
-#include "connection_manager.h"
 #include "poll_manager.h"
+#include "connection_manager.h"
 #include "topic_manager.h"
 #include "xmlrpc_manager.h"
 #include "callback_queue_interface.h"
+#include "rosout_appender.h"
 #include <ros/callback_queue.h>
 #include <std_msgs/String.h>
-//#include <ros/subscribe_options.h>
-//#include "subscriber.h"
 
 namespace roscan {
 
@@ -31,7 +30,7 @@ class NodeBackingCollection {
 class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
     public:
         RosCanNode(std::string name);
-        ~RosCanNode() { xmlrpcManager->shutdown(); }
+        ~RosCanNode();
 
         inline const std::string getName() const { return name_; }
 
@@ -41,7 +40,11 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
 
         //void subChatterCallback(const boost::shared_ptr<std_msgs::String const>&);
 
-        ros::CallbackQueuePtr getInternalCallbackQueue() { return g_internal_callback_queue; }
+        ros::CallbackQueuePtr getInternalCallbackQueue();
+        ros::CallbackQueue* getGlobalCallbackQueue() { return g_global_queue.get(); }
+
+        void getAdvertisedTopics(V_string& topics);
+        void getSubscribedTopics(V_string& topics);
 
         void start();
 
@@ -58,11 +61,11 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
         PollManagerPtr pollManager;
         XMLRPCManagerPtr xmlrpcManager;
 
-        //ros::CallbackQueueInterface* callback_queue_;
-        //NodeBackingCollection* collection_;
+        ros::CallbackQueueInterface* callback_queue_;
+        NodeBackingCollection* collection_;
 
         ros::CallbackQueuePtr g_global_queue;
-        //ROSOutAppender* g_rosout_appender;
+        ROSOutAppender* g_rosout_appender;
         ros::CallbackQueuePtr g_internal_callback_queue;
 };
 

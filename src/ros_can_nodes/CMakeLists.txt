@@ -132,6 +132,7 @@ add_executable(ros_can_nodes
     src/intraprocess_subscriber_link.cpp
     src/single_subscriber_publisher.cpp
     src/subscription_queue.cpp
+    src/rosout_appender.cpp
     )
 
 ## Add cmake target dependencies of the executable
