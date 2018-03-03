@@ -1,8 +1,10 @@
 #include "common.h"
 #include "RosCanNode.h"
 #include "rosout_appender.h"
+#include "advertise_options.h"
+#include "callback_queue.h"
+#include "publisher.h"
 #include <iostream>
-#include <ros/callback_queue.h>
 #include <ros/console.h>
 #include <ros/file_log.h>
 #include <ros/transport/transport_tcp.h>
@@ -23,7 +25,7 @@ void RosCanNode::check_ipv6_environment() {
 
 RosCanNode::RosCanNode(std::string name) : name_("/" + name), started_(false), callback_queue_(0), collection_(0) {
     std::cout << "Creating node " << name_ << "\n";
-    g_global_queue.reset(new ros::CallbackQueue);
+    g_global_queue.reset(new CallbackQueue);
     ROSCONSOLE_AUTOINIT;
     check_ipv6_environment();
     collection_ = new NodeBackingCollection;
@@ -52,9 +54,9 @@ RosCanNode::~RosCanNode() {
     }
 }
 
-ros::CallbackQueuePtr RosCanNode::getInternalCallbackQueue() {
+CallbackQueuePtr RosCanNode::getInternalCallbackQueue() {
     if (!g_internal_callback_queue) {
-        g_internal_callback_queue.reset(new ros::CallbackQueue());
+        g_internal_callback_queue.reset(new CallbackQueue);
     }
     return g_internal_callback_queue;
 }
@@ -124,9 +126,8 @@ void RosCanNode::start() {
     started_ = true;
 }
 
-Publisher RosCanNode::advertise(ros::AdvertiseOptions& ops) {
+Publisher RosCanNode::advertise(AdvertiseOptions& ops) {
     //ops.topic = resolveName(ops.topic);
-    /*
     if (ops.callback_queue == 0) {
         if (callback_queue_) {
             ops.callback_queue = callback_queue_;
@@ -142,10 +143,10 @@ Publisher RosCanNode::advertise(ros::AdvertiseOptions& ops) {
 
         {
             boost::mutex::scoped_lock lock(collection_->mutex_);
-            collection_->pubs_.push_back(pub);
+            //collection_->pubs_.push_back(pub);
         }
         return pub;
-    }*/
+    }
     return Publisher();
 }
 

@@ -26,6 +26,7 @@
  */
 
 #include "common.h"
+#include "RosCanNode.h"
 #include "intraprocess_subscriber_link.h"
 #include "intraprocess_publisher_link.h"
 #include "publication.h"

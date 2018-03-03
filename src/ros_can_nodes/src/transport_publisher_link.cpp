@@ -56,7 +56,6 @@ TransportPublisherLink::~TransportPublisherLink() {
     if (retry_timer_handle_ != -1) {
         ros::getInternalTimerManager()->remove(retry_timer_handle_);
     }
-
     connection_->drop(ros::Connection::Destructing);
 }
 
@@ -83,7 +82,6 @@ bool TransportPublisherLink::initialize(const ros::ConnectionPtr& connection) {
     } else {
         connection_->read(4, boost::bind(&TransportPublisherLink::onMessageLength, this, _1, _2, _3, _4));
     }
-
     return true;
 }
 
@@ -116,7 +114,6 @@ bool TransportPublisherLink::onHeaderReceived(const ros::ConnectionPtr& conn, co
     }
 
     connection_->read(4, boost::bind(&TransportPublisherLink::onMessageLength, this, _1, _2, _3, _4));
-
     return true;
 }
 
@@ -147,7 +144,6 @@ void TransportPublisherLink::onMessageLength(const ros::ConnectionPtr& conn, con
         drop();
         return;
     }
-
     connection_->read(len, boost::bind(&TransportPublisherLink::onMessage, this, _1, _2, _3, _4));
 }
 
@@ -229,9 +225,10 @@ void TransportPublisherLink::onConnectionDropped(const ros::ConnectionPtr& conn,
             next_retry_ = ros::SteadyTime::now() + retry_period_;
             // shared_from_this() shared_ptr is used to ensure TransportPublisherLink is not
             // destroyed in the middle of onRetryTimer execution
-            retry_timer_handle_ = ros::getInternalTimerManager()->add(ros::WallDuration(retry_period_),
+            // TODO RESTORE after callback_queue issue resolved
+            /*retry_timer_handle_ = ros::getInternalTimerManager()->add(ros::WallDuration(retry_period_),
                                                                  boost::bind(&TransportPublisherLink::onRetryTimer, this, _1), node_->getInternalCallbackQueue().get(),
-                                                                 shared_from_this(), false);
+                                                                 shared_from_this(), false);*/
         } else {
             ros::getInternalTimerManager()->setPeriod(retry_timer_handle_, retry_period_);
         }

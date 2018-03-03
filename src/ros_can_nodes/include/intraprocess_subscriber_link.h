@@ -29,7 +29,6 @@
 #define ROSCAN_INTRAPROCESS_SUBSCRIBER_LINK_H
 
 #include "common.h"
-#include "RosCanNode.h"
 #include "subscriber_link.h"
 
 namespace roscan {

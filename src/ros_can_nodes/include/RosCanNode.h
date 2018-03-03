@@ -9,8 +9,8 @@
 #include "callback_queue_interface.h"
 #include "rosout_appender.h"
 #include "publisher.h"
-#include <ros/advertise_options.h>
-#include <ros/callback_queue.h>
+#include "advertise_options.h"
+#include "callback_queue.h"
 #include <std_msgs/String.h>
 
 namespace roscan {
@@ -42,8 +42,8 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
 
         //void subChatterCallback(const boost::shared_ptr<std_msgs::String const>&);
 
-        ros::CallbackQueuePtr getInternalCallbackQueue();
-        ros::CallbackQueue* getGlobalCallbackQueue() { return g_global_queue.get(); }
+        CallbackQueuePtr getInternalCallbackQueue();
+        CallbackQueue* getGlobalCallbackQueue() { return g_global_queue.get(); }
 
         void getAdvertisedTopics(V_string& topics);
         void getSubscribedTopics(V_string& topics);
@@ -55,16 +55,15 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
         const PollManagerPtr& poll_manager();
         const XMLRPCManagerPtr& xmlrpc_manager();
 
-        /*
         template <class M>
         Publisher advertise(const std::string& topic, uint32_t queue_size, bool latch = false) {
-            ros::AdvertiseOptions ops;
+            AdvertiseOptions ops;
             ops.template init<M>(topic, queue_size);
             ops.latch = latch;
             return advertise(ops);
-        }*/
+        }
 
-        Publisher advertise(ros::AdvertiseOptions& ops);
+        Publisher advertise(AdvertiseOptions& ops);
 
     private:
         std::string name_;
@@ -76,13 +75,13 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
         PollManagerPtr pollManager;
         XMLRPCManagerPtr xmlrpcManager;
 
-        ros::CallbackQueuePtr g_global_queue;
+        CallbackQueuePtr g_global_queue;
         ROSOutAppender* g_rosout_appender;
-        ros::CallbackQueuePtr g_internal_callback_queue;
+        CallbackQueuePtr g_internal_callback_queue;
         boost::thread g_internal_queue_thread;
         void check_ipv6_environment();
 
-        ros::CallbackQueueInterface* callback_queue_;
+        CallbackQueueInterface* callback_queue_;
         NodeBackingCollection* collection_;
         //void internalCallbackQueueThreadFunc();
 };

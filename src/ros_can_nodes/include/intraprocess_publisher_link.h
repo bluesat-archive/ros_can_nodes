@@ -29,8 +29,6 @@
 #define ROSCAN_INTRAPROCESS_PUBLISHER_LINK_H
 
 #include "common.h"
-#include "RosCanNode.h"
-#include "subscription.h"
 #include "publisher_link.h"
 
 namespace roscan {

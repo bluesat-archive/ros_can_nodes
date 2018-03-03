@@ -26,10 +26,10 @@
  */
 
 #include "common.h"
+#include "RosCanNode.h"
 #include "publisher.h"
 #include "publication.h"
 #include "topic_manager.h"
-#include <ros/node_handle.h>
 
 namespace roscan {
 

@@ -29,7 +29,6 @@
 #define ROSCAN_PUBLISHER_HANDLE_H
 
 #include "common.h"
-#include "RosCanNode.h"
 #include <ros/message.h>
 #include <ros/serialization.h>
 

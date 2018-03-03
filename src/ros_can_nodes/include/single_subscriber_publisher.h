@@ -29,7 +29,6 @@
 #define ROSCAN_SINGLE_SUBSCRIBER_PUBLISHER_H
 
 #include "common.h"
-#include "subscriber_link.h"
 #include <ros/serialization.h>
 #include <boost/utility.hpp>
 

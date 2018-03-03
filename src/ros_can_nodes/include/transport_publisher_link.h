@@ -29,9 +29,7 @@
 #define ROSCAN_TRANSPORT_PUBLISHER_LINK_H
 
 #include "common.h"
-#include "RosCanNode.h"
 #include "publisher_link.h"
-#include "subscription.h"
 #include <ros/connection.h>
 
 namespace roscan {

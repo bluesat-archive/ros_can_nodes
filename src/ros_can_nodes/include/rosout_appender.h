@@ -36,7 +36,6 @@
 #define ROSCAN_ROSOUT_APPENDER_H
 
 #include "common.h"
-#include "RosCanNode.h"
 #include <ros/message_forward.h>
 #include <ros/console.h>
 

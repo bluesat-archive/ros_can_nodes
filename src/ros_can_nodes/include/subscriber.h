@@ -29,7 +29,6 @@
 #define ROSCAN_SUBSCRIBER_HANDLE_H
 
 #include "common.h"
-#include "RosCanNode.h"
 #include <ros/subscription_callback_helper.h>
 
 namespace roscan {

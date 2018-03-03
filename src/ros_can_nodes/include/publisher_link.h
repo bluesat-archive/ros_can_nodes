@@ -29,8 +29,6 @@
 #define ROSCAN_PUBLISHER_LINK_H
 
 #include "common.h"
-#include "RosCanNode.h"
-#include "subscription.h"
 #include <ros/connection.h>
 #include <ros/header.h>
 #include <ros/transport_hints.h>

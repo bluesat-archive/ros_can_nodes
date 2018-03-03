@@ -28,6 +28,8 @@
 #include "common.h"
 #include "subscriber_link.h"
 #include "publication.h"
+#include <ros/assert.h>
+#include <ros/console.h>
 
 namespace roscan {
 

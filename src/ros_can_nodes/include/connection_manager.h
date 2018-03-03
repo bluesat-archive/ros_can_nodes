@@ -29,8 +29,6 @@
 #define ROSCAN_CONNECTION_MANAGER_H
 
 #include "common.h"
-#include "RosCanNode.h"
-#include "poll_manager.h"
 #include <ros/connection.h>
 #include <ros/header.h>
 

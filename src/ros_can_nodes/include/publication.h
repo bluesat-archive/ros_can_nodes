@@ -29,7 +29,8 @@
 #define ROSCAN_PUBLICATION_H
 
 #include "common.h"
-#include <ros/advertise_options.h>
+#include <ros/serialized_message.h>
+#include <ros/header.h>
 #include <xmlrpcpp/XmlRpc.h>
 
 namespace roscan {

@@ -34,6 +34,8 @@
 #include "xmlrpc_manager.h"
 #include "subscription.h"
 #include "publication.h"
+#include "subscribe_options.h"
+#include "advertise_options.h"
 #include <XmlRpc.h>
 #include <ros/header.h>
 #include <ros/file_log.h>
@@ -227,7 +229,7 @@ bool TopicManager::subscribe(const SubscribeOptions& ops) {
     return true;
 }
 
-bool TopicManager::advertise(const ros::AdvertiseOptions& ops, const SubscriberCallbacksPtr& callbacks) {
+bool TopicManager::advertise(const AdvertiseOptions& ops, const SubscriberCallbacksPtr& callbacks) {
     if (ops.datatype == "*") {
         std::stringstream ss;
         ss << "Advertising with * as the datatype is not allowed.  Topic [" << ops.topic << "]";

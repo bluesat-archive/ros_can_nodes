@@ -29,12 +29,7 @@
 #define ROSCAN_SUBSCRIPTION_H
 
 #include "common.h"
-#include "RosCanNode.h"
 #include "xmlrpc_manager.h"
-#include "publication.h"
-#include "publisher_link.h"
-#include "callback_queue_interface.h"
-#include "subscription_queue.h"
 #include <XmlRpc.h>
 #include <ros/header.h>
 #include <ros/statistics.h>

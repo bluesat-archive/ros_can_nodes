@@ -64,8 +64,6 @@ typedef boost::shared_ptr<Transport> TransportPtr;
 class NodeHandle;
 typedef boost::shared_ptr<NodeHandle> NodeHandlePtr;
 */
-class CallbackQueue;
-
 } // namespace ros
 
 namespace roscan {
@@ -123,7 +121,11 @@ class CallbackQueueInterface;
 class CallbackInterface;
 typedef boost::shared_ptr<CallbackInterface> CallbackInterfacePtr;
 
+class CallbackQueue;
+typedef boost::shared_ptr<CallbackQueue> CallbackQueuePtr;
+
 struct SubscribeOptions;
+struct AdvertiseOptions;
 class ROSOutAppender;
 
 class SubscriptionQueue;

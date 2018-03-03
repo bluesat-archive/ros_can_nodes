@@ -29,16 +29,10 @@
 #define ROSCAN_TOPIC_MANAGER_H
 
 #include "common.h"
-#include "RosCanNode.h"
-#include "connection_manager.h"
-#include "poll_manager.h"
-#include "xmlrpc_manager.h"
-#include "subscription.h"
-#include "publication.h"
 #include "subscribe_options.h"
+#include "advertise_options.h"
 #include <XmlRpcValue.h>
 #include <ros/serialization.h>
-#include <ros/advertise_options.h>
 
 namespace roscan {
 
@@ -53,7 +47,7 @@ class TopicManager {
         bool subscribe(const SubscribeOptions& ops);
         bool unsubscribe(const std::string& _topic, const ros::SubscriptionCallbackHelperPtr& helper);
 
-        bool advertise(const ros::AdvertiseOptions& ops, const SubscriberCallbacksPtr& callbacks);
+        bool advertise(const AdvertiseOptions& ops, const SubscriberCallbacksPtr& callbacks);
         bool unadvertise(const std::string& topic, const SubscriberCallbacksPtr& callbacks);
 
         // Get the list of topics advertised by this node

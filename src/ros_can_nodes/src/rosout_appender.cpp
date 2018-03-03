@@ -33,16 +33,17 @@
  */
 
 #include "common.h"
+#include "RosCanNode.h"
 #include "rosout_appender.h"
 #include "topic_manager.h"
-#include <ros/advertise_options.h>
+#include "advertise_options.h"
 #include <rosgraph_msgs/Log.h>
 
 namespace roscan {
 
 ROSOutAppender::ROSOutAppender(const RosCanNodePtr& node)
     : node_(node), shutting_down_(false), publish_thread_(boost::bind(&ROSOutAppender::logThread, this)) {
-    ros::AdvertiseOptions ops;
+    AdvertiseOptions ops;
     ops.init<rosgraph_msgs::Log>("/rosout", 0);
     ops.latch = true;
     SubscriberCallbacksPtr cbs(boost::make_shared<SubscriberCallbacks>());
