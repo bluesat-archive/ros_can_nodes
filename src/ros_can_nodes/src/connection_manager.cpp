@@ -41,18 +41,17 @@
 namespace roscan {
 
 void ConnectionManager::start() {
-    poll_manager_ = node_->poll_manager();
-    poll_conn_ = poll_manager_->addPollThreadListener(boost::bind(&ConnectionManager::removeDroppedConnections, this));
+    poll_conn_ = node_->poll_manager()->addPollThreadListener(boost::bind(&ConnectionManager::removeDroppedConnections, this));
 
     // Bring up the TCP listener socket
-    tcpserver_transport_ = boost::make_shared<ros::TransportTCP>(&poll_manager_->getPollSet());
+    tcpserver_transport_ = boost::make_shared<ros::TransportTCP>(&node_->poll_manager()->getPollSet());
     if (!tcpserver_transport_->listen(network::getTCPROSPort(), MAX_TCPROS_CONN_QUEUE, boost::bind(&ConnectionManager::tcprosAcceptConnection, this, _1))) {
         ROS_FATAL("Listen on port [%d] failed", network::getTCPROSPort());
         ROS_BREAK();
     }
 
     // Bring up the UDP listener socket
-    udpserver_transport_ = boost::make_shared<ros::TransportUDP>(&poll_manager_->getPollSet());
+    udpserver_transport_ = boost::make_shared<ros::TransportUDP>(&node_->poll_manager()->getPollSet());
     if (!udpserver_transport_->createIncoming(0, true)) {
         ROS_FATAL("Listen failed");
         ROS_BREAK();
@@ -70,7 +69,7 @@ void ConnectionManager::shutdown() {
         tcpserver_transport_.reset();
     }
 
-    poll_manager_->removePollThreadListener(poll_conn_);
+    node_->poll_manager()->removePollThreadListener(poll_conn_);
 
     clear(ros::Connection::Destructing);
 }

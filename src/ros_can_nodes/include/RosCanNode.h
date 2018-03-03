@@ -8,6 +8,8 @@
 #include "xmlrpc_manager.h"
 #include "callback_queue_interface.h"
 #include "rosout_appender.h"
+#include "publisher.h"
+#include <ros/advertise_options.h>
 #include <ros/callback_queue.h>
 #include <std_msgs/String.h>
 
@@ -15,7 +17,7 @@ namespace roscan {
 
 class NodeBackingCollection {
     public:
-        //typedef std::vector<Publisher::ImplWPtr> V_PubImpl;
+        //typedef std::vector<Publisher> V_PubImpl;
         //typedef std::vector<ServiceServer::ImplWPtr> V_SrvImpl;
         //typedef std::vector<Subscriber> V_Subscriber;
         //typedef std::vector<ServiceClient::ImplWPtr> V_SrvCImpl;
@@ -53,20 +55,36 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
         const PollManagerPtr& poll_manager();
         const XMLRPCManagerPtr& xmlrpc_manager();
 
+        /*
+        template <class M>
+        Publisher advertise(const std::string& topic, uint32_t queue_size, bool latch = false) {
+            ros::AdvertiseOptions ops;
+            ops.template init<M>(topic, queue_size);
+            ops.latch = latch;
+            return advertise(ops);
+        }*/
+
+        Publisher advertise(ros::AdvertiseOptions& ops);
+
     private:
         std::string name_;
+
+        bool started_;
 
         TopicManagerPtr topicManager;
         ConnectionManagerPtr connectionManager;
         PollManagerPtr pollManager;
         XMLRPCManagerPtr xmlrpcManager;
 
-        ros::CallbackQueueInterface* callback_queue_;
-        NodeBackingCollection* collection_;
-
         ros::CallbackQueuePtr g_global_queue;
         ROSOutAppender* g_rosout_appender;
         ros::CallbackQueuePtr g_internal_callback_queue;
+        boost::thread g_internal_queue_thread;
+        void check_ipv6_environment();
+
+        ros::CallbackQueueInterface* callback_queue_;
+        NodeBackingCollection* collection_;
+        //void internalCallbackQueueThreadFunc();
 };
 
 } // namespace roscan

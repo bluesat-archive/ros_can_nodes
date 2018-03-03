@@ -35,7 +35,6 @@
 #include "subscription.h"
 #include "publication.h"
 #include <XmlRpc.h>
-#include <ros/console.h>
 #include <ros/header.h>
 #include <ros/file_log.h>
 #include <ros/transport/transport_tcp.h>
@@ -51,18 +50,14 @@ void TopicManager::start() {
     boost::mutex::scoped_lock shutdown_lock(shutting_down_mutex_);
     shutting_down_ = false;
 
-    poll_manager_ = node_->poll_manager();
-    connection_manager_ = node_->connection_manager();
-    xmlrpc_manager_ = node_->xmlrpc_manager();
+    node_->xmlrpc_manager()->bind("publisherUpdate", boost::bind(&TopicManager::pubUpdateCallback, this, _1, _2));
+    node_->xmlrpc_manager()->bind("requestTopic", boost::bind(&TopicManager::requestTopicCallback, this, _1, _2));
+    node_->xmlrpc_manager()->bind("getBusStats", boost::bind(&TopicManager::getBusStatsCallback, this, _1, _2));
+    node_->xmlrpc_manager()->bind("getBusInfo", boost::bind(&TopicManager::getBusInfoCallback, this, _1, _2));
+    node_->xmlrpc_manager()->bind("getSubscriptions", boost::bind(&TopicManager::getSubscriptionsCallback, this, _1, _2));
+    node_->xmlrpc_manager()->bind("getPublications", boost::bind(&TopicManager::getPublicationsCallback, this, _1, _2));
 
-    xmlrpc_manager_->bind("publisherUpdate", boost::bind(&TopicManager::pubUpdateCallback, this, _1, _2));
-    xmlrpc_manager_->bind("requestTopic", boost::bind(&TopicManager::requestTopicCallback, this, _1, _2));
-    xmlrpc_manager_->bind("getBusStats", boost::bind(&TopicManager::getBusStatsCallback, this, _1, _2));
-    xmlrpc_manager_->bind("getBusInfo", boost::bind(&TopicManager::getBusInfoCallback, this, _1, _2));
-    xmlrpc_manager_->bind("getSubscriptions", boost::bind(&TopicManager::getSubscriptionsCallback, this, _1, _2));
-    xmlrpc_manager_->bind("getPublications", boost::bind(&TopicManager::getPublicationsCallback, this, _1, _2));
-
-    poll_manager_->addPollThreadListener(boost::bind(&TopicManager::processPublishQueues, this));
+    node_->poll_manager()->addPollThreadListener(boost::bind(&TopicManager::processPublishQueues, this));
 }
 
 void TopicManager::shutdown() {
@@ -77,15 +72,15 @@ void TopicManager::shutdown() {
         shutting_down_ = true;
     }
 
-    // actually one should call poll_manager_->removePollThreadListener(), but the connection is not stored above
-    poll_manager_->shutdown();
+    // actually one should call node_->poll_manager()->removePollThreadListener(), but the connection is not stored above
+    node_->poll_manager()->shutdown();
 
-    xmlrpc_manager_->unbind("publisherUpdate");
-    xmlrpc_manager_->unbind("requestTopic");
-    xmlrpc_manager_->unbind("getBusStats");
-    xmlrpc_manager_->unbind("getBusInfo");
-    xmlrpc_manager_->unbind("getSubscriptions");
-    xmlrpc_manager_->unbind("getPublications");
+    node_->xmlrpc_manager()->unbind("publisherUpdate");
+    node_->xmlrpc_manager()->unbind("requestTopic");
+    node_->xmlrpc_manager()->unbind("getBusStats");
+    node_->xmlrpc_manager()->unbind("getBusInfo");
+    node_->xmlrpc_manager()->unbind("getSubscriptions");
+    node_->xmlrpc_manager()->unbind("getPublications");
 
     ROSCPP_LOG_DEBUG("Shutting down topics...");
     ROSCPP_LOG_DEBUG("  shutting down publishers");
@@ -189,7 +184,6 @@ bool TopicManager::addSubCallback(const SubscribeOptions& ops) {
             return false;
         }
     }
-
     return found;
 }
 
@@ -321,8 +315,8 @@ bool TopicManager::advertise(const ros::AdvertiseOptions& ops, const SubscriberC
     args[0] = node_->getName();
     args[1] = ops.topic;
     args[2] = ops.datatype;
-    args[3] = xmlrpc_manager_->getServerURI();
-    xmlrpc_manager_->callMaster("registerPublisher", args, result, payload, true);
+    args[3] = node_->xmlrpc_manager()->getServerURI();
+    node_->xmlrpc_manager()->callMaster("registerPublisher", args, result, payload, true);
 
     return true;
 }
@@ -373,8 +367,8 @@ bool TopicManager::unregisterPublisher(const std::string& topic) {
     XmlRpcValue args, result, payload;
     args[0] = node_->getName();
     args[1] = topic;
-    args[2] = xmlrpc_manager_->getServerURI();
-    xmlrpc_manager_->callMaster("unregisterPublisher", args, result, payload, false);
+    args[2] = node_->xmlrpc_manager()->getServerURI();
+    node_->xmlrpc_manager()->callMaster("unregisterPublisher", args, result, payload, false);
 
     return true;
 }
@@ -394,15 +388,15 @@ bool TopicManager::registerSubscriber(const SubscriptionPtr& s, const std::strin
     args[0] = node_->getName();
     args[1] = s->getName();
     args[2] = datatype;
-    args[3] = xmlrpc_manager_->getServerURI();
+    args[3] = node_->xmlrpc_manager()->getServerURI();
 
-    if (!xmlrpc_manager_->callMaster("registerSubscriber", args, result, payload, true)) {
+    if (!node_->xmlrpc_manager()->callMaster("registerSubscriber", args, result, payload, true)) {
         return false;
     }
 
     std::vector<std::string> pub_uris;
     for (int i = 0; i < payload.size(); i++) {
-        if (payload[i] != xmlrpc_manager_->getServerURI()) {
+        if (payload[i] != node_->xmlrpc_manager()->getServerURI()) {
             pub_uris.push_back(std::string(payload[i]));
         }
     }
@@ -448,9 +442,9 @@ bool TopicManager::unregisterSubscriber(const std::string& topic) {
     XmlRpcValue args, result, payload;
     args[0] = node_->getName();
     args[1] = topic;
-    args[2] = xmlrpc_manager_->getServerURI();
+    args[2] = node_->xmlrpc_manager()->getServerURI();
 
-    xmlrpc_manager_->callMaster("unregisterSubscriber", args, result, payload, false);
+    node_->xmlrpc_manager()->callMaster("unregisterSubscriber", args, result, payload, false);
 
     return true;
 }
@@ -505,7 +499,7 @@ bool TopicManager::requestTopic(const std::string& topic, XmlRpcValue& protos, X
             XmlRpcValue tcpros_params;
             tcpros_params[0] = std::string("TCPROS");
             tcpros_params[1] = network::getHost();
-            tcpros_params[2] = int(connection_manager_->getTCPPort());
+            tcpros_params[2] = int(node_->connection_manager()->getTCPPort());
             ret[0] = int(1);
             ret[1] = std::string();
             ret[2] = tcpros_params;
@@ -546,18 +540,18 @@ bool TopicManager::requestTopic(const std::string& topic, XmlRpcValue& protos, X
             }
 
             int max_datagram_size = proto[4];
-            int conn_id = connection_manager_->getNewConnectionID();
-            ros::TransportUDPPtr transport = connection_manager_->getUDPServerTransport()->createOutgoing(host, port, conn_id, max_datagram_size);
+            int conn_id = node_->connection_manager()->getNewConnectionID();
+            ros::TransportUDPPtr transport = node_->connection_manager()->getUDPServerTransport()->createOutgoing(host, port, conn_id, max_datagram_size);
             if (!transport) {
                 ROSCPP_LOG_DEBUG("Error creating outgoing transport for [%s:%d]", host.c_str(), port);
                 return false;
             }
-            connection_manager_->udprosIncomingConnection(transport, h);
+            node_->connection_manager()->udprosIncomingConnection(transport, h);
 
             XmlRpcValue udpros_params;
             udpros_params[0] = std::string("UDPROS");
             udpros_params[1] = network::getHost();
-            udpros_params[2] = connection_manager_->getUDPServerTransport()->getServerPort();
+            udpros_params[2] = node_->connection_manager()->getUDPServerTransport()->getServerPort();
             udpros_params[3] = conn_id;
             udpros_params[4] = max_datagram_size;
             m["topic"] = topic;
@@ -625,7 +619,7 @@ void TopicManager::publish(const std::string& topic, const boost::function<ros::
         // If we're not doing a serialized publish we don't need to signal the pollset.  The write()
         // call inside signal() is actually relatively expensive when doing a nocopy publish.
         if (serialize) {
-            poll_manager_->getPollSet().signal();
+            node_->poll_manager()->getPollSet().signal();
         }
     } else {
         p->incrementSequence();

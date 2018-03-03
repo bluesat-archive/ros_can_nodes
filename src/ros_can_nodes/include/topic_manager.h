@@ -167,10 +167,6 @@ class TopicManager {
 
         volatile bool shutting_down_;
         boost::mutex shutting_down_mutex_;
-
-        PollManagerPtr poll_manager_;
-        ConnectionManagerPtr connection_manager_;
-        XMLRPCManagerPtr xmlrpc_manager_;
 };
 
 } // namespace roscan

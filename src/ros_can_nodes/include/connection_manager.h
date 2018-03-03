@@ -74,7 +74,6 @@ class ConnectionManager {
         void tcprosAcceptConnection(const ros::TransportTCPPtr& transport);
 
         RosCanNodePtr node_;
-        PollManagerPtr poll_manager_;
 
         ros::S_Connection connections_;
         ros::V_Connection dropped_connections_;

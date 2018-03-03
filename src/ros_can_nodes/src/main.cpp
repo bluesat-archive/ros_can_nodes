@@ -29,8 +29,11 @@ int main() {
                 if (args[0] == "create") {
                     RosCanNodePtr node;
                     node.reset(new RosCanNode(args[1]));
+                    std::cout << node.use_count() << "\n";
                     roscannodes.push_back(node);
+                    std::cout << node.use_count() << "\n";
                     node->start();
+                    std::cout << node.use_count() << "\n";
                 } else if (args[0] == "checkMaster") {
                     std::istringstream(args[1]) >> index;
                     std::cout << roscannodes[index]->xmlrpc_manager()->checkMaster() << std::endl;
@@ -62,7 +65,8 @@ int main() {
                     }
                 }
             }
-        } 
+        }
+        std::cout << roscannodes[0].use_count() << "\n";
         /*
         if (s == "subscribe") {
             ros::SubscribeOptions ops;
@@ -76,6 +80,5 @@ int main() {
             }
         }*/
     }
-
     return 0;
 }
