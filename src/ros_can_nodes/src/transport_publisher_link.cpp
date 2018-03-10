@@ -39,12 +39,12 @@
 #include "connection_manager.h"
 #include "poll_manager.h"
 #include "subscription.h"
-#include <ros/callback_queue.h>
+#include "callback_queue.h"
+#include "internal_timer_manager.h"
+#include "timer_manager.h"
 #include <ros/connection.h>
 #include <ros/file_log.h>
 #include <ros/header.h>
-#include <ros/internal_timer_manager.h>
-#include <ros/timer_manager.h>
 #include <ros/transport/transport.h>
 #include <ros/transport/transport_tcp.h>
 
@@ -54,7 +54,7 @@ TransportPublisherLink::~TransportPublisherLink() {
     dropping_ = true;
 
     if (retry_timer_handle_ != -1) {
-        ros::getInternalTimerManager()->remove(retry_timer_handle_);
+        getInternalTimerManager()->remove(retry_timer_handle_);
     }
     connection_->drop(ros::Connection::Destructing);
 }
@@ -109,7 +109,7 @@ bool TransportPublisherLink::onHeaderReceived(const ros::ConnectionPtr& conn, co
     }
 
     if (retry_timer_handle_ != -1) {
-        ros::getInternalTimerManager()->remove(retry_timer_handle_);
+        getInternalTimerManager()->remove(retry_timer_handle_);
         retry_timer_handle_ = -1;
     }
 
@@ -121,7 +121,7 @@ void TransportPublisherLink::onMessageLength(const ros::ConnectionPtr& conn, con
     (void)conn;
     (void)size;
     if (retry_timer_handle_ != -1) {
-        ros::getInternalTimerManager()->remove(retry_timer_handle_);
+        getInternalTimerManager()->remove(retry_timer_handle_);
         retry_timer_handle_ = -1;
     }
 
@@ -226,11 +226,11 @@ void TransportPublisherLink::onConnectionDropped(const ros::ConnectionPtr& conn,
             // shared_from_this() shared_ptr is used to ensure TransportPublisherLink is not
             // destroyed in the middle of onRetryTimer execution
             // TODO RESTORE after callback_queue issue resolved
-            /*retry_timer_handle_ = ros::getInternalTimerManager()->add(ros::WallDuration(retry_period_),
+            retry_timer_handle_ = getInternalTimerManager()->add(ros::WallDuration(retry_period_),
                                                                  boost::bind(&TransportPublisherLink::onRetryTimer, this, _1), node_->getInternalCallbackQueue().get(),
-                                                                 shared_from_this(), false);*/
+                                                                 shared_from_this(), false);
         } else {
-            ros::getInternalTimerManager()->setPeriod(retry_timer_handle_, retry_period_);
+            getInternalTimerManager()->setPeriod(retry_timer_handle_, retry_period_);
         }
     } else {
         drop();

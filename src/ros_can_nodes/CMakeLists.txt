@@ -134,6 +134,7 @@ add_executable(ros_can_nodes
     src/subscription_queue.cpp
     src/callback_queue.cpp
     src/rosout_appender.cpp
+    src/internal_timer_manager.cpp
     )
 
 ## Add cmake target dependencies of the executable

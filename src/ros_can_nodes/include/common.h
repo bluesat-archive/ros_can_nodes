@@ -25,8 +25,7 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/bind.hpp>
-
-//#include <ros/time.h>
+#include <ros/time.h>
 
 namespace ros {
 
@@ -64,6 +63,22 @@ typedef boost::shared_ptr<Transport> TransportPtr;
 class NodeHandle;
 typedef boost::shared_ptr<NodeHandle> NodeHandlePtr;
 */
+
+// // Structure passed as a parameter to the callback invoked by a ros::SteadyTimer
+// struct SteadyTimerEvent {
+//     SteadyTime last_expected; ///< In a perfect world, this is when the last callback should have happened
+//     SteadyTime last_real;     ///< When the last callback actually happened
+
+//     SteadyTime current_expected; ///< In a perfect world, this is when the current callback should be happening
+//     SteadyTime current_real;     ///< This is when the current callback was actually called (SteadyTime::now() as of the beginning of the callback)
+
+//     struct {
+//         WallDuration last_duration; ///< How long the last callback ran for
+//     } profile;
+// };
+struct SteadyTimerEvent;
+typedef boost::function<void(const SteadyTimerEvent&)> SteadyTimerCallback;
+
 } // namespace ros
 
 namespace roscan {
@@ -180,20 +195,6 @@ struct WallTimerEvent {
     } profile;
 };
 typedef boost::function<void(const WallTimerEvent&)> WallTimerCallback;
-
-// Structure passed as a parameter to the callback invoked by a ros::SteadyTimer
-struct SteadyTimerEvent {
-    SteadyTime last_expected; ///< In a perfect world, this is when the last callback should have happened
-    SteadyTime last_real;     ///< When the last callback actually happened
-
-    SteadyTime current_expected; ///< In a perfect world, this is when the current callback should be happening
-    SteadyTime current_real;     ///< This is when the current callback was actually called (SteadyTime::now() as of the beginning of the callback)
-
-    struct {
-        WallDuration last_duration; ///< How long the last callback ran for
-    } profile;
-};
-typedef boost::function<void(const SteadyTimerEvent&)> SteadyTimerCallback;
 
 class ServiceManager;
 typedef boost::shared_ptr<ServiceManager> ServiceManagerPtr;

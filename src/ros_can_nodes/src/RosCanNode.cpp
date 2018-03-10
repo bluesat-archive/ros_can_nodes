@@ -4,11 +4,11 @@
 #include "advertise_options.h"
 #include "callback_queue.h"
 #include "publisher.h"
+#include "internal_timer_manager.h"
 #include <iostream>
 #include <ros/console.h>
 #include <ros/file_log.h>
 #include <ros/transport/transport_tcp.h>
-#include <ros/internal_timer_manager.h>
 #include <xmlrpcpp/XmlRpcSocket.h>
 #include <unistd.h>
 
@@ -108,7 +108,7 @@ const XMLRPCManagerPtr& RosCanNode::xmlrpc_manager() {
 // }
 
 void RosCanNode::start() {
-    //ros::initInternalTimerManager();
+    initInternalTimerManager();
 
     poll_manager()->start();
     connection_manager()->start();
