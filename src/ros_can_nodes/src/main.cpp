@@ -76,5 +76,8 @@ int main() {
             }
         }*/
     }
+    for (RosCanNodePtr& node : roscannodes) {
+        node->shutdown();
+    }
     return 0;
 }

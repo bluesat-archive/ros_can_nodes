@@ -23,35 +23,20 @@ void RosCanNode::check_ipv6_environment() {
     XmlRpc::XmlRpcSocket::s_use_ipv6_ = use_ipv6;
 }
 
-RosCanNode::RosCanNode(std::string name) : name_("/" + name), started_(false), callback_queue_(0), collection_(0) {
+RosCanNode::RosCanNode(std::string name) : name_("/" + name), g_started(false), g_shutting_down(false), callback_queue_(0), collection_(0) {
     std::cout << "Creating node " << name_ << "\n";
     g_global_queue.reset(new CallbackQueue);
     ROSCONSOLE_AUTOINIT;
     check_ipv6_environment();
     collection_ = new NodeBackingCollection;
+    std::cout << "Created node " << name_ << "\n";
 }
 
 RosCanNode::~RosCanNode() {
+    shutdown();
     std::cout << "Deleting node " << name_ << "\n";
     delete collection_;
-    
-    ros::console::shutdown();
-
-    g_global_queue->disable();
-    g_global_queue->clear();
-
-    if (g_internal_queue_thread.get_id() != boost::this_thread::get_id()) {
-        g_internal_queue_thread.join();
-    }
-
-    if (started_) {
-        topic_manager()->shutdown();
-        poll_manager()->shutdown();
-        connection_manager()->shutdown();
-        xmlrpc_manager()->shutdown();
-
-        ros::Time::shutdown();
-    }
+    std::cout << "Deleted node " << name_ << "\n";
 }
 
 CallbackQueuePtr RosCanNode::getInternalCallbackQueue() {
@@ -97,17 +82,18 @@ const XMLRPCManagerPtr& RosCanNode::xmlrpc_manager() {
     return xmlrpcManager;
 }
 
-// void RosCanNode::internalCallbackQueueThreadFunc() {
-//     ros::disableAllSignalsInThisThread();
+void RosCanNode::internalCallbackQueueThreadFunc() {
+    ros::disableAllSignalsInThisThread();
 
-//     ros::CallbackQueuePtr queue = getInternalCallbackQueue();
+    CallbackQueuePtr queue = getInternalCallbackQueue();
 
-//     while (!g_shutting_down) {
-//         queue->callAvailable(ros::WallDuration(0.1));
-//     }
-// }
+    while (!g_shutting_down) {
+        queue->callAvailable(ros::WallDuration(0.1));
+    }
+}
 
 void RosCanNode::start() {
+    std::cout << "Starting node " << name_ << "\n";
     initInternalTimerManager();
 
     poll_manager()->start();
@@ -121,9 +107,38 @@ void RosCanNode::start() {
     g_rosout_appender = new ROSOutAppender(shared_from_this());
     ros::console::register_appender(g_rosout_appender);
 
-    // g_internal_queue_thread = boost::thread(internalCallbackQueueThreadFunc);
-    // getGlobalCallbackQueue()->enable();
-    started_ = true;
+    g_internal_queue_thread = boost::thread(&RosCanNode::internalCallbackQueueThreadFunc, this);
+    getGlobalCallbackQueue()->enable();
+    g_started = true;
+    std::cout << "Started node " << name_ << "\n";
+}
+
+void RosCanNode::shutdown() {
+    if (g_shutting_down) {
+        return;
+    }
+    std::cout << "Shutting down node " << name_ << "\n";
+    g_shutting_down = true;
+    //ros::console::shutdown();
+
+    g_global_queue->disable();
+    g_global_queue->clear();
+
+    if (g_internal_queue_thread.get_id() != boost::this_thread::get_id()) {
+        g_internal_queue_thread.join();
+    }
+
+    g_rosout_appender = 0;
+
+    if (g_started) {
+        topic_manager()->shutdown();
+        poll_manager()->shutdown();
+        connection_manager()->shutdown();
+        xmlrpc_manager()->shutdown();
+    }
+    //ros::Time::shutdown();
+    g_started = false;
+    std::cout << "Shut down node " << name_ << "\n";
 }
 
 Publisher RosCanNode::advertise(AdvertiseOptions& ops) {

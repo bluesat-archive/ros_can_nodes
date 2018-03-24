@@ -49,6 +49,7 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
         void getSubscribedTopics(V_string& topics);
 
         void start();
+        void shutdown();
 
         const TopicManagerPtr& topic_manager();
         const ConnectionManagerPtr& connection_manager();
@@ -68,7 +69,8 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
     private:
         std::string name_;
 
-        bool started_;
+        bool g_started;
+        volatile bool g_shutting_down;
 
         TopicManagerPtr topicManager;
         ConnectionManagerPtr connectionManager;
@@ -83,7 +85,7 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
 
         CallbackQueueInterface* callback_queue_;
         NodeBackingCollection* collection_;
-        //void internalCallbackQueueThreadFunc();
+        void internalCallbackQueueThreadFunc();
 };
 
 } // namespace roscan
