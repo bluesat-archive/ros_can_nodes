@@ -15,19 +15,7 @@
 
 namespace roscan {
 
-class NodeBackingCollection {
-    public:
-        //typedef std::vector<Publisher> V_PubImpl;
-        //typedef std::vector<ServiceServer::ImplWPtr> V_SrvImpl;
-        //typedef std::vector<Subscriber> V_Subscriber;
-        //typedef std::vector<ServiceClient::ImplWPtr> V_SrvCImpl;
-        //V_PubImpl pubs_;
-        //V_SrvImpl srvs_;
-        //V_Subscriber subs_;
-        //V_SrvCImpl srv_cs_;
-
-        boost::mutex mutex_;
-};
+class NodeBackingCollection;
 
 class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
     public:
@@ -56,15 +44,124 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
         const PollManagerPtr& poll_manager();
         const XMLRPCManagerPtr& xmlrpc_manager();
 
+        PublisherPtr advertise(AdvertiseOptions& ops);
+        SubscriberPtr subscribe(SubscribeOptions& ops);
+
         template <class M>
-        Publisher advertise(const std::string& topic, uint32_t queue_size, bool latch = false) {
+        PublisherPtr advertise(const std::string& topic, uint32_t queue_size, bool latch = false) {
             AdvertiseOptions ops;
             ops.template init<M>(topic, queue_size);
             ops.latch = latch;
             return advertise(ops);
         }
 
-        Publisher advertise(AdvertiseOptions& ops);
+        template <class M, class T>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size, void (T::*fp)(M), T* obj,
+                             const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template initByFullCallbackType<M>(topic, queue_size, boost::bind(fp, obj, _1));
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M, class T>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size, void (T::*fp)(M) const, T* obj,
+                             const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template initByFullCallbackType<M>(topic, queue_size, boost::bind(fp, obj, _1));
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M, class T>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size,
+                             void (T::*fp)(const boost::shared_ptr<M const>&), T* obj,
+                             const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template init<M>(topic, queue_size, boost::bind(fp, obj, _1));
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M, class T>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size,
+                             void (T::*fp)(const boost::shared_ptr<M const>&) const, T* obj,
+                             const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template init<M>(topic, queue_size, boost::bind(fp, obj, _1));
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M, class T>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size, void (T::*fp)(M),
+                             const boost::shared_ptr<T>& obj, const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template initByFullCallbackType<M>(topic, queue_size, boost::bind(fp, obj.get(), _1));
+            ops.tracked_object = obj;
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M, class T>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size, void (T::*fp)(M) const,
+                             const boost::shared_ptr<T>& obj, const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template initByFullCallbackType<M>(topic, queue_size, boost::bind(fp, obj.get(), _1));
+            ops.tracked_object = obj;
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M, class T>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size,
+                             void (T::*fp)(const boost::shared_ptr<M const>&),
+                             const boost::shared_ptr<T>& obj, const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template init<M>(topic, queue_size, boost::bind(fp, obj.get(), _1));
+            ops.tracked_object = obj;
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M, class T>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size,
+                             void (T::*fp)(const boost::shared_ptr<M const>&) const,
+                             const boost::shared_ptr<T>& obj, const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template init<M>(topic, queue_size, boost::bind(fp, obj.get(), _1));
+            ops.tracked_object = obj;
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size, void (*fp)(const boost::shared_ptr<M const>&), const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template init<M>(topic, queue_size, fp);
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size, const boost::function<void(const boost::shared_ptr<M const>&)>& callback,
+                             const ros::VoidConstPtr& tracked_object = ros::VoidConstPtr(), const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template init<M>(topic, queue_size, callback);
+            ops.tracked_object = tracked_object;
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
+
+        template <class M, class C>
+        SubscriberPtr subscribe(const std::string& topic, uint32_t queue_size, const boost::function<void(C)>& callback,
+                             const ros::VoidConstPtr& tracked_object = ros::VoidConstPtr(), const ros::TransportHints& transport_hints = ros::TransportHints()) {
+            SubscribeOptions ops;
+            ops.template initByFullCallbackType<C>(topic, queue_size, callback);
+            ops.tracked_object = tracked_object;
+            ops.transport_hints = transport_hints;
+            return subscribe(ops);
+        }
 
     private:
         std::string name_;

@@ -4,6 +4,7 @@
 #include "advertise_options.h"
 #include "callback_queue.h"
 #include "publisher.h"
+#include "subscriber.h"
 #include "internal_timer_manager.h"
 #include <iostream>
 #include <ros/console.h>
@@ -13,6 +14,25 @@
 #include <unistd.h>
 
 namespace roscan {
+
+class NodeBackingCollection {
+    public:
+        //typedef std::vector<Publisher::ImplWPtr> V_PubImpl;
+        //typedef std::vector<ServiceServer::ImplWPtr> V_SrvImpl;
+        //typedef std::vector<Subscriber::ImplWPtr> V_SubImpl;
+        //typedef std::vector<ServiceClient::ImplWPtr> V_SrvCImpl;
+
+        typedef std::vector<PublisherPtr> V_Pubs;
+        //typedef std::vector<ServiceServer::ImplWPtr> V_SrvImpl;
+        typedef std::vector<SubscriberPtr> V_Subs;
+        //typedef std::vector<ServiceClient::ImplWPtr> V_SrvCImpl;
+        V_Pubs pubs_;
+        //V_SrvImpl srvs_;
+        V_Subs subs_;
+        //V_SrvCImpl srv_cs_;
+
+        boost::mutex mutex_;
+};
 
 void RosCanNode::check_ipv6_environment() {
     char* env_ipv6 = NULL;
@@ -141,7 +161,7 @@ void RosCanNode::shutdown() {
     std::cout << "Shut down node " << name_ << "\n";
 }
 
-Publisher RosCanNode::advertise(AdvertiseOptions& ops) {
+PublisherPtr RosCanNode::advertise(AdvertiseOptions& ops) {
     //ops.topic = resolveName(ops.topic);
     if (ops.callback_queue == 0) {
         if (callback_queue_) {
@@ -154,34 +174,29 @@ Publisher RosCanNode::advertise(AdvertiseOptions& ops) {
     SubscriberCallbacksPtr callbacks(boost::make_shared<SubscriberCallbacks>(ops.connect_cb, ops.disconnect_cb, ops.tracked_object, ops.callback_queue));
 
     if (topic_manager()->advertise(ops, callbacks)) {
-        Publisher pub(ops.topic, shared_from_this(), ops.md5sum, ops.datatype, callbacks);
+        //Publisher pub(ops.topic, shared_from_this(), ops.md5sum, ops.datatype, callbacks);
+        PublisherPtr pub = boost::make_shared<Publisher>(ops.topic, shared_from_this(), ops.md5sum, ops.datatype, callbacks);
 
         {
             boost::mutex::scoped_lock lock(collection_->mutex_);
-            //collection_->pubs_.push_back(pub);
+            collection_->pubs_.push_back(pub);
         }
         return pub;
     }
-    return Publisher();
+    return boost::make_shared<Publisher>();
 }
 
-/*
-void RosCanNode::subChatterCallback(const boost::shared_ptr<std_msgs::String const>& msg) {
-    std::cout << "received " << msg->data << std::endl;
-}
-
-Subscriber RosCanNode::subscribe(ros::SubscribeOptions& ops) {
+SubscriberPtr RosCanNode::subscribe(SubscribeOptions& ops) {
     if (ops.callback_queue == 0) {
         if (callback_queue_) {
             ops.callback_queue = callback_queue_;
         } else {
-            std::cout << "argh no callback queue\n";
-            return Subscriber();
+            ops.callback_queue = getGlobalCallbackQueue();
         }
     }
 
     if (topicManager->subscribe(ops)) {
-        Subscriber sub(ops.topic, boost::make_shared<RosCanNode>(*this), ops.helper);
+        SubscriberPtr sub = boost::make_shared<Subscriber>(ops.topic, shared_from_this(), ops.helper);
 
         {
             boost::mutex::scoped_lock lock(collection_->mutex_);
@@ -190,13 +205,11 @@ Subscriber RosCanNode::subscribe(ros::SubscribeOptions& ops) {
 
         return sub;
     }
-
-    return Subscriber();
+    return boost::make_shared<Subscriber>();
 }
 
 void RosCanNode::spinOnce() {
-    ((ros::CallbackQueue*)callback_queue_)->callAvailable(ros::WallDuration());
+    g_global_queue->callAvailable(ros::WallDuration());
 }
-*/
 
 } // namespace roscan

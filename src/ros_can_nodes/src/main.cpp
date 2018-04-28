@@ -1,22 +1,104 @@
 #include "RosCanNode.h"
 #include "network.h"
+#include <ros/ros.h>
+#include <csignal>
+#include <algorithm>
+#include <std_msgs/String.h>
+#include <thread>
+#include <chrono>
 
-// main has to be in the global namespace lol
+#define TOPIC "/CAN_test"
+
+using namespace roscan;
+
+//std::vector<RosCanNodePtr> nodes{2};
+
+volatile bool quit{false};
+std::thread publisher_thread;
+std::thread subscriber_thread;
+
+void sub_callback_string(const std_msgs::String::ConstPtr& msg) {
+    std::cout << "Subscriber node callback received '" << msg->data << "'\n";
+}
+
+void publisher_core() {
+    RosCanNodePtr node;
+    node.reset(new RosCanNode("can_pub_node"));
+    node->start();
+    auto pub = node->advertise<std_msgs::String>(TOPIC, 10);
+
+    std_msgs::String msg;
+    int i = 0;
+    ros::Rate r(1);
+    while (!quit && i < 10) {
+        msg.data = ("publisher string number " + std::to_string(i)).c_str();
+        std::cout << "publisher node publishing '" << msg.data << "'\n";
+        pub->publish(msg);
+        ++i;
+        r.sleep();
+    }
+    node->shutdown();
+}
+
+void subscriber_core() {
+    RosCanNodePtr node;
+    node.reset(new RosCanNode("can_sub_node"));
+    node->start();
+
+    node->subscribe(TOPIC, 1000, &sub_callback_string);
+
+    int i = 0;
+    ros::Rate r(1);
+    while (!quit && i < 10) {
+        node->spinOnce();
+        r.sleep();
+        ++i;
+    }
+
+    node->shutdown();
+}
+
+void cleanup() {
+    /*for (const auto& node : nodes) {
+        if (node) {
+            node->shutdown();
+        }
+    }*/
+
+    if (publisher_thread.joinable()) {
+        publisher_thread.join();
+    }
+    if (subscriber_thread.joinable()) {
+        subscriber_thread.join();
+    }
+}
+
+void sigint_handler(int signal) {
+    (void)signal;
+    std::cout << "User signalled quit\n";
+    quit = true;
+    cleanup();
+    exit(0);
+}
+
 int main() {
-    using namespace roscan;
+    signal(SIGINT, sigint_handler);
     network::init();
 
-    std::vector<RosCanNodePtr> roscannodes;
+    publisher_thread = std::thread{publisher_core};
+    subscriber_thread = std::thread{subscriber_core};
+    //publisher_core();
+    //subscriber_core();
 
-    // mini shell for testing lel
-    while (1) {
+    /*while (1) {
         std::cout << "$ ";
         std::string s;
         getline(std::cin, s);
-        if (s == "exit") {
+        if (s == "") {
             break;
-        } else if (s == "h") {
-            std::cout << "arg1 arg2 (arg3)\n";
+        } else if (s == "h" || s == "help") {
+            std::cout << "arg1 arg2 (arg3)" << std::endl;
+            std::cout << "exit by entering CTRL-D" << std::endl;
         } else {
             std::istringstream ss(s);
             std::vector<std::string> args;
@@ -29,19 +111,19 @@ int main() {
                 if (args[0] == "create") {
                     RosCanNodePtr node;
                     node.reset(new RosCanNode(args[1]));
-                    roscannodes.push_back(node);
                     node->start();
+                    nodes.push_back(node);
                 } else if (args[0] == "checkMaster") {
                     std::istringstream(args[1]) >> index;
-                    std::cout << roscannodes[index]->xmlrpc_manager()->checkMaster() << std::endl;
+                    std::cout << nodes[index]->xmlrpc_manager()->checkMaster() << std::endl;
                 } else if (args[0] == "getMasterURI") {
                     std::istringstream(args[1]) >> index;
-                    std::cout << roscannodes[index]->xmlrpc_manager()->getMasterURI() << std::endl;
+                    std::cout << nodes[index]->xmlrpc_manager()->getMasterURI() << std::endl;
                 } else if (args[0] == "getAllNodes") {
                     std::istringstream(args[1]) >> index;
-                    std::vector<std::string> nodes;
-                    if (roscannodes[index]->xmlrpc_manager()->getAllNodes(nodes)) {
-                        for (std::string& node : nodes) {
+                    std::vector<std::string> nodelist;
+                    if (nodes[index]->xmlrpc_manager()->getAllNodes(nodelist)) {
+                        for (const auto& node : nodelist) {
                             std::cout << node << std::endl;
                         }
                     } else {
@@ -52,9 +134,9 @@ int main() {
                     std::cout << "subgraph: ";
                     std::string subgraph;
                     getline(std::cin, subgraph);
-                    std::vector<XMLRPCManager::TopicInfo> topics;
-                    if (roscannodes[index]->xmlrpc_manager()->getAllTopics(subgraph, topics)) {
-                        for (XMLRPCManager::TopicInfo& topic : topics) {
+                    std::vector<XMLRPCManager::TopicInfo> topiclist;
+                    if (nodes[index]->xmlrpc_manager()->getAllTopics(subgraph, topiclist)) {
+                        for (const auto& topic : topiclist) {
                             std::cout << topic.name << " (" << topic.datatype << ")" << std::endl;
                         }
                     } else {
@@ -62,7 +144,7 @@ int main() {
                     }
                 }
             }
-        }
+        }*/
         /*
         if (s == "subscribe") {
             ros::SubscribeOptions ops;
@@ -75,9 +157,7 @@ int main() {
                 sleep(1);
             }
         }*/
-    }
-    for (RosCanNodePtr& node : roscannodes) {
-        node->shutdown();
-    }
+    //}
+    cleanup();
     return 0;
 }
