@@ -148,6 +148,8 @@ void RosCanNode::shutdown() {
         g_internal_queue_thread.join();
     }
 
+    delete collection_;
+
     g_rosout_appender = 0;
 
     if (g_started) {
@@ -162,7 +164,6 @@ void RosCanNode::shutdown() {
 }
 
 PublisherPtr RosCanNode::advertise(AdvertiseOptions& ops) {
-    //ops.topic = resolveName(ops.topic);
     if (ops.callback_queue == 0) {
         if (callback_queue_) {
             ops.callback_queue = callback_queue_;
@@ -174,7 +175,6 @@ PublisherPtr RosCanNode::advertise(AdvertiseOptions& ops) {
     SubscriberCallbacksPtr callbacks(boost::make_shared<SubscriberCallbacks>(ops.connect_cb, ops.disconnect_cb, ops.tracked_object, ops.callback_queue));
 
     if (topic_manager()->advertise(ops, callbacks)) {
-        //Publisher pub(ops.topic, shared_from_this(), ops.md5sum, ops.datatype, callbacks);
         PublisherPtr pub = boost::make_shared<Publisher>(ops.topic, shared_from_this(), ops.md5sum, ops.datatype, callbacks);
 
         {
@@ -202,7 +202,6 @@ SubscriberPtr RosCanNode::subscribe(SubscribeOptions& ops) {
             boost::mutex::scoped_lock lock(collection_->mutex_);
             collection_->subs_.push_back(sub);
         }
-
         return sub;
     }
     return boost::make_shared<Subscriber>();

@@ -24,11 +24,7 @@ class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
 
         inline const std::string getName() const { return name_; }
 
-        //Subscriber subscribe(ros::SubscribeOptions& ops);
-
         void spinOnce();
-
-        //void subChatterCallback(const boost::shared_ptr<std_msgs::String const>&);
 
         CallbackQueuePtr getInternalCallbackQueue();
         CallbackQueue* getGlobalCallbackQueue() { return g_global_queue.get(); }

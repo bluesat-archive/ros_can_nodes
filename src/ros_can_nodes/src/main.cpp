@@ -17,10 +17,6 @@ volatile bool quit{false};
 std::thread publisher_thread;
 std::thread subscriber_thread;
 
-void sub_callback_string(const std_msgs::String::ConstPtr& msg) {
-    std::cout << "Subscriber node callback received '" << msg->data << "'\n";
-}
-
 void publisher_core() {
     RosCanNodePtr node;
     node.reset(new RosCanNode("can_pub_node"));
@@ -40,6 +36,10 @@ void publisher_core() {
     node->shutdown();
 }
 
+void sub_callback_string(const std_msgs::String::ConstPtr& msg) {
+    std::cout << "Subscriber node callback received '" << msg->data << "'\n";
+}
+
 void subscriber_core() {
     RosCanNodePtr node;
     node.reset(new RosCanNode("can_sub_node"));
@@ -54,7 +54,6 @@ void subscriber_core() {
         r.sleep();
         ++i;
     }
-
     node->shutdown();
 }
 
@@ -64,21 +63,11 @@ void cleanup() {
             node->shutdown();
         }
     }*/
-
-    if (publisher_thread.joinable()) {
-        publisher_thread.join();
-    }
-    if (subscriber_thread.joinable()) {
-        subscriber_thread.join();
-    }
 }
 
 void sigint_handler(int signal) {
     (void)signal;
-    std::cout << "User signalled quit\n";
     quit = true;
-    cleanup();
-    exit(0);
 }
 
 int main() {
@@ -87,6 +76,8 @@ int main() {
 
     publisher_thread = std::thread{publisher_core};
     subscriber_thread = std::thread{subscriber_core};
+    publisher_thread.join();
+    subscriber_thread.join();
     //publisher_core();
     //subscriber_core();
 
@@ -144,20 +135,7 @@ int main() {
                     }
                 }
             }
-        }*/
-        /*
-        if (s == "subscribe") {
-            ros::SubscribeOptions ops;
-            ops.template init<std_msgs::String>("/chatter", 1, boost::bind(&roscan::RosCanNode::subChatterCallback, node, _1));
-            ops.transport_hints = ros::TransportHints();
-            node->subscribe(ops);
-            while(1) {
-                // spin on callbacks
-                node->spinOnce();
-                sleep(1);
-            }
-        }*/
-    //}
-    cleanup();
+        }
+    }*/
     return 0;
 }

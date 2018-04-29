@@ -549,7 +549,7 @@ uint32_t Subscription::handleMessage(const ros::SerializedMessage& m, bool ser, 
     }
 
     // measure statistics
-    statistics_.callback(connection_header, name_, link->getCallerID(), m, link->getStats().bytes_received_, receipt_time, drops > 0);
+    //statistics_.callback(connection_header, name_, link->getCallerID(), m, link->getStats().bytes_received_, receipt_time, drops > 0);
 
     // If this link is latched, store off the message so we can immediately pass it to new subscribers later
     if (link->isLatched()) {
@@ -570,7 +570,7 @@ bool Subscription::addCallback(const ros::SubscriptionCallbackHelperPtr& helper,
     ROS_ASSERT(helper);
     ROS_ASSERT(queue);
 
-    statistics_.init(helper);
+    //statistics_.init(helper);
 
     // Decay to a real type as soon as we have a subscriber with a real type
     {
