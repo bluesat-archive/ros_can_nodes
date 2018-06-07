@@ -61,28 +61,24 @@ static int CANHelpers::send_can_port(struct can_frame *frame) {
     }
 }
 
-static struct CANHelpers::can_frame read_can_port() {
-    struct can_frame frame_rd;
-    int recvbytes = 0;
+static int read_can_port(struct can_frame *frame) {
+    int recvbytes = -1;
 
+    // 1 second timeout on read, will adjust based on testing
     struct timeval timeout = {1, 0};
     fd_set readSet;
     FD_ZERO(&readSet);
     FD_SET(soc, &readSet);
 
+    // Check if the socket is ready to read from
+    // Possibly check errno for bad FD
     if (select((soc + 1), &readSet, NULL, NULL, &timeout) >= 0) {
         if (FD_ISSET(soc, &readSet)) {
-            recvbytes = read(soc, &frame_rd, sizeof(struct can_frame));
-            if(recvbytes) {
-                // If we managed to acquire a can frame, return it
-                return (can_frame) recvbytes;
-            }
+            recvbytes = read(soc, frame, sizeof(struct can_frame));
         }
     }
 
-    // Otherwise exit
-    // TODO: can possibly replace this with a loop until successful read
-    return NULL;
+    return recvbytes;
 }
 
 static void CANHelpers::close_can_port() {

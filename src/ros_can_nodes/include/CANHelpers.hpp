@@ -14,7 +14,7 @@ class CANHelpers{
 
     static int send_can_port(struct can_frame *frame);
 
-    static struct can_frame read_can_port();
+    static int read_can_port(struct can_frame *frame);
 
     static void close_can_port();
 }

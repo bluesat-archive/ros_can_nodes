@@ -17,7 +17,7 @@ static void TopicBuffers::initBuffers(){
 
 static void TopicBuffers::processData(int key, uint8_t* data, int d_len, bool last_msg){
 
-    TopicBuffers::appendData(data);
+    TopicBuffers::appendData(key, data);
 
     if(last_msg){
         // TODO: Convert to flattype and publish to ros network
@@ -25,6 +25,7 @@ static void TopicBuffers::processData(int key, uint8_t* data, int d_len, bool la
 }
 
 
-static void TopicBuffers::appendData(uint8_t* data){
-
+static void TopicBuffers::appendData(int key, uint8_t* data){
+    //TODO: append data
+    topic_buffers[key] = data;
 }
