@@ -13,6 +13,7 @@
 #include "ROSCANConstants.hpp"
 #include "TopicBuffers.hpp"
 #include "CANHelpers.hpp"
+#include "RosCanNode.hpp"
 
 int main(int argc, char **argv){
     ros::init(argc, argv, "can_ros_decoder");
@@ -77,7 +78,6 @@ static void CANMsgRouter::processCANMsg(can_frame msg){
             // Start a thread to handle control message.
             // TODO: handle shared resource with topicThread (nodeList, topics etc)
             CANMsgRouter::routeControlMsg(msg);
-            controlThread.join();
 
         } else {
             // -- Reserved --
@@ -98,44 +98,44 @@ static void CANMsgRouter::routeControlMsg(can_frame msg){
             uint step = mode_info & 0x1;
             uint nodeHash = (mode_info >> 1) & 0xF);
             std::string name = msg.data;
-            NodeClass::registerNode(name, hashId);
+            RosCanNode::registerNode(name, hashId);
 
         case control_modes.DEREGISTER_NODE:
 
             uint nodeID = mode_info & 0xF;
-            NodeClass::getNode(nodeID)->deregisterNode(nodeID);
+            RosCanNode::getNode(nodeID)->deregisterNode(nodeID);
 
         case control_modes.SUBSCRIBE_TOPIC:
 
             uint nodeID = mode_info & 0xF;
-            NodeClass::getNode(nodeID)->registerSubscriber(std::string topic, std::string topic_type);
+            RosCanNode::getNode(nodeID)->registerSubscriber(std::string topic, std::string topic_type);
 
         case control_modes.UNREGISTER_TOPIC:
 
             uint nodeID = mode_info & 0xF;
             uint topicID = (mode_info >> 4) & 0x3F;
-            NodeClass::getNode(nodeID)->unregisterSubscriber(topicID);
+            RosCanNode::getNode(nodeID)->unregisterSubscriber(topicID);
 
         case control_modes.ADVERTISE_TOPIC:
 
             uint nodeID = mode_info & 0xF;
-            NodeClass::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
+            RosCanNode::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
 
         case control_modes.UNREGISTER_PUBLISHER:
 
             uint nodeID = mode_info & 0xF;
             uint topicID = (mode_info >> 4) & 0x3F;
-            NodeClass::getNode(nodeID)->unregisterPublisher(topicID);
+            RosCanNode::getNode(nodeID)->unregisterPublisher(topicID);
 
         case control_modes.ADVERTISE_SERVICE:
 
             uint nodeID = mode_info & 0xF;
-            //NodeClass::getNode(nodeID)->advertiseService(std::string service);
+            //RosCanNode::getNode(nodeID)->advertiseService(std::string service);
 
         case control_modes.UNREGISTER_SERVICE:
 
             uint nodeID = mode_info & 0xF;
-            //NodeClass::getNode(nodeID)->unregisterService(std::string service);
+            //RosCanNode::getNode(nodeID)->unregisterService(std::string service);
 
         case control_modes.PARAMETERS:
 
@@ -144,7 +144,7 @@ static void CANMsgRouter::routeControlMsg(can_frame msg){
         case control_modes.HEARTBEAT:
 
             uint nodeID = mode_info & 0xF;
-            //NodeClass::getNode(nodeID)->heartbeat(void);
+            //RosCanNode::getNode(nodeID)->heartbeat(void);
 
         case control_modes.EXTENDED:
 
@@ -159,11 +159,18 @@ static void CANMsgRouter::routeControlMsg(can_frame msg){
 
 static void CANMsgRouter::routePublishMsg(can_frame msg){
 
+    uint msg_header = msg.can_id & CAN_ERR_MASK;
+
     // Check if we have reached the last expected msg
-    // TODO: this doesn't handle if last msg is 8 in length!
+    // TODO: handling of message length and special cases
     bool last_msg = (msg.can_dlc < 8) ? FALSE : TRUE;
+    uint topic = (msg >> bitshift_topic_id) & bitmask_topic_id;
+    uint nid = (msg >> bitshift_nid) & bitmask_nid;
 
-    int key = 0;
+    uint seq = (msg >> bitshift_seq) & bitmask_seq;
 
-    TopicBuffers::processData( key, data, msg.can_dlc, last_msg);
+    // Key will be concatenation of topicid, and nid
+    short key = (topic << 5) | nid;
+
+    TopicBuffers::processData( key, msg.data, seq, last_msg);
 }

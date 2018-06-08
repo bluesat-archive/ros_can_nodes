@@ -231,7 +231,7 @@ namespace roscan {
 
             boost::mutex topicLock;
             std::bitset<MAX_TOPICS> topicIds;
-            boost::thread spinOnceThread;
+            boost::thread spinThread;
 
             bool isZombie;
             int getFirstFreeTopic();

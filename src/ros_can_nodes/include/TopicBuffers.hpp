@@ -19,13 +19,13 @@ typedef uint8_t[TOPIC_BUFFER_SIZE] buffer;
 
 class TopicBuffers{
 
-    std::unordered_map<int, buffer> topic_buffers;
+    std::unordered_map<short, buffer> topic_buffers;
 
-    static void initBuffers(void);
+    void initBuffers(void);
 
-    static void processData(int key, uint8_t* data, int d_len, bool last_msg);
+    void processData(short key, uint8_t* data, int d_len, bool last_msg);
 
-    static void appendData(uint8_t* data);
+    void appendData(uint8_t* data);
 
     // TODO: Possible Custom Hash function for unordered_map
     // TODO: Possible Custom Equality function for unordered_map
