@@ -8,6 +8,9 @@
  * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
  */
 
+#ifndef CANHELPERS_H
+#define CANHELPERS_H
+
 class CANHelpers{
 
     static int open_can_port(const char *port);
@@ -18,3 +21,5 @@ class CANHelpers{
 
     static void close_can_port();
 }
+
+#endif // CANHELPERS_H

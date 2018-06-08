@@ -8,6 +8,9 @@
  * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
  */
 
+#ifndef CANMSGROUTER_H
+#define CANMSGROUTER_H
+
 #include <linux/can.h>
 
 class CANMsgRouter{
@@ -23,3 +26,5 @@ class CANMsgRouter{
         static void routePublishMsg(uint32_t identifier, uint8_t *data);
 
 }
+
+#endif // CANMSGROUTER_H

@@ -7,6 +7,8 @@
  * Purpose:
  * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
  */
+#ifndef ROSCANCONSTANTS_H
+#define ROSCANCONSTANTS_H
 
 namespace ROSCANConstants{
 
@@ -38,13 +40,15 @@ namespace ROSCANConstants{
     /* --------------------------------------   */
 
     /* Bitshifting for rostopic msg fields */
-    static const uint bitshift_topic_id = 8;
-    static const uint bitshift_len = 16;
+    static const uint bitshift_msg_num = 8;
+    static const uint bitshift_topic_id = 10;
+    static const uint bitshift_len = 17;
     static const uint bitshift_nid = 25;
 
     /* Bitmasking for ROS Topic Messages */
-    static const uint bitmask_topic_id = (0xFF << bitshift_topic_id);
-    static const uint bitmask_len = (0x1FF << bitshift_len);
+    static const uint bitmask_msg_num = (0x3 << bitshift_msg_num);
+    static const uint bitmask_topic_id = (0x7F << bitshift_topic_id);
+    static const uint bitmask_len = (0xFF << bitshift_len);
     static const uint bitmask_nid = (0xF << bitshift_nid);
 
     /* --------------------------------------   */
@@ -75,3 +79,4 @@ namespace ROSCANConstants{
     };
 
 }
+#endif // ROSCANCONSTANTS_H

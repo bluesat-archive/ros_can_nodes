@@ -8,6 +8,9 @@
  * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
  */
 
+#ifndef TOPICBUFFERS_H
+#define TOPICBUFFERS_H
+
 #include <unordered_map>
 
 #define MAX_CAN_MSGS 32
@@ -27,3 +30,4 @@ class TopicBuffers{
     // TODO: Possible Custom Hash function for unordered_map
     // TODO: Possible Custom Equality function for unordered_map
 }
+#endif // TOPICBUFFERS_H

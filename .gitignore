@@ -36,3 +36,9 @@ hector_nav_msgs/src/hector_nav_msgs/
 
 #python scripts
 *.pyc
+
+#tags
+src/*/tags
+
+src/ros_can_nodes_old
+.vscode

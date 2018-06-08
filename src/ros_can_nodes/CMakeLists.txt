@@ -1,17 +1,19 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ros_can_nodes)
 
+set_directory_properties(PROPERTIES COMPILE_OPTIONS "-std=c++11;-Wall;-Wextra")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  rospy
   std_msgs
+  xmlrpcpp
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -70,25 +72,6 @@ find_package(catkin REQUIRED COMPONENTS
 #   std_msgs
 # )
 
-################################################
-## Declare ROS dynamic reconfigure parameters ##
-################################################
-
-## To declare and build dynamic reconfigure parameters within this
-## package, follow these steps:
-## * In the file package.xml:
-##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
-## * In this file (CMakeLists.txt):
-##   * add "dynamic_reconfigure" to
-##     find_package(catkin REQUIRED COMPONENTS ...)
-##   * uncomment the "generate_dynamic_reconfigure_options" section below
-##     and list every .cfg file to be processed
-
-## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
 
 ###################################
 ## catkin specific configuration ##
@@ -100,10 +83,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES ros_can_nodes
-  CATKIN_DEPENDS roscpp rospy std_msgs
-  DEPENDS system_lib
+    INCLUDE_DIRS include
+    #LIBRARIES ros_can_nodes
+    CATKIN_DEPENDS roscpp std_msgs xmlrpcpp
+    DEPENDS Boost
 )
 
 ###########
@@ -114,8 +97,8 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
+    include
+    ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -129,16 +112,39 @@ include_directories(
 # add_dependencies(ros_can_nodes ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(ros_can_nodes src/NodeClass.cpp)
+add_executable(ros_can_nodes
+    src/RosCanNode.cpp
+    src/main.cpp
+    src/xmlrpc_manager.cpp
+    src/network.cpp
+    src/poll_manager.cpp
+    src/connection_manager.cpp
+    src/topic_manager.cpp
+    src/publication.cpp
+    src/publisher.cpp
+    src/publisher_link.cpp
+    src/transport_publisher_link.cpp
+    src/intraprocess_publisher_link.cpp
+    src/subscription.cpp
+    src/subscriber.cpp
+    src/subscriber_link.cpp
+    src/transport_subscriber_link.cpp
+    src/intraprocess_subscriber_link.cpp
+    src/single_subscriber_publisher.cpp
+    src/subscription_queue.cpp
+    src/callback_queue.cpp
+    src/rosout_appender.cpp
+    src/internal_timer_manager.cpp
+    )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(ros_can_nodes_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(ros_can_nodes ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(ros_can_nodes
-   ${catkin_LIBRARIES}
- )
+    ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -155,11 +161,11 @@ target_link_libraries(ros_can_nodes
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ros_can_nodes ros_can_nodes_node
+#install(TARGETS ros_can_nodes ros_can_nodes
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+#)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/

@@ -13,7 +13,6 @@
 #include "ROSCANConstants.hpp"
 #include "TopicBuffers.hpp"
 #include "CANHelpers.hpp"
-#include <thread>
 
 int main(int argc, char **argv){
     ros::init(argc, argv, "can_ros_decoder");
@@ -66,7 +65,7 @@ static void CANMsgRouter::processCANMsg(can_frame msg){
             // Start thread to handle a ros message packet
             // Mutex is placed within handler on a per-node basis, so that
             // no 2 topics from a single node can be concurrently handling
-            std::thread topicThread (CANMsgRouter::routePublishMsg, msg);
+            CANMsgRouter::routePublishMsg(msg);
 
 
         } else if (msg_function == ROSCANConstants::msg_func.ROS_SERVICE)) {
@@ -77,7 +76,7 @@ static void CANMsgRouter::processCANMsg(can_frame msg){
             // Assume control messages are valid and intended for main controller
             // Start a thread to handle control message.
             // TODO: handle shared resource with topicThread (nodeList, topics etc)
-            std::thread controlThread (CANMsgRouter::routeControlMsg, msg);
+            CANMsgRouter::routeControlMsg(msg);
             controlThread.join();
 
         } else {
