@@ -98,6 +98,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
     include
+    include/ros_node_lib
     ${catkin_INCLUDE_DIRS}
 )
 
@@ -114,27 +115,30 @@ include_directories(
 ## Declare a C++ executable
 add_executable(ros_can_nodes
     src/RosCanNode.cpp
-    src/main.cpp
-    src/xmlrpc_manager.cpp
-    src/network.cpp
-    src/poll_manager.cpp
-    src/connection_manager.cpp
-    src/topic_manager.cpp
-    src/publication.cpp
-    src/publisher.cpp
-    src/publisher_link.cpp
-    src/transport_publisher_link.cpp
-    src/intraprocess_publisher_link.cpp
-    src/subscription.cpp
-    src/subscriber.cpp
-    src/subscriber_link.cpp
-    src/transport_subscriber_link.cpp
-    src/intraprocess_subscriber_link.cpp
-    src/single_subscriber_publisher.cpp
-    src/subscription_queue.cpp
-    src/callback_queue.cpp
-    src/rosout_appender.cpp
-    src/internal_timer_manager.cpp
+    src/TopicBuffers.cpp
+    src/CANHelpers.cpp
+    src/CANMsgRouter.cpp
+    ##src/main.cpp
+    src/ros_node_lib/xmlrpc_manager.cpp
+    src/ros_node_lib/network.cpp
+    src/ros_node_lib/poll_manager.cpp
+    src/ros_node_lib/connection_manager.cpp
+    src/ros_node_lib/topic_manager.cpp
+    src/ros_node_lib/publication.cpp
+    src/ros_node_lib/publisher.cpp
+    src/ros_node_lib/publisher_link.cpp
+    src/ros_node_lib/transport_publisher_link.cpp
+    src/ros_node_lib/intraprocess_publisher_link.cpp
+    src/ros_node_lib/subscription.cpp
+    src/ros_node_lib/subscriber.cpp
+    src/ros_node_lib/subscriber_link.cpp
+    src/ros_node_lib/transport_subscriber_link.cpp
+    src/ros_node_lib/intraprocess_subscriber_link.cpp
+    src/ros_node_lib/single_subscriber_publisher.cpp
+    src/ros_node_lib/subscription_queue.cpp
+    src/ros_node_lib/callback_queue.cpp
+    src/ros_node_lib/rosout_appender.cpp
+    src/ros_node_lib/internal_timer_manager.cpp
     )
 
 ## Add cmake target dependencies of the executable
