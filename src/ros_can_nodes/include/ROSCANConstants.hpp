@@ -26,7 +26,7 @@ namespace ROSCANConstants{
     static const uint bitmask_ros_msg = (0x1 << bitshift_ros_msg);
     static const uint bitmask_priority = (0x3 << bitshift_priority);
     static const uint bitmask_func = (0x3 << bitshift_func);
-    static const uint bitshift_seq = (0x3 << bitshift_seq);
+    static const uint bitmask_seq = (0x3 << bitshift_seq);
 
     static const enum msg_func{
         ROS_TOPIC,
@@ -77,6 +77,5 @@ namespace ROSCANConstants{
         HEARTBEAT,
         EXTENDED
     };
-
 }
 #endif // ROSCANCONSTANTS_H

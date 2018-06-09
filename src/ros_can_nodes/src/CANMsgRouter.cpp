@@ -162,12 +162,18 @@ static void CANMsgRouter::routePublishMsg(can_frame msg){
     uint msg_header = msg.can_id & CAN_ERR_MASK;
 
     // Check if we have reached the last expected msg
-    // TODO: handling of message length and special cases
     bool last_msg = (msg.can_dlc < 8) ? FALSE : TRUE;
+
+    // Grab attributes needed for accessing the buffer
     uint topic = (msg >> bitshift_topic_id) & bitmask_topic_id;
     uint nid = (msg >> bitshift_nid) & bitmask_nid;
 
     uint seq = (msg >> bitshift_seq) & bitmask_seq;
+
+    // Special case for messages that are made up of 7 or more can packets
+    if (seq == 7) {
+        seq = (msg >> bitshift_len) & bitmask_len;
+    }
 
     // Key will be concatenation of topicid, and nid
     short key = (topic << 5) | nid;
