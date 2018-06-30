@@ -16,7 +16,7 @@
 
 
 #define MAX_CAN_MSGS 32
-#define TOPIC_BUFFER_SIZE (CAN_MAX_DLEN * MAX_CAN_MSGS)
+#define TOPIC_BUFFER_SIZE (MAX_CAN_MSGS)
 
 typedef uint8_t buffer[TOPIC_BUFFER_SIZE];
  // NOTE: above line is bad style, as calling sizeof will produce incorrect
