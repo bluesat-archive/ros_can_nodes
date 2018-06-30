@@ -1,5 +1,5 @@
 #include "common.h"
-#include "RosCanNode.h"
+#include "RosCanNode.hpp"
 #include "rosout_appender.h"
 #include "advertise_options.h"
 #include "callback_queue.h"
