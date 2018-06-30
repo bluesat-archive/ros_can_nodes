@@ -15,7 +15,10 @@
 
 #define MAX_CAN_MSGS 32
 #define TOPIC_BUFFER_SIZE (CAN_MAX_DLEN * MAX_CAN_MSGS)
-typedef uint8_t[TOPIC_BUFFER_SIZE] buffer;
+
+typedef uint8_t buffer[TOPIC_BUFFER_SIZE];
+ // NOTE: above line is bad style, as calling sizeof will produce incorrect
+ // results if not aware of the array type of 'buffer'
 
 class TopicBuffers{
 

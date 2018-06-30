@@ -33,19 +33,19 @@ namespace roscan {
 
     class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
         public:
-            RosCanNode(std::string name, uint id);
+            RosCanNode(std::string name, uint8_t id);
             ~RosCanNode();
 
             inline const std::string getID() const { return id_; }
             inline const std::string getName() const { return name_; }
 
-            static RosCanNode *getNode(uint id);
+            static RosCanNode *getNode(uint8_t id);
 
             // ==================================================
             //           CAN-facing methods and attributes
             // ==================================================
 
-            static void registerNode(std::string name, uint hashName);
+            static void registerNode(std::string name, uint8_t hashName);
             void deregisterNode();
             void heartbeat(void);
             int registerSubscriber(std::string topic, std::string topic_type);
@@ -65,7 +65,7 @@ namespace roscan {
 
         private:
             std::string name_;
-            uint id_;
+            uint8_t id_;
 
             bool g_started;
             volatile bool g_shutting_down;

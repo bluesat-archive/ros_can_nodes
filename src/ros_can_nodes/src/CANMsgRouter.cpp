@@ -51,7 +51,7 @@ static void CANMsgRouter::run(){
 
 static void CANMsgRouter::processCANMsg(can_frame msg){
     // Check the CAN Msg Header to perform routing
-    uint msg_header = msg.can_id & CAN_ERR_MASK;
+    uint8_t msg_header = msg.can_id & CAN_ERR_MASK;
 
     if ((msg_header & bitmask_ros_msg) == 0){
             // Out-of-Channel communication handling
@@ -59,7 +59,7 @@ static void CANMsgRouter::processCANMsg(can_frame msg){
 
     } else {
         // Check the function
-        uint msg_function = ((msg_header & bitmask_func) >> bitshift_func);
+        uint8_t msg_function = ((msg_header & bitmask_func) >> bitshift_func);
 
         if(msg_function == ROSCANConstants::msg_func.ROS_TOPIC) {
 
@@ -88,53 +88,53 @@ static void CANMsgRouter::processCANMsg(can_frame msg){
 // Function to cut the control msg into its components, and then call the
 // appropriate Node function.
 static void CANMsgRouter::routeControlMsg(can_frame msg){
-    uint mode = ((msg & bitmask_mode) >> bitshift_mode);
+    uint8_t mode = ((msg & bitmask_mode) >> bitshift_mode);
 
-    uint mode_info = ((msg & bitmask_mode_specific) >> bitshift_mode_specific);
+    uint8_t mode_info = ((msg & bitmask_mode_specific) >> bitshift_mode_specific);
 
     switch(mode){
         case control_modes.REGISTER_NODE:
 
-            uint step = mode_info & 0x1;
-            uint nodeHash = (mode_info >> 1) & 0xF);
+            uint8_t step = mode_info & 0x1;
+            uint8_t nodeHash = (mode_info >> 1) & 0xF);
             std::string name = msg.data;
             RosCanNode::registerNode(name, hashId);
 
         case control_modes.DEREGISTER_NODE:
 
-            uint nodeID = mode_info & 0xF;
+            uint8_t nodeID = mode_info & 0xF;
             RosCanNode::getNode(nodeID)->deregisterNode(nodeID);
 
         case control_modes.SUBSCRIBE_TOPIC:
 
-            uint nodeID = mode_info & 0xF;
+            uint8_t nodeID = mode_info & 0xF;
             RosCanNode::getNode(nodeID)->registerSubscriber(std::string topic, std::string topic_type);
 
         case control_modes.UNREGISTER_TOPIC:
 
-            uint nodeID = mode_info & 0xF;
-            uint topicID = (mode_info >> 4) & 0x3F;
+            uint8_t nodeID = mode_info & 0xF;
+            uint8_t topicID = (mode_info >> 4) & 0x3F;
             RosCanNode::getNode(nodeID)->unregisterSubscriber(topicID);
 
         case control_modes.ADVERTISE_TOPIC:
 
-            uint nodeID = mode_info & 0xF;
+            uint8_t nodeID = mode_info & 0xF;
             RosCanNode::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
 
         case control_modes.UNREGISTER_PUBLISHER:
 
-            uint nodeID = mode_info & 0xF;
-            uint topicID = (mode_info >> 4) & 0x3F;
+            uint8_t nodeID = mode_info & 0xF;
+            uint8_t topicID = (mode_info >> 4) & 0x3F;
             RosCanNode::getNode(nodeID)->unregisterPublisher(topicID);
 
         case control_modes.ADVERTISE_SERVICE:
 
-            uint nodeID = mode_info & 0xF;
+            uint8_t nodeID = mode_info & 0xF;
             //RosCanNode::getNode(nodeID)->advertiseService(std::string service);
 
         case control_modes.UNREGISTER_SERVICE:
 
-            uint nodeID = mode_info & 0xF;
+            uint8_t nodeID = mode_info & 0xF;
             //RosCanNode::getNode(nodeID)->unregisterService(std::string service);
 
         case control_modes.PARAMETERS:
@@ -143,7 +143,7 @@ static void CANMsgRouter::routeControlMsg(can_frame msg){
 
         case control_modes.HEARTBEAT:
 
-            uint nodeID = mode_info & 0xF;
+            uint8_t nodeID = mode_info & 0xF;
             //RosCanNode::getNode(nodeID)->heartbeat(void);
 
         case control_modes.EXTENDED:
@@ -159,16 +159,16 @@ static void CANMsgRouter::routeControlMsg(can_frame msg){
 
 static void CANMsgRouter::routePublishMsg(can_frame msg){
 
-    uint msg_header = msg.can_id & CAN_ERR_MASK;
+    uint8_t msg_header = msg.can_id & CAN_ERR_MASK;
 
     // Check if we have reached the last expected msg
     bool last_msg = (msg.can_dlc < 8) ? FALSE : TRUE;
 
     // Grab attributes needed for accessing the buffer
-    uint topic = (msg >> bitshift_topic_id) & bitmask_topic_id;
-    uint nid = (msg >> bitshift_nid) & bitmask_nid;
+    uint8_t topic = (msg >> bitshift_topic_id) & bitmask_topic_id;
+    uint8_t nid = (msg >> bitshift_nid) & bitmask_nid;
 
-    uint seq = (msg >> bitshift_seq) & bitmask_seq;
+    uint8_t seq = (msg >> bitshift_seq) & bitmask_seq;
 
     // Special case for messages that are made up of 7 or more can packets
     if (seq == 7) {

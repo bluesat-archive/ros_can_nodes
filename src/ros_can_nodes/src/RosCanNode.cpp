@@ -43,7 +43,7 @@ namespace roscan {
         XmlRpc::XmlRpcSocket::s_use_ipv6_ = use_ipv6;
     }
 
-    RosCanNode::RosCanNode(std::string name, uint id) : name_("can_node/" + name), id_(id), isZombie(false), g_started(false), g_shutting_down(false), callback_queue_(0), collection_(0) {
+    RosCanNode::RosCanNode(std::string name, uint8_t id) : name_("can_node/" + name), id_(id), isZombie(false), g_started(false), g_shutting_down(false), callback_queue_(0), collection_(0) {
 
         std::cout << "Creating node " << name_ << "\n";
         g_global_queue.reset(new CallbackQueue);
@@ -80,7 +80,7 @@ namespace roscan {
         return nodeList[index];
     }
 
-    static void RosCanNode::registerNode(std::string callerId, uint hashName) {
+    static void RosCanNode::registerNode(std::string callerId, uint8_t hashName) {
         int index = 0;
         //get the first id
 
@@ -281,7 +281,7 @@ namespace roscan {
     //               ROS Facing Methods
     // ==================================================
 
-    void rosCanCallback(const ROSTypeFlat& msg, uint topicID){
+    void rosCanCallback(const ROSTypeFlat& msg, uint8_t topicID){
         //TODO: call Syam's rostypeflat conversion, then put on can bus
     }
 

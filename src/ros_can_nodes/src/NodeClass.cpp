@@ -1,6 +1,6 @@
 #include "NodeClass.hpp"
 
-Node::Node(std::string callerId, int id, uint hashName) {
+Node::Node(std::string callerId, int id, uint8_t hashName) {
 
     //NOTE: ONLY RUN FOLLOWING IF REGISTER TO ROS IS SUCCESSFUL
     this->id = id;
@@ -25,7 +25,7 @@ static Node * Node::getNode(int index) {
     return nodeList[index];
 }
 
-static void Node::registerNode(std::string callerId, uint hashName) {
+static void Node::registerNode(std::string callerId, uint8_t hashName) {
     int index = 0;
     //get the first not set id
     while (index < MAX_NODES && nodeList[index] != NULL) {
@@ -49,7 +49,7 @@ static void Node::deregisterNode(int atID) {
     nodeList[atID] = NULL;
 }
 
-static bool checkValidMsg(uint id, uint topic){
+static bool checkValidMsg(uint8_t id, uint8_t topic){
     int valid = false;
 
     if(nodeList[id] != NULL){

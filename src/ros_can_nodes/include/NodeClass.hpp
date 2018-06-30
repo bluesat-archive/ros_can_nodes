@@ -5,16 +5,16 @@
 class Node {
 
     public:
-        Node(std::string name, int id, uint hashName);
+        Node(std::string name, int id, uint8_t hashName);
         ~Node();
 
         int getID();
         std::string getName();
 
         static Node * getNode(int id);
-        static void registerNode(std::string name, uint hashName);
+        static void registerNode(std::string name, uint8_t hashName);
         static void deregisterNode(int atID);
-        static bool checkValidMsg(uint id, uint topic);
+        static bool checkValidMsg(uint8_t id, uint8_t topic);
 
         void heartbeat(void);
         int registerSubscriber(std::string topic, std::string topic_type);
@@ -36,7 +36,7 @@ class Node {
 
         int id;
         std::string callerId;
-        uint hashName;
+        uint8_t hashName;
         static Node *nodeList[MAX_NODES];
 
 };
