@@ -19,12 +19,11 @@
 #define TOPIC_BUFFER_SIZE (MAX_CAN_MSGS)
 
 typedef uint8_t buffer[TOPIC_BUFFER_SIZE];
+std::unordered_map<short, buffer> topic_buffers;
  // NOTE: above line is bad style, as calling sizeof will produce incorrect
  // results if not aware of the array type of 'buffer'
 
 class TopicBuffers{
-
-    static std::unordered_map<short, buffer> topic_buffers;
 
     static void initBuffers(void);
 
