@@ -11,11 +11,11 @@
  #include "ROSCANConstants.hpp"
  #include "TopicBuffers.hpp"
 
-static void TopicBuffers::initBuffers(){
+static void initBuffers(){
 
 }
 
-static void TopicBuffers::processData(short key, uint8_t* data, int d_len, bool last_msg){
+static void processData(short key, uint8_t* data, int d_len, bool last_msg){
 
     TopicBuffers::appendData(key, data);
 
