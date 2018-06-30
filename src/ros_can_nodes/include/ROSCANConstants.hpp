@@ -30,12 +30,10 @@ namespace ROSCANConstants{
     static const uint8_t bitmask_func = (0x3 << bitshift_func);
     static const uint8_t bitmask_seq = (0x3 << bitshift_seq);
 
-    static const enum msg_func{
-        ROS_TOPIC,
-        ROS_SERVICE,
-        CONTROL,
-        RESERVED
-    };
+    const uint8_t ROS_TOPIC = 0;
+    const uint8_t ROS_SERVICE = 1;
+    const uint8_t CONTROL = 2;
+    const uint8_t RESERVED = 3;
 
     /* --------------------------------------   */
     /*            ROSTopic Msg fields           */
@@ -66,18 +64,16 @@ namespace ROSCANConstants{
     static const uint8_t bitmask_mode_specific = (0x3FFFF << bitshift_mode_specific);
 
     /* Enumeration for Control Message Modes */
-    static const enum control_modes{
-        REGISTER_NODE,
-        DEREGISTER_NODE,
-        SUBSCRIBE_TOPIC,
-        UNREGISTER_TOPIC,
-        ADVERTISE_TOPIC,
-        UNREGISTER_PUBLISHER,
-        ADVERTISE_SERVICE,
-        UNREGISTER_SERVICE,
-        PARAMETERS,
-        HEARTBEAT,
-        EXTENDED
-    };
+    static const uint8_t REGISTER_NODE = 0;
+    static const uint8_t DEREGISTER_NODE = 1;
+    static const uint8_t SUBSCRIBE_TOPIC = 2;
+    static const uint8_t UNREGISTER_TOPIC = 3;
+    static const uint8_t ADVERTISE_TOPIC = 4;
+    static const uint8_t UNREGISTER_PUBLISHER = 5;
+    static const uint8_t ADVERTISE_SERVICE = 6;
+    static const uint8_t UNREGISTER_SERVICE = 7;
+    static const uint8_t PARAMETERS = 8;
+    static const uint8_t HEARTBEAT = 9;
+    static const uint8_t EXTENDED = 10;
 }
 #endif // ROSCANCONSTANTS_H
