@@ -24,7 +24,7 @@ typedef uint8_t buffer[TOPIC_BUFFER_SIZE];
 
 class TopicBuffers{
 
-    std::unordered_map<short, buffer> topic_buffers;
+    static std::unordered_map<short, buffer> topic_buffers;
 
     static void initBuffers(void);
 

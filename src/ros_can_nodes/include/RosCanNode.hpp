@@ -11,16 +11,16 @@
 #ifndef ROSCANNODE_H
 #define ROSCANNODE_H
 
-#include "common.h"
-#include "poll_manager.h"
-#include "connection_manager.h"
-#include "topic_manager.h"
-#include "xmlrpc_manager.h"
-#include "callback_queue_interface.h"
-#include "rosout_appender.h"
-#include "publisher.h"
-#include "advertise_options.h"
-#include "callback_queue.h"
+#include "ros_node_lib/common.h"
+#include "ros_node_lib/poll_manager.h"
+#include "ros_node_lib/connection_manager.h"
+#include "ros_node_lib/topic_manager.h"
+#include "ros_node_lib/xmlrpc_manager.h"
+#include "ros_node_lib/callback_queue_interface.h"
+#include "ros_node_lib/rosout_appender.h"
+#include "ros_node_lib/publisher.h"
+#include "ros_node_lib/advertise_options.h"
+#include "ros_node_lib/callback_queue.h"
 #include <std_msgs/String.h>
 #include <bitset>
 
