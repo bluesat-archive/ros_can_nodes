@@ -18,7 +18,7 @@
 int main(int argc, char **argv){
     ros::init(argc, argv, "can_ros_decoder");
 
-    CANMsgRoute::init();
+    CANMsgRouter::init();
 
     CANMsgRouter::run();
 }

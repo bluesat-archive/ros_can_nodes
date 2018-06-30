@@ -20,6 +20,8 @@ class CANMsgRouter{
 
     private:
 
+        static void run();
+        
         static bool processCANMsg(can_frame msg);
 
         static void routeControlMsg(uint32_t identifier, uint8_t *data);

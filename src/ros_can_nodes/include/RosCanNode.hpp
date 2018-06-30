@@ -23,6 +23,7 @@
 #include "ros_node_lib/callback_queue.h"
 #include <std_msgs/String.h>
 #include <bitset>
+#include "ros_type_introspection/ros_introspection.hpp"
 
 #define MAX_NODES 16
 #define MAX_TOPICS 128
@@ -36,7 +37,7 @@ namespace roscan {
             RosCanNode(std::string name, uint8_t id);
             ~RosCanNode();
 
-            inline const std::string getID() const { return id_; }
+            inline const uint8_t getID() const { return id_; }
             inline const std::string getName() const { return name_; }
 
             static RosCanNode *getNode(uint8_t id);
@@ -239,7 +240,7 @@ namespace roscan {
     };
 
     boost::mutex nodeListMutex;
-    static Node *nodeList[MAX_NODES];
+    static RosCanNode *nodeList[MAX_NODES];
 
 
 } // namespace roscan
