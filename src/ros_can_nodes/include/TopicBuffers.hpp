@@ -12,6 +12,8 @@
 #define TOPICBUFFERS_H
 
 #include <unordered_map>
+#include <cstdint>
+
 
 #define MAX_CAN_MSGS 32
 #define TOPIC_BUFFER_SIZE (CAN_MAX_DLEN * MAX_CAN_MSGS)

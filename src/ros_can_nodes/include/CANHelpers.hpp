@@ -11,6 +11,8 @@
 #ifndef CANHELPERS_H
 #define CANHELPERS_H
 
+#include <cstdint>
+
 class CANHelpers{
 
     static int open_can_port(const char *port);

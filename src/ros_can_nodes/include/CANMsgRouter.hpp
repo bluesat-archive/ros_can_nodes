@@ -12,6 +12,7 @@
 #define CANMSGROUTER_H
 
 #include <linux/can.h>
+#include <cstdint>
 
 class CANMsgRouter{
 

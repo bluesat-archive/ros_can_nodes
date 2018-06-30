@@ -10,6 +10,8 @@
 #ifndef ROSCANCONSTANTS_H
 #define ROSCANCONSTANTS_H
 
+#include <cstdint>
+
 namespace ROSCANConstants{
 
     /* --------------------------------------   */
