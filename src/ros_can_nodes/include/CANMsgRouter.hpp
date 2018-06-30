@@ -26,6 +26,6 @@ class CANMsgRouter{
 
         static void routePublishMsg(uint32_t identifier, uint8_t *data);
 
-}
+};
 
 #endif // CANMSGROUTER_H

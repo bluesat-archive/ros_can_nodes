@@ -22,6 +22,6 @@ class CANHelpers{
     static int read_can_port(struct can_frame *frame);
 
     static void close_can_port();
-}
+};
 
 #endif // CANHELPERS_H

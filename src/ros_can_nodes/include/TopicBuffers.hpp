@@ -26,13 +26,13 @@ class TopicBuffers{
 
     std::unordered_map<short, buffer> topic_buffers;
 
-    void initBuffers(void);
+    static void initBuffers(void);
 
-    void processData(short key, uint8_t* data, int d_len, bool last_msg);
+    static void processData(short key, uint8_t* data, int d_len, bool last_msg);
 
     void appendData(uint8_t* data);
 
     // TODO: Possible Custom Hash function for unordered_map
     // TODO: Possible Custom Equality function for unordered_map
-}
+};
 #endif // TOPICBUFFERS_H
