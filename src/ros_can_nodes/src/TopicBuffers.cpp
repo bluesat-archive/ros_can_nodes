@@ -17,7 +17,7 @@ static void initBuffers(){
 
 static void appendData(short key, uint8_t data){
     //TODO: append data
-    topic_buffers[key] = data;
+    topic_buffers[key][0] = data;
 }
 
 static void processData(short key, uint8_t* data, int d_len, bool last_msg){
