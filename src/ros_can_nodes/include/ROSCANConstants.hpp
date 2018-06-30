@@ -63,7 +63,7 @@ namespace ROSCANConstants{
 
     /* Bitmasking for Control Messages */
     static const uint8_t bitmask_mode = (0xF << bitshift_mode);
-    static const uint8_t bitmask_mode_specific = (0x3FFFF << bitshift_mode_specific)
+    static const uint8_t bitmask_mode_specific = (0x3FFFF << bitshift_mode_specific);
 
     /* Enumeration for Control Message Modes */
     static const enum control_modes{
