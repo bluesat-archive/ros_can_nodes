@@ -18,6 +18,7 @@ static void initBuffers(){
 static void processData(short key, uint8_t* data, int d_len, bool last_msg){
 
     TopicBuffers::appendData(key, data);
+    int x = d_len;
 
     if(last_msg){
         // TODO: Convert to flattype and publish to ros network
