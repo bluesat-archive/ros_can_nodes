@@ -15,14 +15,14 @@ static void initBuffers(){
 
 }
 
-static void appendData(short key, uint8_t* data){
+static void appendData(short key, uint8_t data){
     //TODO: append data
-    topic_buffers[key] = &data;
+    topic_buffers[key] = data;
 }
 
 static void processData(short key, uint8_t* data, int d_len, bool last_msg){
 
-    appendData(key, data);
+    appendData(key, *data);
 
     if(last_msg){
         // TODO: Convert to flattype and publish to ros network
