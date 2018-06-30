@@ -25,7 +25,7 @@ int main(int argc, char **argv){
 
 static void CANMsgRouter::init(){
     // TODO: either fail on bad open_port OR have reconnect policy
-    int err = CANHelpers::open_can_port('can0');
+    int err = open_can_port('can0');
 
     if(err){
         throw "Failed to acuire can socket, exiting";
