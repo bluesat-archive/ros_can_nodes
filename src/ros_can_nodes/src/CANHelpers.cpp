@@ -20,7 +20,7 @@
 
 int soc;
 
-static int CANHelpers::open_can_port(const char *port) {
+static int open_can_port(const char *port) {
     struct ifreq ifr;
     struct sockaddr_can addr;
 
@@ -50,7 +50,7 @@ static int CANHelpers::open_can_port(const char *port) {
     return 0;
 }
 
-static int CANHelpers::send_can_port(struct can_frame *frame) {
+static int send_can_port(struct can_frame *frame) {
     int retval;
    retval = write(soc, frame, sizeof(struct can_frame));
     if (retval != sizeof(struct can_frame)) {
@@ -81,7 +81,7 @@ static int read_can_port(struct can_frame *frame) {
     return recvbytes;
 }
 
-static void CANHelpers::close_can_port() {
+static void close_can_port() {
     close(soc);
     return 0;
 }
