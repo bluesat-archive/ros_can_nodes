@@ -27,9 +27,9 @@ class TopicBuffers{
 
     static void initBuffers(void);
 
-    static void processData(short key, uint8_t* data, int d_len, bool last_msg);
-
     static void appendData(short key, uint8_t* data);
+
+    static void processData(short key, uint8_t* data, int d_len, bool last_msg);
 
     // TODO: Possible Custom Hash function for unordered_map
     // TODO: Possible Custom Equality function for unordered_map
