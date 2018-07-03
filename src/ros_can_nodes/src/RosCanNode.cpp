@@ -281,7 +281,7 @@ namespace roscan {
     //               ROS Facing Methods
     // ==================================================
 
-    void rosCanCallback(const ROSIntrospection::ROSTypeFlat& msg, uint8_t topicID){
+    void rosCanCallback(const RosIntrospection::ROSTypeFlat& msg, uint8_t topicID){
         //TODO: call Syam's rostypeflat conversion, then put on can bus
     }
 
@@ -440,7 +440,7 @@ namespace roscan {
     void RosCanNode::spin(){
         ros::Rate r(100); //100Hz
         while (!isZombie) {
-            node->spinOnce();
+            this->spinOnce();
             r.sleep();
         }
     }
@@ -448,7 +448,7 @@ namespace roscan {
     int RosCanNode::getFirstFreeTopic(){
         // TODO: make this more efficient
         int i;
-        for(i = 0; i < topicIds.size; i++){
+        for(i = 0; i < topicIds.size(); i++){
             if(!topicIds[i]){
                 return i;
             }

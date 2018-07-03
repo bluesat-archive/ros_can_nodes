@@ -18,12 +18,12 @@
 int main(int argc, char **argv){
     ros::init(argc, argv, "can_ros_decoder");
 
-    CANMsgRouter::init();
+    init();
 
-    CANMsgRouter::run();
+    run();
 }
 
-static void CANMsgRouter::init(){
+static void init(){
     // TODO: either fail on bad open_port OR have reconnect policy
     int err = open_can_port("can0");
 
@@ -31,10 +31,10 @@ static void CANMsgRouter::init(){
         throw "Failed to acuire can socket, exiting";
     }
 
-    TopicBuffers::initBuffers();
+    initBuffers();
 }
 
-static void CANMsgRouter::run(){
+static void run(){
     struct can_frame can_msg;
 
     while(1){
@@ -44,12 +44,12 @@ static void CANMsgRouter::run(){
 
         if (numbytes >= 0){
             // Pass to processCANMsg
-            CANMsgRouter::processCANMsg(can_msg);
+            processCANMsg(can_msg);
         }
     }
 }
 
-static void CANMsgRouter::processCANMsg(can_frame msg){
+static void processCANMsg(can_frame msg){
     // Check the CAN Msg Header to perform routing
     uint8_t msg_header = msg.can_id & CAN_ERR_MASK;
 
@@ -66,7 +66,7 @@ static void CANMsgRouter::processCANMsg(can_frame msg){
             // Start thread to handle a ros message packet
             // Mutex is placed within handler on a per-node basis, so that
             // no 2 topics from a single node can be concurrently handling
-            CANMsgRouter::routePublishMsg(msg);
+            routePublishMsg(msg);
 
 
         } else if (msg_function == ROSCANConstants::msg_func.ROS_SERVICE)) {
@@ -77,7 +77,7 @@ static void CANMsgRouter::processCANMsg(can_frame msg){
             // Assume control messages are valid and intended for main controller
             // Start a thread to handle control message.
             // TODO: handle shared resource with topicThread (nodeList, topics etc)
-            CANMsgRouter::routeControlMsg(msg);
+            routeControlMsg(msg);
 
         } else {
             // -- Reserved --
@@ -87,7 +87,7 @@ static void CANMsgRouter::processCANMsg(can_frame msg){
 
 // Function to cut the control msg into its components, and then call the
 // appropriate Node function.
-static void CANMsgRouter::routeControlMsg(can_frame msg){
+static void routeControlMsg(can_frame msg){
     uint8_t mode = ((msg & bitmask_mode) >> bitshift_mode);
 
     uint8_t mode_info = ((msg & bitmask_mode_specific) >> bitshift_mode_specific);
@@ -157,7 +157,7 @@ static void CANMsgRouter::routeControlMsg(can_frame msg){
     }
 }
 
-static void CANMsgRouter::routePublishMsg(can_frame msg){
+static void routePublishMsg(can_frame msg){
 
     uint8_t msg_header = msg.can_id & CAN_ERR_MASK;
 
