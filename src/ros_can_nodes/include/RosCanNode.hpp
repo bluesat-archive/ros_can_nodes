@@ -228,7 +228,7 @@ namespace roscan {
                 return subscribe(ops);
             }
 
-            void rosCanCallback(const ROSTypeFlat& msg);
+            void rosCanCallback(const ROSIntrospection::ROSTypeFlat& msg);
 
             boost::mutex topicLock;
             std::bitset<MAX_TOPICS> topicIds;

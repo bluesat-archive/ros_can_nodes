@@ -62,7 +62,7 @@ namespace roscan {
 
         {
             boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-            nodeList[this->getID] = NULL;
+            nodeList[this->getID()] = NULL;
         }
 
         shutdown();
@@ -75,9 +75,9 @@ namespace roscan {
     //               CAN Facing Methods
     // ==================================================
 
-    static RosCanNode * RosCanNode::getNode(int index) {
+    static RosCanNode * getNode(uint8_t id) {
         boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-        return nodeList[index];
+        return nodeList[id];
     }
 
     static void registerNode(std::string callerId, uint8_t hashName) {
@@ -96,13 +96,13 @@ namespace roscan {
             }
 
             if(index < MAX_NODES) {
-                RosCanNode *node = new RosCanNode(callerId, index, hashName);
+                RosCanNode *node = new RosCanNode(hashName, index);
                 nodeList[index] = node;
+
+                // if successful, create thread to loop spinOnce for any subscribers
+                node->spinThread(&RosCanNode::spin, node);
             }
         }
-
-        // if successful, create thread to loop spinOnce for any subscribers
-        this.spinThread(&RosCanNode::spin, this);
 
         // TODO send response?
     }
