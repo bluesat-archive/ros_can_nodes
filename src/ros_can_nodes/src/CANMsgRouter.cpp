@@ -94,66 +94,66 @@ static void routeControlMsg(can_frame msg){
 
     switch(mode){
         case control_modes.REGISTER_NODE:
-
-            uint8_t step = mode_info & 0x1;
-            uint8_t nodeHash = (mode_info >> 1) & 0xF);
-            std::string name = msg.data;
-            RosCanNode::registerNode(name, hashId);
-
+            {
+                uint8_t step = mode_info & 0x1;
+                uint8_t nodeHash = (mode_info >> 1) & 0xF);
+                std::string name = msg.data;
+                RosCanNode::registerNode(name, hashId);
+            }
         case control_modes.DEREGISTER_NODE:
-
-            uint8_t nodeID = mode_info & 0xF;
-            RosCanNode::getNode(nodeID)->deregisterNode(nodeID);
-
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                RosCanNode::getNode(nodeID)->deregisterNode(nodeID);
+            }
         case control_modes.SUBSCRIBE_TOPIC:
-
-            uint8_t nodeID = mode_info & 0xF;
-            RosCanNode::getNode(nodeID)->registerSubscriber(std::string topic, std::string topic_type);
-
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                RosCanNode::getNode(nodeID)->registerSubscriber(std::string topic, std::string topic_type);
+            }
         case control_modes.UNREGISTER_TOPIC:
-
-            uint8_t nodeID = mode_info & 0xF;
-            uint8_t topicID = (mode_info >> 4) & 0x3F;
-            RosCanNode::getNode(nodeID)->unregisterSubscriber(topicID);
-
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                uint8_t topicID = (mode_info >> 4) & 0x3F;
+                RosCanNode::getNode(nodeID)->unregisterSubscriber(topicID);
+            }
         case control_modes.ADVERTISE_TOPIC:
-
-            uint8_t nodeID = mode_info & 0xF;
-            RosCanNode::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
-
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                RosCanNode::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
+            }
         case control_modes.UNREGISTER_PUBLISHER:
-
-            uint8_t nodeID = mode_info & 0xF;
-            uint8_t topicID = (mode_info >> 4) & 0x3F;
-            RosCanNode::getNode(nodeID)->unregisterPublisher(topicID);
-
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                uint8_t topicID = (mode_info >> 4) & 0x3F;
+                RosCanNode::getNode(nodeID)->unregisterPublisher(topicID);
+            }
         case control_modes.ADVERTISE_SERVICE:
-
-            uint8_t nodeID = mode_info & 0xF;
-            //RosCanNode::getNode(nodeID)->advertiseService(std::string service);
-
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                //RosCanNode::getNode(nodeID)->advertiseService(std::string service);
+            }
         case control_modes.UNREGISTER_SERVICE:
-
-            uint8_t nodeID = mode_info & 0xF;
-            //RosCanNode::getNode(nodeID)->unregisterService(std::string service);
-
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                //RosCanNode::getNode(nodeID)->unregisterService(std::string service);
+            }
         case control_modes.PARAMETERS:
-
-            //TODO: later
-
+            {
+                //TODO: later
+            }
         case control_modes.HEARTBEAT:
-
-            uint8_t nodeID = mode_info & 0xF;
-            //RosCanNode::getNode(nodeID)->heartbeat(void);
-
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                //RosCanNode::getNode(nodeID)->heartbeat(void);
+            }
         case control_modes.EXTENDED:
-
-            //TODO: later
-
+            {
+                //TODO: later
+            }
         default:
-
+            {
             //NOTE: not a valid mode
-
+            }
     }
 }
 
