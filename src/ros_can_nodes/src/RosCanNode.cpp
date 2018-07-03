@@ -57,12 +57,12 @@ namespace roscan {
     RosCanNode::~RosCanNode() {
 
         // Wait for spinning thread to end.
-        this.isZombie = true;
-        this.spinThread.join();
+        this->isZombie = true;
+        this->spinThread.join();
 
         {
             boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-            nodeList[this.getID] = NULL;
+            nodeList[this->getID] = NULL;
         }
 
         shutdown();
@@ -80,7 +80,7 @@ namespace roscan {
         return nodeList[index];
     }
 
-    static void RosCanNode::registerNode(std::string callerId, uint8_t hashName) {
+    static void registerNode(std::string callerId, uint8_t hashName) {
         int index = 0;
         //get the first id
 
@@ -96,7 +96,7 @@ namespace roscan {
             }
 
             if(index < MAX_NODES) {
-                Node *node = new Node(callerId, index, hashName);
+                RosCanNode *node = new RosCanNode(callerId, index, hashName);
                 nodeList[index] = node;
             }
         }
@@ -127,12 +127,12 @@ namespace roscan {
     int RosCanNode::registerSubscriber(std::string topic, std::string topic_type) {
         std::cout << "Calling subscriber" << '\n';
 
-        std:string name = "/" + topic;
+        std::string name = "/" + topic;
         int topic_num = getFirstFreeTopic();
 
         if(topic_num >= 0){
 
-            node->subscribe(name, 1000, boost::bind(rosCanCallback, _1, topic_num);
+            this->subscribe(name, 1000, boost::bind(rosCanCallback, _1, topic_num);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
@@ -160,7 +160,7 @@ namespace roscan {
 
         if(topic_num >= 0){
 
-            node->advertise<ROSTypeFlat>(name, 10);
+            this->advertise<ROSTypeFlat>(name, 10);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
@@ -281,7 +281,7 @@ namespace roscan {
     //               ROS Facing Methods
     // ==================================================
 
-    void rosCanCallback(const ROSTypeFlat& msg, uint8_t topicID){
+    void rosCanCallback(const ROSIntrospection::ROSTypeFlat& msg, uint8_t topicID){
         //TODO: call Syam's rostypeflat conversion, then put on can bus
     }
 
