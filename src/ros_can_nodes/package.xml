@@ -4,7 +4,7 @@
   <version>0.0.0</version>
   <description>The ros_can_nodes package</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
   <maintainer email="nuno@todo.todo">nuno</maintainer>
@@ -43,11 +43,11 @@
   <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>xmlrpcpp</build_depend>
-  <build_depend>ros_introspection</build_depend>
+  <build_depend>ros_type_introspection</build_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>xmlrpcpp</run_depend>
-  <run_depend>ros_introspection</run_depend>
+  <run_depend>ros_type_introspection</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
