@@ -28,7 +28,7 @@ class CANMsgRouter{
 
         static void routeControlMsg(uint32_t identifier, uint8_t *data);
 
-        static vvoid routePublishMsg(uint32_t identifier, uint8_t *data);
+        static void routePublishMsg(uint32_t identifier, uint8_t *data);
 };
 
 #endif // CANMSGROUTER_H

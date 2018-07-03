@@ -81,7 +81,7 @@ namespace roscan {
     }
 
     static void registerNode(std::string callerId, uint8_t hashName) {
-        int index = 0;
+        uint8_t index = 0;
         //get the first id
 
         {
@@ -96,7 +96,8 @@ namespace roscan {
             }
 
             if(index < MAX_NODES) {
-                RosCanNode *node = new RosCanNode(hashName, index);
+                //TODO: take name from frame data
+                RosCanNode *node = new RosCanNode("Placeholder", index);
                 nodeList[index] = node;
 
                 // if successful, create thread to loop spinOnce for any subscribers

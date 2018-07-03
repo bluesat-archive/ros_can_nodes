@@ -165,14 +165,14 @@ static void routePublishMsg(can_frame msg){
     bool last_msg = (msg.can_dlc < 8) ? FALSE : TRUE;
 
     // Grab attributes needed for accessing the buffer
-    uint8_t topic = (msg >> bitshift_topic_id) & bitmask_topic_id;
-    uint8_t nid = (msg >> bitshift_nid) & bitmask_nid;
+    uint8_t topic = (msg >> ROSCANConstants::bitshift_topic_id) & ROSCANConstants::bitmask_topic_id;
+    uint8_t nid = (msg >> ROSCANConstants::bitshift_nid) & ROSCANConstants::bitmask_nid;
 
-    uint8_t seq = (msg >> bitshift_seq) & bitmask_seq;
+    uint8_t seq = (msg >> ROSCANConstants::bitshift_seq) & ROSCANConstants::bitmask_seq;
 
     // Special case for messages that are made up of 7 or more can packets
     if (seq == 7) {
-        seq = (msg >> bitshift_len) & bitmask_len;
+        seq = (msg >> ROSCANConstants::bitshift_len) & ROSCANConstants::bitmask_len;
     }
 
     // Key will be concatenation of topicid, and nid
