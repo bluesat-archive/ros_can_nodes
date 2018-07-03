@@ -31,7 +31,7 @@ static void init(){
         throw "Failed to acuire can socket, exiting";
     }
 
-    initBuffers();
+    TopicBuffers::initBuffers();
 }
 
 static void run(){
