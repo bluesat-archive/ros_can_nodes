@@ -24,9 +24,9 @@ class CANMsgRouter{
 
         static bool processCANMsg(can_frame msg);
 
-        static void routeControlMsg(uint32_t identifier, uint8_t *data);
+        static void routeControlMsg(can_frame msg);
 
-        static void routePublishMsg(uint32_t identifier, uint8_t *data);
+        static void routePublishMsg(can_frame msg);
 
     private:
 

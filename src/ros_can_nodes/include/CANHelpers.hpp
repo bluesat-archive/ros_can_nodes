@@ -14,14 +14,14 @@
 #include <cstdint>
 
 class CANHelpers{
+    public:
+        static int open_can_port(const char *port);
 
-    static int open_can_port(const char *port);
+        static int send_can_port(struct can_frame *frame);
 
-    static int send_can_port(struct can_frame *frame);
+        static int read_can_port(struct can_frame *frame);
 
-    static int read_can_port(struct can_frame *frame);
-
-    static void close_can_port();
+        static void close_can_port();
 };
 
 #endif // CANHELPERS_H

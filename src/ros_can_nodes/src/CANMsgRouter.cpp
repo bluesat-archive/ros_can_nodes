@@ -69,11 +69,11 @@ static void processCANMsg(can_frame msg){
             CANMsgRouter::routePublishMsg(msg);
 
 
-        } else if (msg_function == ROSCANConstants::ROS_SERVICE)) {
+        } else if (msg_function == ROSCANConstants::ROS_SERVICE) {
             // ROS_SERVICE message handling
             // Currently unimplemented
 
-        } else if (msg_function == ROSCANConstants::CONTROL)) {
+        } else if (msg_function == ROSCANConstants::CONTROL) {
             // Assume control messages are valid and intended for main controller
             // Start a thread to handle control message.
             // TODO: handle shared resource with topicThread (nodeList, topics etc)
@@ -88,27 +88,28 @@ static void processCANMsg(can_frame msg){
 // Function to cut the control msg into its components, and then call the
 // appropriate Node function.
 static void routeControlMsg(can_frame msg){
-    uint8_t mode = ((msg & ROSCANConstants::bitmask_mode) >> ROSCANConstants::bitshift_mode);
+    uint8_t mode = ((msg.can_id & ROSCANConstants::bitmask_mode) >> ROSCANConstants::bitshift_mode);
 
-    uint8_t mode_info = ((msg & ROSCANConstants::bitmask_mode_specific) >> ROSCANConstants::bitshift_mode_specific);
+    uint8_t mode_info = ((msg.can_id & ROSCANConstants::bitmask_mode_specific) >> ROSCANConstants::bitshift_mode_specific);
 
     switch(mode){
         case ROSCANConstants::REGISTER_NODE:
             {
                 uint8_t step = mode_info & 0x1;
-                uint8_t nodeHash = (mode_info >> 1) & 0xF);
+                uint8_t nodeHash = (mode_info >> 1) & 0xF;
                 std::string name = msg.data;
                 roscan::RosCanNode::registerNode(name, hashId);
             }
         case ROSCANConstants::DEREGISTER_NODE:
             {
                 uint8_t nodeID = mode_info & 0xF;
-                roscan::RosCanNode::getNode(nodeID)->deregisterNode(nodeID);
+                roscan::RosCanNode::getNode(nodeID)->deregisterNode();
             }
         case ROSCANConstants::SUBSCRIBE_TOPIC:
             {
                 uint8_t nodeID = mode_info & 0xF;
-                roscan::RosCanNode::getNode(nodeID)->registerSubscriber(std::string topic, std::string topic_type);
+                //TODO: get data content for function call
+                //roscan::RosCanNode::getNode(nodeID)->registerSubscriber(topic, topic_type);
             }
         case ROSCANConstants::UNREGISTER_TOPIC:
             {
@@ -119,7 +120,8 @@ static void routeControlMsg(can_frame msg){
         case ROSCANConstants::ADVERTISE_TOPIC:
             {
                 uint8_t nodeID = mode_info & 0xF;
-                roscan::RosCanNode::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
+                //TODO: get data content for function call
+                //roscan::RosCanNode::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
             }
         case ROSCANConstants::UNREGISTER_PUBLISHER:
             {
@@ -162,17 +164,17 @@ static void routePublishMsg(can_frame msg){
     uint8_t msg_header = msg.can_id & CAN_ERR_MASK;
 
     // Check if we have reached the last expected msg
-    bool last_msg = (msg.can_dlc < 8) ? FALSE : TRUE;
+    bool last_msg = (msg.can_dlc < 8) ? false : true;
 
     // Grab attributes needed for accessing the buffer
-    uint8_t topic = (msg >> ROSCANConstants::bitshift_topic_id) & ROSCANConstants::bitmask_topic_id;
-    uint8_t nid = (msg >> ROSCANConstants::bitshift_nid) & ROSCANConstants::bitmask_nid;
+    uint8_t topic = (msg_header >> ROSCANConstants::bitshift_topic_id) & ROSCANConstants::bitmask_topic_id;
+    uint8_t nid = (msg_header >> ROSCANConstants::bitshift_nid) & ROSCANConstants::bitmask_nid;
 
-    uint8_t seq = (msg >> ROSCANConstants::bitshift_seq) & ROSCANConstants::bitmask_seq;
+    uint8_t seq = (msg_header >> ROSCANConstants::bitshift_seq) & ROSCANConstants::bitmask_seq;
 
     // Special case for messages that are made up of 7 or more can packets
     if (seq == 7) {
-        seq = (msg >> ROSCANConstants::bitshift_len) & ROSCANConstants::bitmask_len;
+        seq = (msg_header >> ROSCANConstants::bitshift_len) & ROSCANConstants::bitmask_len;
     }
 
     // Key will be concatenation of topicid, and nid
