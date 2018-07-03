@@ -20,15 +20,15 @@ class CANMsgRouter{
 
     private:
 
-        void init();
+        static void init();
 
-        void run();
+        static void run();
 
-        bool processCANMsg(can_frame msg);
+        static bool processCANMsg(can_frame msg);
 
-        void routeControlMsg(uint32_t identifier, uint8_t *data);
+        static void routeControlMsg(uint32_t identifier, uint8_t *data);
 
-        void routePublishMsg(uint32_t identifier, uint8_t *data);
+        static vvoid routePublishMsg(uint32_t identifier, uint8_t *data);
 };
 
 #endif // CANMSGROUTER_H
