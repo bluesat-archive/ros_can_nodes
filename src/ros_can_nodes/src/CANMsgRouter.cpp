@@ -25,7 +25,7 @@ int main(int argc, char **argv){
 
 static void init(){
     // TODO: either fail on bad open_port OR have reconnect policy
-    int err = open_can_port("can0");
+    int err = CANHelpers::open_can_port("can0");
 
     if(err){
         throw "Failed to acuire can socket, exiting";
@@ -40,7 +40,7 @@ static void run(){
     while(1){
         // Check for Messages
         // TODO add reconnection ability
-        int numbytes = read_can_port(&can_msg);
+        int numbytes = CANHelpers::read_can_port(&can_msg);
 
         if (numbytes >= 0){
             // Pass to processCANMsg

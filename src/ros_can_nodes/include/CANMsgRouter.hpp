@@ -18,8 +18,6 @@ class CANMsgRouter{
 
     public:
 
-    private:
-
         static void init();
 
         static void run();
@@ -29,6 +27,9 @@ class CANMsgRouter{
         static void routeControlMsg(uint32_t identifier, uint8_t *data);
 
         static void routePublishMsg(uint32_t identifier, uint8_t *data);
+
+    private:
+
 };
 
 #endif // CANMSGROUTER_H
