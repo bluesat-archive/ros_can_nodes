@@ -43,9 +43,11 @@
   <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>xmlrpcpp</build_depend>
+  <build_depend>ros_introspection</build_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>xmlrpcpp</run_depend>
+  <run_depend>ros_introspection</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

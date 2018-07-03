@@ -8,6 +8,7 @@ set_directory_properties(PROPERTIES COMPILE_OPTIONS "-std=c++11;-Wall;-Wextra")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  ros_introspection
   std_msgs
   xmlrpcpp
 )
@@ -85,7 +86,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
     INCLUDE_DIRS include
     #LIBRARIES ros_can_nodes
-    CATKIN_DEPENDS roscpp std_msgs xmlrpcpp
+    CATKIN_DEPENDS roscpp std_msgs xmlrpcpp ros_introspection
     DEPENDS Boost
 )
 
