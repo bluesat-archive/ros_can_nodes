@@ -111,7 +111,7 @@ namespace roscan {
     void RosCanNode::deregisterNode() {
         {
             boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-            nodeList[this.getID] = NULL;
+            nodeList[this->getID] = NULL;
         }
         delete this;
 
@@ -156,7 +156,7 @@ namespace roscan {
     int RosCanNode::advertiseTopic(std::string topic, std::string topic_type) {
         std::cout << "Advertising topic" << '\n';
 
-        std:string name = "/" + topic;
+        std::string name = "/" + topic;
         int topic_num = getFirstFreeTopic();
 
         if(topic_num >= 0){

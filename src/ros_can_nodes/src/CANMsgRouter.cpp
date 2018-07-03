@@ -44,7 +44,7 @@ static void run(){
 
         if (numbytes >= 0){
             // Pass to processCANMsg
-            processCANMsg(can_msg);
+            CANMsgRouter::processCANMsg(can_msg);
         }
     }
 }
@@ -61,23 +61,23 @@ static void processCANMsg(can_frame msg){
         // Check the function
         uint8_t msg_function = ((msg_header & ROSCANConstants::bitmask_func) >> ROSCANConstants::bitshift_func);
 
-        if(msg_function == ROSCANConstants::msg_func.ROS_TOPIC) {
+        if(msg_function == ROSCANConstants::ROS_TOPIC) {
 
             // Start thread to handle a ros message packet
             // Mutex is placed within handler on a per-node basis, so that
             // no 2 topics from a single node can be concurrently handling
-            routePublishMsg(msg);
+            CANMsgRouter::routePublishMsg(msg);
 
 
-        } else if (msg_function == ROSCANConstants::msg_func.ROS_SERVICE)) {
+        } else if (msg_function == ROSCANConstants::ROS_SERVICE)) {
             // ROS_SERVICE message handling
             // Currently unimplemented
 
-        } else if (msg_function == ROSCANConstants::msg_func.CONTROL)) {
+        } else if (msg_function == ROSCANConstants::CONTROL)) {
             // Assume control messages are valid and intended for main controller
             // Start a thread to handle control message.
             // TODO: handle shared resource with topicThread (nodeList, topics etc)
-            routeControlMsg(msg);
+            CANMsgRouter::routeControlMsg(msg);
 
         } else {
             // -- Reserved --
@@ -93,60 +93,60 @@ static void routeControlMsg(can_frame msg){
     uint8_t mode_info = ((msg & ROSCANConstants::bitmask_mode_specific) >> ROSCANConstants::bitshift_mode_specific);
 
     switch(mode){
-        case control_modes.REGISTER_NODE:
+        case ROSCANConstants::REGISTER_NODE:
             {
                 uint8_t step = mode_info & 0x1;
                 uint8_t nodeHash = (mode_info >> 1) & 0xF);
                 std::string name = msg.data;
-                RosCanNode::registerNode(name, hashId);
+                roscan::RosCanNode::registerNode(name, hashId);
             }
-        case control_modes.DEREGISTER_NODE:
+        case ROSCANConstants::DEREGISTER_NODE:
             {
                 uint8_t nodeID = mode_info & 0xF;
-                RosCanNode::getNode(nodeID)->deregisterNode(nodeID);
+                roscan::RosCanNode::getNode(nodeID)->deregisterNode(nodeID);
             }
-        case control_modes.SUBSCRIBE_TOPIC:
+        case ROSCANConstants::SUBSCRIBE_TOPIC:
             {
                 uint8_t nodeID = mode_info & 0xF;
-                RosCanNode::getNode(nodeID)->registerSubscriber(std::string topic, std::string topic_type);
+                roscan::RosCanNode::getNode(nodeID)->registerSubscriber(std::string topic, std::string topic_type);
             }
-        case control_modes.UNREGISTER_TOPIC:
-            {
-                uint8_t nodeID = mode_info & 0xF;
-                uint8_t topicID = (mode_info >> 4) & 0x3F;
-                RosCanNode::getNode(nodeID)->unregisterSubscriber(topicID);
-            }
-        case control_modes.ADVERTISE_TOPIC:
-            {
-                uint8_t nodeID = mode_info & 0xF;
-                RosCanNode::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
-            }
-        case control_modes.UNREGISTER_PUBLISHER:
+        case ROSCANConstants::UNREGISTER_TOPIC:
             {
                 uint8_t nodeID = mode_info & 0xF;
                 uint8_t topicID = (mode_info >> 4) & 0x3F;
-                RosCanNode::getNode(nodeID)->unregisterPublisher(topicID);
+                roscan::RosCanNode::getNode(nodeID)->unregisterSubscriber(topicID);
             }
-        case control_modes.ADVERTISE_SERVICE:
+        case ROSCANConstants::ADVERTISE_TOPIC:
             {
                 uint8_t nodeID = mode_info & 0xF;
-                //RosCanNode::getNode(nodeID)->advertiseService(std::string service);
+                roscan::RosCanNode::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
             }
-        case control_modes.UNREGISTER_SERVICE:
+        case ROSCANConstants::UNREGISTER_PUBLISHER:
             {
                 uint8_t nodeID = mode_info & 0xF;
-                //RosCanNode::getNode(nodeID)->unregisterService(std::string service);
+                uint8_t topicID = (mode_info >> 4) & 0x3F;
+                roscan::RosCanNode::getNode(nodeID)->unregisterPublisher(topicID);
             }
-        case control_modes.PARAMETERS:
+        case ROSCANConstants::ADVERTISE_SERVICE:
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                //roscan::RosCanNode::getNode(nodeID)->advertiseService(std::string service);
+            }
+        case ROSCANConstants::UNREGISTER_SERVICE:
+            {
+                uint8_t nodeID = mode_info & 0xF;
+                //roscan::RosCanNode::getNode(nodeID)->unregisterService(std::string service);
+            }
+        case ROSCANConstants::PARAMETERS:
             {
                 //TODO: later
             }
-        case control_modes.HEARTBEAT:
+        case ROSCANConstants::HEARTBEAT:
             {
                 uint8_t nodeID = mode_info & 0xF;
-                //RosCanNode::getNode(nodeID)->heartbeat(void);
+                //roscan::RosCanNode::getNode(nodeID)->heartbeat(void);
             }
-        case control_modes.EXTENDED:
+        case ROSCANConstants::EXTENDED:
             {
                 //TODO: later
             }
