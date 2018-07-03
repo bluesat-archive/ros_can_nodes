@@ -18,9 +18,9 @@
 int main(int argc, char **argv){
     ros::init(argc, argv, "can_ros_decoder");
 
-    init();
+    CANMsgRouter::init();
 
-    run();
+    CANMsgRouter::run();
 }
 
 static void init(){
@@ -53,13 +53,13 @@ static void processCANMsg(can_frame msg){
     // Check the CAN Msg Header to perform routing
     uint8_t msg_header = msg.can_id & CAN_ERR_MASK;
 
-    if ((msg_header & bitmask_ros_msg) == 0){
+    if ((msg_header & ROSCANConstants::bitmask_ros_msg) == 0){
             // Out-of-Channel communication handling
             // Currently unimplemented
 
     } else {
         // Check the function
-        uint8_t msg_function = ((msg_header & bitmask_func) >> bitshift_func);
+        uint8_t msg_function = ((msg_header & ROSCANConstants::bitmask_func) >> ROSCANConstants::bitshift_func);
 
         if(msg_function == ROSCANConstants::msg_func.ROS_TOPIC) {
 
@@ -88,9 +88,9 @@ static void processCANMsg(can_frame msg){
 // Function to cut the control msg into its components, and then call the
 // appropriate Node function.
 static void routeControlMsg(can_frame msg){
-    uint8_t mode = ((msg & bitmask_mode) >> bitshift_mode);
+    uint8_t mode = ((msg & ROSCANConstants::bitmask_mode) >> ROSCANConstants::bitshift_mode);
 
-    uint8_t mode_info = ((msg & bitmask_mode_specific) >> bitshift_mode_specific);
+    uint8_t mode_info = ((msg & ROSCANConstants::bitmask_mode_specific) >> ROSCANConstants::bitshift_mode_specific);
 
     switch(mode){
         case control_modes.REGISTER_NODE:
