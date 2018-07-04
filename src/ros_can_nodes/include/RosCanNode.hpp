@@ -41,6 +41,8 @@ namespace roscan {
             inline const std::string getName() const { return name_; }
 
             static RosCanNode *getNode(uint8_t id);
+            boost::thread spinThread;
+            void spin();
 
             // ==================================================
             //           CAN-facing methods and attributes
@@ -232,11 +234,9 @@ namespace roscan {
 
             boost::mutex topicLock;
             std::bitset<MAX_TOPICS> topicIds;
-            boost::thread spinThread;
 
             bool isZombie;
             int getFirstFreeTopic();
-            void spin();
     };
 
     boost::mutex nodeListMutex;

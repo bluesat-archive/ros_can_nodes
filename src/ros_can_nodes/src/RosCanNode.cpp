@@ -111,7 +111,7 @@ namespace roscan {
     void RosCanNode::deregisterNode() {
         {
             boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-            nodeList[this->getID] = NULL;
+            nodeList[this->getID()] = NULL;
         }
         delete this;
 
@@ -161,7 +161,7 @@ namespace roscan {
 
         if(topic_num >= 0){
 
-            this->advertise<ROSTypeFlat>(name, 10, false);
+            this->advertise<ROSTypeFlat>(name, (uint32_t)10, false);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.

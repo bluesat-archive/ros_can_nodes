@@ -99,7 +99,7 @@ static void routeControlMsg(can_frame msg){
                 uint8_t hashName = (mode_info >> 1) & 0xF;
 
                 std::ostringstream convert;
-                for (int a = 0; a < msg.d_len; a++) {
+                for (int a = 0; a < msg.can_dlc; a++) {
                     convert << (int)msg.data[a];
                 }
 
