@@ -161,7 +161,7 @@ namespace roscan {
 
         if(topic_num >= 0){
 
-            this->advertise<ROSTypeFlat>(name, (uint32_t)10, false);
+            this->advertise<RosIntrospection::FlatMessage>(name, (uint32_t)10, false);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
@@ -282,8 +282,8 @@ namespace roscan {
     //               ROS Facing Methods
     // ==================================================
 
-    void rosCanCallback(const RosIntrospection::ROSTypeFlat& msg, uint8_t topicID){
-        //TODO: call Syam's rostypeflat conversion, then put on can bus
+    void rosCanCallback(const RosIntrospection::FlatMessage& msg, uint8_t topicID){
+        //TODO: call Syam's FlatMessage conversion, then put on can bus
     }
 
     CallbackQueuePtr RosCanNode::getInternalCallbackQueue() {

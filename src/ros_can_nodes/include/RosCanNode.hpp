@@ -24,7 +24,6 @@
 #include <std_msgs/String.h>
 #include <bitset>
 #include <ros_type_introspection/ros_introspection.hpp>
-#include <ros_type_introspection/deserializer.hpp>
 
 
 #define MAX_NODES 16
@@ -232,7 +231,7 @@ namespace roscan {
                 return subscribe(ops);
             }
 
-            void rosCanCallback(const RosIntrospection::ROSTypeFlat& msg);
+            void rosCanCallback(const RosIntrospection::FlatMessage& msg);
 
             boost::mutex topicLock;
             std::bitset<MAX_TOPICS> topicIds;
