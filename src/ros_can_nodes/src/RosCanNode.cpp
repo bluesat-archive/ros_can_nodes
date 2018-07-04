@@ -101,7 +101,7 @@ namespace roscan {
                 nodeList[index] = node;
 
                 // if successful, create thread to loop spinOnce for any subscribers
-                node->spinThread(&RosCanNode::spin, node);
+                node->spinThread(boost::bind(&RosCanNode::spin, node));
             }
         }
 
