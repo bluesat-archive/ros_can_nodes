@@ -24,6 +24,8 @@
 #include <std_msgs/String.h>
 #include <bitset>
 #include <ros_type_introspection/ros_introspection.hpp>
+#include <ros_type_introspection/deserializer.hpp>
+
 
 #define MAX_NODES 16
 #define MAX_TOPICS 128
