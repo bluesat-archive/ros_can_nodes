@@ -96,9 +96,16 @@ static void routeControlMsg(can_frame msg){
         case ROSCANConstants::REGISTER_NODE:
             {
                 uint8_t step = mode_info & 0x1;
-                uint8_t nodeHash = (mode_info >> 1) & 0xF;
-                std::string name = msg.data;
-                roscan::RosCanNode::registerNode(name, hashId);
+                uint8_t hashName = (mode_info >> 1) & 0xF;
+
+                std::ostringstream convert;
+                for (int a = 0; a < msg.d_len; a++) {
+                    convert << (int)msg.data[a];
+                }
+
+                std::string name = convert.str();
+
+                roscan::RosCanNode::registerNode(name, hashName);
             }
         case ROSCANConstants::DEREGISTER_NODE:
             {

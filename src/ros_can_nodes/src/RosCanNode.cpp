@@ -80,7 +80,7 @@ namespace roscan {
         return nodeList[id];
     }
 
-    static void registerNode(std::string callerId, uint8_t hashName) {
+    static void registerNode(std::string name, uint8_t hashName) {
         uint8_t index = 0;
         //get the first id
 
@@ -97,7 +97,7 @@ namespace roscan {
 
             if(index < MAX_NODES) {
                 //TODO: take name from frame data
-                RosCanNode *node = new RosCanNode("Placeholder", index);
+                RosCanNode *node = new RosCanNode(name, index);
                 nodeList[index] = node;
 
                 // if successful, create thread to loop spinOnce for any subscribers
@@ -146,7 +146,7 @@ namespace roscan {
         }
     }
 
-    int RosCanNode::unregisterSubscriber(std::string topic) {
+    int RosCanNode::unregisterSubscriber(uint8_t topic) {
         // TODO: at a later date, at this moment, just call unregister node
         std::cout << "Unregistering subscriber" << '\n';
 
@@ -177,7 +177,7 @@ namespace roscan {
         return 0;
     }
 
-    int RosCanNode::unregisterPublisher(std::string topic) {
+    int RosCanNode::unregisterPublisher(uint8_t topic) {
         // TODO: at a later date, at this moment, just call unregister node
 
         std::cout << "Unregistering publisher" << '\n';

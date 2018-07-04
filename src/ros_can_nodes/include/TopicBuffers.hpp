@@ -24,14 +24,14 @@ std::unordered_map<short, buffer> topic_buffers;
  // results if not aware of the array type of 'buffer'
 
 class TopicBuffers{
+    public:
+        static void initBuffers(void);
 
-    static void initBuffers(void);
+        static void appendData(short key, uint8_t* data);
 
-    static void appendData(short key, uint8_t* data);
+        static void processData(short key, uint8_t* data, int d_len, bool last_msg);
 
-    static void processData(short key, uint8_t* data, int d_len, bool last_msg);
-
-    // TODO: Possible Custom Hash function for unordered_map
-    // TODO: Possible Custom Equality function for unordered_map
+        // TODO: Possible Custom Hash function for unordered_map
+        // TODO: Possible Custom Equality function for unordered_map
 };
 #endif // TOPICBUFFERS_H
