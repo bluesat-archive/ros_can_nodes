@@ -101,7 +101,6 @@ int main(int argc, char** argv) {
     std::vector<ros::Subscriber> subscribers;
 
     for (const std::string& topic_name: topic_names) {
-        //??
         boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
         callback = [&parser, topic_name](const topic_tools::ShapeShifter::ConstPtr& msg) -> void {
             topicCallback(msg, topic_name, parser);
