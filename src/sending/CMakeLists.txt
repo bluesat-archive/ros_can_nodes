@@ -130,7 +130,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(buffer
-    src/buffer.cpp)
+    src/MessageBuffer.cpp
+    src/main.cpp)
 target_link_libraries(buffer ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
