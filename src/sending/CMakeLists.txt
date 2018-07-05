@@ -9,9 +9,6 @@ add_compile_options(-std=c++11)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  std_msgs
-  topic_tools
-  ros_type_introspection
 )
 
 ## System dependencies are found with CMake's conventions
@@ -105,7 +102,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp std_msgs topic_tools ros_type_introspection
+  CATKIN_DEPENDS roscpp
 )
 
 ###########
@@ -132,13 +129,9 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(publisher
-    src/publisher.cpp)
-target_link_libraries(publisher ${catkin_LIBRARIES})
-
-add_executable(test2
-    src/test2.cpp)
-target_link_libraries(test2 ${catkin_LIBRARIES})
+add_executable(buffer
+    src/buffer.cpp)
+target_link_libraries(buffer ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
