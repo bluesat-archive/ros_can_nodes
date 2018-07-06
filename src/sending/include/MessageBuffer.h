@@ -6,21 +6,22 @@
 #include <mutex>
 #include <string>
 #include <iostream>
+#include <linux/can.h>
 
 class MessageBuffer {
     private:
-        std::queue<std::string> q;
+        std::queue<struct can_frame> q;
         std::condition_variable cv;
         std::mutex mutex;
 
         // synchronised
-        std::string pop();
+        struct can_frame pop();
 
     public:
         MessageBuffer() {}
 
         // synchronised
-        void push(const std::string& s);
+        void push(const struct can_frame& s);
 
         // starts a thread to loop sending messages from the buffer
         void startSendThread();
