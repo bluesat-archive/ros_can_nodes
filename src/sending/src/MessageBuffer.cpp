@@ -3,13 +3,7 @@
 #include <string>
 #include <mutex>
 #include <condition_variable>
-
-std::string MessageBuffer::send_next() {
-    auto data = q.front();
-    q.pop();
-    std::cout << "sending " << data << "\n";
-    return data;
-}
+#include <thread>
 
 void MessageBuffer::push(const std::string& s) {
     std::unique_lock<std::mutex> lk(mutex);
@@ -20,16 +14,31 @@ void MessageBuffer::push(const std::string& s) {
     cv.notify_all();
 }
 
-std::string MessageBuffer::send(const bool flush) {
+std::string MessageBuffer::pop() {
     std::unique_lock<std::mutex> lk(mutex);
     cv.wait(lk, [this](){ return q.size() > 0; });
+
+    auto data = q.front();
+    q.pop();
     
-    auto data = send_next();
-    if (flush) {
-        while (q.size() > 0) {
-            data = send_next();
-        }
-    }
     lk.unlock();
     return data;
+}
+
+void MessageBuffer::startSendThread() {
+    std::thread sender{[this]() {
+        while (true) {
+            auto data = pop();
+            std::cout << "sending " << data << std::endl;
+
+            // TODO send code here
+
+            // debug exit condition
+            if (data == "") {
+                std::cout << "exit condition\n";
+                break;
+            }
+        }
+    }};
+    sender.detach();
 }

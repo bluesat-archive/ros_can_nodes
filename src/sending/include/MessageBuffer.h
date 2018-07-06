@@ -13,8 +13,8 @@ class MessageBuffer {
         std::condition_variable cv;
         std::mutex mutex;
 
-        // precondition: q.size() > 0
-        std::string send_next();
+        // synchronised
+        std::string pop();
 
     public:
         MessageBuffer() {}
@@ -22,8 +22,8 @@ class MessageBuffer {
         // synchronised
         void push(const std::string& s);
 
-        // synchronised
-        std::string send(const bool flush = false);
+        // starts a thread to loop sending messages from the buffer
+        void startSendThread();
 };
 
 #endif // MESSAGE_BUFFER_H
