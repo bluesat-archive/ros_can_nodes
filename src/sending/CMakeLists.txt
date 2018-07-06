@@ -131,6 +131,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(buffer
     src/MessageBuffer.cpp
+    src/CANHelpers.cpp
     src/main.cpp)
 target_link_libraries(buffer ${catkin_LIBRARIES})
 
