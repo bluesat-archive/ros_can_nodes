@@ -10,10 +10,10 @@
 #include <linux/can.h>
 #include "MessageBuffer.h"
 
-constexpr int items = 2;
-constexpr int num_pushers = 3;
+constexpr int items = 3;
+constexpr int num_pushers = 5;
 
-MessageBuffer mb;
+MessageBuffer& mb = MessageBuffer::instance();
 
 int main(int argc, char *argv[]) {
     std::vector<std::thread> pushers;
@@ -43,8 +43,6 @@ int main(int argc, char *argv[]) {
             std::this_thread::sleep_for(std::chrono::milliseconds(distrib(gen)));
         }
     };
-
-    mb.startSendThread();
     
     for (int i = 0;i < num_pushers;++i) {
         pushers.push_back(std::thread{pusher_func});
