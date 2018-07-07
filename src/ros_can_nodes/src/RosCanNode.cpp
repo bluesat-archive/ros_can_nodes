@@ -85,7 +85,7 @@ namespace roscan {
 
         if(topic_num >= 0){
 
-            this->subscribe(name, 100, boost::bind(rosCanCallback, _1, topic_num));
+            this->subscribe(name, 100, boost::bind(rosCanCallback, _1, topic_num, topic));
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
@@ -234,8 +234,42 @@ namespace roscan {
     //               ROS Facing Methods
     // ==================================================
 
-    void rosCanCallback(const RosIntrospection::FlatMessage& msg, uint8_t topicID){
-        //TODO: call Syam's FlatMessage conversion, then put on can bus
+    void rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, uint8_t topicID, std::string topic_name){
+        RosIntrospection::Parser parser;
+
+        const std::string&  datatype   =  msg->getDataType();
+        const std::string&  definition =  msg->getMessageDefinition();
+
+        parser.registerMessageDefinition( topic_name,
+                                          RosIntrospection::ROSType(datatype),
+                                          definition);
+
+        //reuse these objects to improve efficiency ("static" makes them persistent)
+        static std::vector<uint8_t> buffer;
+        static std::map<std::string,FlatMessage>   flat_containers;
+        static std::map<std::string,RenamedValues> renamed_vectors;
+
+        FlatMessage&   flat_container = flat_containers[topic_name];
+        RenamedValues& renamed_values = renamed_vectors[topic_name];
+
+        //copy raw memory into the buffer
+        buffer.resize(msg->size());
+        ros::serialization::OStream stream(buffer.data(), buffer.size());
+        msg->write(stream);
+
+        //deserialize and rename the vectors
+        parser.deserializeIntoFlatContainer(topic_name, absl::Span<uint8_t>(buffer), &flat_container, 100);
+
+        parser.applyNameTransform(topic_name, flat_container, &renamed_values);
+
+        //print the content of the message
+        printf("--------- %s ----------\n", topic_name.c_str());
+        for (auto it: renamed_values) {
+            const std::string& key = it.first;
+            const Variant& value   = it.second;
+            printf(" %s = %f\n", key.c_str(), value.convert<double>()); //convert into CAN message set
+        }
+
     }
 
     CallbackQueuePtr RosCanNode::getInternalCallbackQueue() {
