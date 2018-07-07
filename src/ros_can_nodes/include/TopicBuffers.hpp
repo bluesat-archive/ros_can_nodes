@@ -19,19 +19,28 @@
 #define TOPIC_BUFFER_SIZE (MAX_CAN_MSGS)
 
 typedef uint8_t buffer[TOPIC_BUFFER_SIZE];
-std::unordered_map<short, buffer> topic_buffers;
- // NOTE: above line is bad style, as calling sizeof will produce incorrect
- // results if not aware of the array type of 'buffer'
 
-class TopicBuffers{
+// NOTE: above line is bad style, as calling sizeof will produce incorrect
+// results if not aware of the array type of 'buffer'
+
+class TopicBuffers {
     public:
-        static void initBuffers(void);
+        static TopicBuffers& instance();
 
-        static void appendData(short key, uint8_t* data);
+        void initBuffers();
 
-        static void processData(short key, uint8_t* data, int d_len, bool last_msg);
+        void appendData(short key, uint8_t data);
+
+        void processData(short key, uint8_t* data, int d_len, bool last_msg);
 
         // TODO: Possible Custom Hash function for unordered_map
         // TODO: Possible Custom Equality function for unordered_map
+    private:
+        TopicBuffers() {}
+
+        std::unordered_map<short, buffer> topic_buffers;
+
+        TopicBuffers(const TopicBuffers&) = delete;
+        void operator=(const TopicBuffers&) = delete;
 };
 #endif // TOPICBUFFERS_H

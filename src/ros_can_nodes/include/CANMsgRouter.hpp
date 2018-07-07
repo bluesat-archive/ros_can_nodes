@@ -14,7 +14,7 @@
 #include <linux/can.h>
 #include <cstdint>
 
-class CANMsgRouter{
+class CANMsgRouter {
 
     public:
 
@@ -22,7 +22,7 @@ class CANMsgRouter{
 
         static void run();
 
-        static bool processCANMsg(can_frame msg);
+        static void processCANMsg(can_frame msg);
 
         static void routeControlMsg(can_frame msg);
 

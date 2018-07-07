@@ -14,8 +14,10 @@
 #include "TopicBuffers.hpp"
 #include "CANHelpers.hpp"
 #include "RosCanNode.hpp"
+#include "RosCanNodeManager.hpp"
 
-int main(int argc, char **argv){
+
+int main(int argc, char **argv) {
     ros::init(argc, argv, "can_ros_decoder");
 
     CANMsgRouter::init();
@@ -23,21 +25,21 @@ int main(int argc, char **argv){
     CANMsgRouter::run();
 }
 
-static void init(){
+void CANMsgRouter::init() {
     // TODO: either fail on bad open_port OR have reconnect policy
     int err = CANHelpers::open_can_port("can0");
 
-    if(err){
+    if (err) {
         throw "Failed to acuire can socket, exiting";
     }
 
-    TopicBuffers::initBuffers();
+    TopicBuffers::instance().initBuffers();
 }
 
-static void run(){
-    struct can_frame can_msg;
+void CANMsgRouter::run() {
+    can_frame can_msg;
 
-    while(1){
+    while (1) {
         // Check for Messages
         // TODO add reconnection ability
         int numbytes = CANHelpers::read_can_port(&can_msg);
@@ -49,7 +51,7 @@ static void run(){
     }
 }
 
-static void processCANMsg(can_frame msg){
+void CANMsgRouter::processCANMsg(can_frame msg) {
     // Check the CAN Msg Header to perform routing
     uint8_t msg_header = msg.can_id & CAN_ERR_MASK;
 
@@ -61,7 +63,7 @@ static void processCANMsg(can_frame msg){
         // Check the function
         uint8_t msg_function = ((msg_header & ROSCANConstants::bitmask_func) >> ROSCANConstants::bitshift_func);
 
-        if(msg_function == ROSCANConstants::ROS_TOPIC) {
+        if (msg_function == ROSCANConstants::ROS_TOPIC) {
 
             // Start thread to handle a ros message packet
             // Mutex is placed within handler on a per-node basis, so that
@@ -87,12 +89,12 @@ static void processCANMsg(can_frame msg){
 
 // Function to cut the control msg into its components, and then call the
 // appropriate Node function.
-static void routeControlMsg(can_frame msg){
+void CANMsgRouter::routeControlMsg(can_frame msg) {
     uint8_t mode = ((msg.can_id & ROSCANConstants::bitmask_mode) >> ROSCANConstants::bitshift_mode);
 
     uint8_t mode_info = ((msg.can_id & ROSCANConstants::bitmask_mode_specific) >> ROSCANConstants::bitshift_mode_specific);
 
-    switch(mode){
+    switch (mode) {
         case ROSCANConstants::REGISTER_NODE:
             {
                 uint8_t step = mode_info & 0x1;
@@ -105,12 +107,12 @@ static void routeControlMsg(can_frame msg){
 
                 std::string name = convert.str();
 
-                roscan::RosCanNode::registerNode(name, hashName);
+                RosCanNodeManager::instance().registerNode(name, hashName);
             }
         case ROSCANConstants::DEREGISTER_NODE:
             {
                 uint8_t nodeID = mode_info & 0xF;
-                roscan::RosCanNode::getNode(nodeID)->deregisterNode();
+                RosCanNodeManager::instance().deregisterNode(nodeID);
             }
         case ROSCANConstants::SUBSCRIBE_TOPIC:
             {
@@ -122,7 +124,7 @@ static void routeControlMsg(can_frame msg){
             {
                 uint8_t nodeID = mode_info & 0xF;
                 uint8_t topicID = (mode_info >> 4) & 0x3F;
-                roscan::RosCanNode::getNode(nodeID)->unregisterSubscriber(topicID);
+                RosCanNodeManager::instance().getNode(nodeID)->unregisterSubscriber(topicID);
             }
         case ROSCANConstants::ADVERTISE_TOPIC:
             {
@@ -134,7 +136,7 @@ static void routeControlMsg(can_frame msg){
             {
                 uint8_t nodeID = mode_info & 0xF;
                 uint8_t topicID = (mode_info >> 4) & 0x3F;
-                roscan::RosCanNode::getNode(nodeID)->unregisterPublisher(topicID);
+                 RosCanNodeManager::instance().getNode(nodeID)->unregisterPublisher(topicID);
             }
         case ROSCANConstants::ADVERTISE_SERVICE:
             {
@@ -166,7 +168,7 @@ static void routeControlMsg(can_frame msg){
     }
 }
 
-static void routePublishMsg(can_frame msg){
+void CANMsgRouter::routePublishMsg(can_frame msg) {
 
     uint8_t msg_header = msg.can_id & CAN_ERR_MASK;
 
@@ -187,5 +189,5 @@ static void routePublishMsg(can_frame msg){
     // Key will be concatenation of topicid, and nid
     short key = (topic << 5) | nid;
 
-    TopicBuffers::processData( key, msg.data, seq, last_msg);
+    TopicBuffers::instance().processData(key, msg.data, seq, last_msg);
 }

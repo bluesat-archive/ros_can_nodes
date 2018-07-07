@@ -41,7 +41,6 @@ namespace roscan {
             inline const uint8_t getID() const { return id_; }
             inline const std::string getName() const { return name_; }
 
-            static RosCanNode *getNode(uint8_t id);
             boost::thread spinThread;
             void spin();
 
@@ -49,9 +48,8 @@ namespace roscan {
             //           CAN-facing methods and attributes
             // ==================================================
 
-            static void registerNode(std::string name, uint8_t hashName);
             void deregisterNode();
-            void heartbeat(void);
+            void heartbeat();
             int registerSubscriber(std::string topic, std::string topic_type);
             int unregisterSubscriber(uint8_t topic);
             int advertiseTopic(std::string topic, std::string topic_type);
@@ -241,10 +239,6 @@ namespace roscan {
             bool isZombie;
             int getFirstFreeTopic();
     };
-
-    boost::mutex nodeListMutex;
-    static RosCanNode *nodeList[MAX_NODES];
-
 
 } // namespace roscan
 

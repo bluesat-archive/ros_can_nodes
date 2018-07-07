@@ -8,23 +8,28 @@
  * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
  */
 
- #include "ROSCANConstants.hpp"
- #include "TopicBuffers.hpp"
+#include "ROSCANConstants.hpp"
+#include "TopicBuffers.hpp"
 
-static void initBuffers(){
+TopicBuffers& TopicBuffers::instance() {
+    static TopicBuffers instance;
+    return instance;
+}
+
+void TopicBuffers::initBuffers() {
 
 }
 
-static void appendData(short key, uint8_t data){
+void TopicBuffers::appendData(short key, uint8_t data) {
     //TODO: append data
     topic_buffers[key][0] = data;
 }
 
-static void processData(short key, uint8_t* data, int d_len, bool last_msg){
+void TopicBuffers::processData(short key, uint8_t* data, int d_len, bool last_msg) {
 
     appendData(key, *data);
 
-    if(last_msg){
+    if (last_msg) {
         // TODO: Convert to flattype and publish to ros network
 
 

@@ -120,6 +120,7 @@ add_executable(ros_can_nodes
     src/CANHelpers.cpp
     src/CANMsgRouter.cpp
     src/MessageBuffer.cpp
+    src/RosCanNodeManager.cpp
     ##src/main.cpp
     src/ros_node_lib/xmlrpc_manager.cpp
     src/ros_node_lib/network.cpp

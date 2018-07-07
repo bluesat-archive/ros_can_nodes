@@ -60,11 +60,6 @@ namespace roscan {
         this->isZombie = true;
         this->spinThread.join();
 
-        {
-            boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-            nodeList[this->getID()] = NULL;
-        }
-
         shutdown();
         std::cout << "Deleting node " << name_ << "\n";
         delete collection_;
@@ -74,49 +69,6 @@ namespace roscan {
     // ==================================================
     //               CAN Facing Methods
     // ==================================================
-
-    static RosCanNode * getNode(uint8_t id) {
-        boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-        return nodeList[id];
-    }
-
-    static void registerNode(std::string name, uint8_t hashName) {
-        uint8_t index = 0;
-        //get the first id
-
-        {
-            boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-
-            while (index < MAX_NODES && nodeList[index] != NULL) {
-                index++;
-                if (index >= MAX_NODES) {
-                    std::cout << "No available ids" << '\n';
-                    break;
-                }
-            }
-
-            if(index < MAX_NODES) {
-                //TODO: take name from frame data
-                RosCanNode *node = new RosCanNode(name, index);
-                nodeList[index] = node;
-
-                // if successful, create thread to loop spinOnce for any subscribers
-                node->spinThread(boost::bind(&RosCanNode::spin, node));
-            }
-        }
-
-        // TODO send response?
-    }
-
-    void RosCanNode::deregisterNode() {
-        {
-            boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-            nodeList[this->getID()] = NULL;
-        }
-        delete this;
-
-        //TODO send response, will need to store nodeid if so.
-    }
 
     //NOTE: do at a later date
     void RosCanNode::heartbeat() {
@@ -133,7 +85,7 @@ namespace roscan {
 
         if(topic_num >= 0){
 
-            this->subscribe(name, 1000, boost::bind(rosCanCallback, _1, topic_num));
+            //this->subscribe(name, 1000, boost::bind(rosCanCallback, _1, topic_num));
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
@@ -161,7 +113,7 @@ namespace roscan {
 
         if(topic_num >= 0){
 
-            this->advertise<RosIntrospection::FlatMessage>(name, (uint32_t)10, false);
+            //this->advertise<RosIntrospection::FlatMessage>(name, (uint32_t)10, false);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
