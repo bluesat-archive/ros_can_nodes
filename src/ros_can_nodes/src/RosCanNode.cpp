@@ -80,7 +80,7 @@ namespace roscan {
 
         if(topic_num >= 0){
             boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
-            callback = [this, topic_num, &name](const topic_tools::ShapeShifter::ConstPtr& msg) {
+            callback = [this, topic_num, name](const topic_tools::ShapeShifter::ConstPtr& msg) {
                 rosCanCallback(msg, topic_num, name);
             };
             this->subscribe(name, 100, callback);
@@ -233,7 +233,7 @@ namespace roscan {
     // ==================================================
 
     void RosCanNode::rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, uint8_t topicID, std::string topic_name) {
-        ROS_INFO_STREAM("callback: id = " << topicID << " topic_name = " << topic_name);
+        ROS_INFO_STREAM("callback: topic_id = " << (int)topicID << " topic_name = " << topic_name);
         RosIntrospection::Parser parser;
 
         const std::string&  datatype   =  msg->getDataType();
