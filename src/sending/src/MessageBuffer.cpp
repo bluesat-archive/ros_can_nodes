@@ -21,8 +21,6 @@ void MessageBuffer::push(const struct can_frame& data) {
 
 MessageBuffer::MessageBuffer() {
     std::thread sender{[this]() {
-        auto can_port = "can0";
-
         while (true) {
             std::unique_lock<std::mutex> lk(mutex);
             cv.wait(lk, [this](){ return q.size() > 0; });
@@ -44,18 +42,18 @@ MessageBuffer::MessageBuffer() {
             }
             std::cout << "\n";
 
-            // if (CANHelpers::open_can_port(can_port) < 0) {
-            //     std::cerr << "send failed: can port \"" << can_port << "\" open failed\n";
-            //     continue;
-            // }
+            if (CANHelpers::open_can_port(can_port) < 0) {
+                std::cerr << "send failed: can port \"" << can_port << "\" open failed\n";
+                continue;
+            }
 
-            // if (CANHelpers::send_can_port(&data) < 0) {
-            //     std::cerr << "send failed: frame could not be sent\n";
-            //     CANHelpers::close_can_port();
-            //     continue;
-            // }
+            if (CANHelpers::send_can_port(&data) < 0) {
+                std::cerr << "send failed: frame could not be sent\n";
+                CANHelpers::close_can_port();
+                continue;
+            }
 
-            // CANHelpers::close_can_port();
+            CANHelpers::close_can_port();
         }
     }};
     sender.detach();

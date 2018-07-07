@@ -23,6 +23,7 @@ class MessageBuffer {
         std::queue<struct can_frame> q;
         std::condition_variable cv;
         std::mutex mutex;
+        const char *can_port = "can0";
 };
 
 #endif // MESSAGE_BUFFER_H
