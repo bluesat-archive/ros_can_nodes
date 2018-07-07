@@ -7,7 +7,7 @@ RosCanNodeManager& RosCanNodeManager::instance() {
     return instance;
 }
 
-roscan::RosCanNode *RosCanNodeManager::getNode(uint8_t id) {
+roscan::RosCanNodePtr RosCanNodeManager::getNode(uint8_t id) {
     boost::mutex::scoped_lock nodeListLock(nodeListMutex);
     return nodeList[id];
 }
@@ -29,11 +29,11 @@ uint8_t RosCanNodeManager::registerNode(std::string& name, uint8_t hashName) {
 
         if (index < MAX_NODES) {
             //TODO: take name from frame data
-            roscan::RosCanNode *node = new roscan::RosCanNode(name, index);
-            nodeList[index] = node;
+            nodeList[index].reset(new roscan::RosCanNode(name, index));
+            nodeList[index]->start();
 
             // if successful, create thread to loop spinOnce for any subscribers
-            //node->spinThread(boost::bind(&RosCanNode::spin, node));
+            nodeList[index]->startSpinThread();
         }
     }
 
@@ -42,13 +42,11 @@ uint8_t RosCanNodeManager::registerNode(std::string& name, uint8_t hashName) {
 }
 
 void RosCanNodeManager::deregisterNode(uint8_t id) {
-    roscan::RosCanNode *node = nullptr;
     {
         boost::mutex::scoped_lock nodeListLock(nodeListMutex);
-        node = nodeList[id];
+        nodeList[id]->shutdown(); // may leak memory!!!
         nodeList[id] = nullptr;
     }
-    delete node;
 
     //TODO send response, will need to store nodeid if so.
 }

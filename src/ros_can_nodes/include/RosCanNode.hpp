@@ -42,7 +42,7 @@ namespace roscan {
             inline const uint8_t getID() const { return id_; }
             inline const std::string getName() const { return name_; }
 
-            boost::thread spinThread;
+            void startSpinThread();
             void spin();
 
             // ==================================================
@@ -72,6 +72,7 @@ namespace roscan {
 
             bool g_started;
             volatile bool g_shutting_down;
+            boost::thread spinThread;
 
             TopicManagerPtr topicManager;
             ConnectionManagerPtr connectionManager;

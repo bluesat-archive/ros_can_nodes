@@ -55,11 +55,6 @@ namespace roscan {
     }
 
     RosCanNode::~RosCanNode() {
-
-        // Wait for spinning thread to end.
-        this->isZombie = true;
-        this->spinThread.join();
-
         shutdown();
         std::cout << "Deleting node " << name_ << "\n";
         delete collection_;
@@ -238,6 +233,7 @@ namespace roscan {
     // ==================================================
 
     void RosCanNode::rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, uint8_t topicID, std::string topic_name) {
+        ROS_INFO_STREAM("callback: id = " << topicID << " topic_name = " << topic_name);
         RosIntrospection::Parser parser;
 
         const std::string&  datatype   =  msg->getDataType();
@@ -354,6 +350,11 @@ namespace roscan {
             return;
         }
         std::cout << "Shutting down node " << name_ << "\n";
+
+        // Wait for spinning thread to end.
+        this->isZombie = true;
+        this->spinThread.join();
+
         g_shutting_down = true;
         //ros::console::shutdown();
 
@@ -433,6 +434,10 @@ namespace roscan {
             this->spinOnce();
             r.sleep();
         }
+    }
+
+    void RosCanNode::startSpinThread() {
+        spinThread = boost::thread(&RosCanNode::spin, this);
     }
 
     int RosCanNode::getFirstFreeTopic(){

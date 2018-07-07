@@ -20,7 +20,7 @@
 int main(int argc, char **argv) {
     ros::init(argc, argv, "can_ros_decoder");
 
-    CANMsgRouter::init();
+    //CANMsgRouter::init();
 
     CANMsgRouter::subscriberTest();
 
@@ -61,7 +61,7 @@ void CANMsgRouter::subscriberTest() {
     std::string name = "testNode";
     nodeId = RosCanNodeManager::instance().registerNode(name, id);
 
-    roscan::RosCanNode * node = RosCanNodeManager::instance().getNode(nodeId);
+    roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
 
     node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
 
