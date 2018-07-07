@@ -133,7 +133,7 @@ namespace roscan {
 
         if(topic_num >= 0){
 
-            this->subscribe(name, 1000, boost::bind(rosCanCallback, _1, topic_num);
+            this->subscribe(name, 1000, boost::bind(rosCanCallback, _1, topic_num));
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
