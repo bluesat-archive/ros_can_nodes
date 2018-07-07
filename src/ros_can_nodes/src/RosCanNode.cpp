@@ -84,8 +84,11 @@ namespace roscan {
         int topic_num = getFirstFreeTopic();
 
         if(topic_num >= 0){
-
-            this->subscribe(name, 100, boost::bind(rosCanCallback, _1, topic_num, topic));
+            boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
+            callback = [this, topic_num, &name](const topic_tools::ShapeShifter::ConstPtr& msg) {
+                rosCanCallback(msg, topic_num, name);
+            };
+            this->subscribe(name, 100, callback);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
@@ -234,7 +237,7 @@ namespace roscan {
     //               ROS Facing Methods
     // ==================================================
 
-    void rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, uint8_t topicID, std::string topic_name){
+    void RosCanNode::rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, uint8_t topicID, std::string topic_name) {
         RosIntrospection::Parser parser;
 
         const std::string&  datatype   =  msg->getDataType();
@@ -246,11 +249,11 @@ namespace roscan {
 
         //reuse these objects to improve efficiency ("static" makes them persistent)
         static std::vector<uint8_t> buffer;
-        static std::map<std::string,FlatMessage>   flat_containers;
-        static std::map<std::string,RenamedValues> renamed_vectors;
+        static std::map<std::string,RosIntrospection::FlatMessage>   flat_containers;
+        static std::map<std::string,RosIntrospection::RenamedValues> renamed_vectors;
 
-        FlatMessage&   flat_container = flat_containers[topic_name];
-        RenamedValues& renamed_values = renamed_vectors[topic_name];
+        RosIntrospection::FlatMessage&   flat_container = flat_containers[topic_name];
+        RosIntrospection::RenamedValues& renamed_values = renamed_vectors[topic_name];
 
         //copy raw memory into the buffer
         buffer.resize(msg->size());
@@ -266,7 +269,7 @@ namespace roscan {
         printf("--------- %s ----------\n", topic_name.c_str());
         for (auto it: renamed_values) {
             const std::string& key = it.first;
-            const Variant& value   = it.second;
+            const RosIntrospection::Variant& value   = it.second;
             printf(" %s = %f\n", key.c_str(), value.convert<double>()); //convert into CAN message set
         }
 

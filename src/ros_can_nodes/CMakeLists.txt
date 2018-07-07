@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   ros_type_introspection
   std_msgs
   xmlrpcpp
+  topic_tools
 )
 
 ## System dependencies are found with CMake's conventions
@@ -86,7 +87,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
     INCLUDE_DIRS include
     #LIBRARIES ros_can_nodes
-    CATKIN_DEPENDS roscpp std_msgs xmlrpcpp ros_type_introspection include/xmlrpcpp
+    CATKIN_DEPENDS roscpp std_msgs xmlrpcpp ros_type_introspection include/xmlrpcpp topic_tools
     DEPENDS Boost
 )
 

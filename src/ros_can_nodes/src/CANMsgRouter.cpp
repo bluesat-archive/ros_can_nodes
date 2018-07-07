@@ -58,7 +58,8 @@ void CANMsgRouter::run() {
 void CANMsgRouter::subscriberTest() {
     uint8_t id = 0;
     uint8_t nodeId;
-    nodeId = RosCanNodeManager::instance().registerNode("testNode", id);
+    std::string name = "testNode";
+    nodeId = RosCanNodeManager::instance().registerNode(name, id);
 
     roscan::RosCanNode * node = RosCanNodeManager::instance().getNode(nodeId);
 

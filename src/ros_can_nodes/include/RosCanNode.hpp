@@ -24,6 +24,7 @@
 #include <std_msgs/String.h>
 #include <bitset>
 #include <ros_type_introspection/ros_introspection.hpp>
+#include <topic_tools/shape_shifter.h>
 
 
 #define MAX_NODES 16
@@ -231,7 +232,7 @@ namespace roscan {
             }
 
         private:
-            void rosCanCallback(const RosIntrospection::FlatMessage& msg);
+            void rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, uint8_t topic_num, std::string topic_name);
 
             boost::mutex topicLock;
             std::bitset<MAX_TOPICS> topicIds;
