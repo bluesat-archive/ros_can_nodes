@@ -12,7 +12,7 @@ roscan::RosCanNode *RosCanNodeManager::getNode(uint8_t id) {
     return nodeList[id];
 }
 
-void RosCanNodeManager::registerNode(std::string& name, uint8_t hashName) {
+uint8_t RosCanNodeManager::registerNode(std::string& name, uint8_t hashName) {
     uint8_t index = 0;
     //get the first id
 
@@ -37,6 +37,7 @@ void RosCanNodeManager::registerNode(std::string& name, uint8_t hashName) {
         }
     }
 
+    return index;
     // TODO send response?
 }
 

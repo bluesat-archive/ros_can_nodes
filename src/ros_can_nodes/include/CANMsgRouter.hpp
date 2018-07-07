@@ -22,6 +22,8 @@ class CANMsgRouter {
 
         static void run();
 
+        static void subscriberTest();
+
         static void processCANMsg(can_frame msg);
 
         static void routeControlMsg(can_frame msg);

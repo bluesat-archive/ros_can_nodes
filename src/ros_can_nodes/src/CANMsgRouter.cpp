@@ -22,18 +22,22 @@ int main(int argc, char **argv) {
 
     CANMsgRouter::init();
 
-    CANMsgRouter::run();
+    CANMsgRouter::subscriberTest();
+
+    while(1);
+
+    //CANMsgRouter::run();
 }
 
 void CANMsgRouter::init() {
     // TODO: either fail on bad open_port OR have reconnect policy
-    int err = CANHelpers::open_can_port("can0");
+    int err = CANHelpers::open_can_port("vcan0");
 
     if (err) {
         throw "Failed to acuire can socket, exiting";
     }
 
-    TopicBuffers::instance().initBuffers();
+    //TopicBuffers::instance().initBuffers();
 }
 
 void CANMsgRouter::run() {
@@ -49,6 +53,17 @@ void CANMsgRouter::run() {
             CANMsgRouter::processCANMsg(can_msg);
         }
     }
+}
+
+void CANMsgRouter::subscriberTest() {
+    uint8_t id = 0;
+    uint8_t nodeId;
+    nodeId = RosCanNodeManager::instance().registerNode("testNode", id);
+
+    roscan::RosCanNode * node = RosCanNodeManager::instance().getNode(nodeId);
+
+    node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
+
 }
 
 void CANMsgRouter::processCANMsg(can_frame msg) {
