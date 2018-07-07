@@ -33,7 +33,7 @@
  */
 
 #include "common.h"
-#include "RosCanNode.h"
+#include "RosCanNode.hpp"
 #include "publisher_link.h"
 #include "transport_publisher_link.h"
 #include "connection_manager.h"

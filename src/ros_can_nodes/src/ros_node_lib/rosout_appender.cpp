@@ -33,7 +33,7 @@
  */
 
 #include "common.h"
-#include "RosCanNode.h"
+#include "RosCanNode.hpp"
 #include "rosout_appender.h"
 #include "topic_manager.h"
 #include "advertise_options.h"

@@ -92,6 +92,7 @@ namespace roscan {
             // ==================================================
             //           ROS node methods and attributes
             // ==================================================
+        public:
             void spinOnce();
 
             CallbackQueuePtr getInternalCallbackQueue();
@@ -231,6 +232,7 @@ namespace roscan {
                 return subscribe(ops);
             }
 
+        private:
             void rosCanCallback(const RosIntrospection::FlatMessage& msg);
 
             boost::mutex topicLock;

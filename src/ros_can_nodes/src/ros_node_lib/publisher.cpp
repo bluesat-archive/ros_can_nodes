@@ -26,7 +26,7 @@
  */
 
 #include "common.h"
-#include "RosCanNode.h"
+#include "RosCanNode.hpp"
 #include "publisher.h"
 #include "publication.h"
 #include "topic_manager.h"

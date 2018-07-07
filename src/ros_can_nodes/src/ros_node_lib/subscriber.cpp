@@ -26,7 +26,7 @@
  */
 
 #include "common.h"
-#include "RosCanNode.h"
+#include "RosCanNode.hpp"
 #include "subscriber.h"
 
 namespace roscan {

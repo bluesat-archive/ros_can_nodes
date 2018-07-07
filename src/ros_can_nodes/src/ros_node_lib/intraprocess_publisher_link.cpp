@@ -33,7 +33,7 @@
  */
 
 #include "common.h"
-#include "RosCanNode.h"
+#include "RosCanNode.hpp"
 #include "subscription.h"
 #include "intraprocess_publisher_link.h"
 #include "intraprocess_subscriber_link.h"

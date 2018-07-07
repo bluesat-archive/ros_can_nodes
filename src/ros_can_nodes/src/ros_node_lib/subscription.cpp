@@ -34,7 +34,7 @@
 
 #include "common.h"
 #include "subscription.h"
-#include "RosCanNode.h"
+#include "RosCanNode.hpp"
 #include "connection_manager.h"
 #include "network.h"
 #include "poll_manager.h"

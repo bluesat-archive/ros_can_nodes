@@ -21,13 +21,13 @@
 
 int soc;
 
-static int open_can_port(const char *port) {
+int CANHelpers::open_can_port(const char *port) {
     struct ifreq ifr;
     struct sockaddr_can addr;
 
     /* open socket */
     soc = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-    if(soc < 0) {
+    if (soc < 0) {
         return (-1);
     }
 
@@ -35,7 +35,6 @@ static int open_can_port(const char *port) {
     strcpy(ifr.ifr_name, port);
 
     if (ioctl(soc, SIOCGIFINDEX, &ifr) < 0) {
-
         return (-1);
     }
 
@@ -44,25 +43,23 @@ static int open_can_port(const char *port) {
     fcntl(soc, F_SETFL, O_NONBLOCK);
 
     if (bind(soc, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-
         return (-1);
     }
 
     return 0;
 }
 
-static int send_can_port(struct can_frame *frame) {
+int CANHelpers::send_can_port(struct can_frame *frame) {
     int retval;
-   retval = write(soc, frame, sizeof(struct can_frame));
+    retval = write(soc, frame, sizeof(struct can_frame));
     if (retval != sizeof(struct can_frame)) {
         return (-1);
-    }
-    else {
+    } else {
         return (0);
     }
 }
 
-static int read_can_port(struct can_frame *frame) {
+int CANHelpers::read_can_port(struct can_frame *frame) {
     int recvbytes = -1;
 
     // 1 second timeout on read, will adjust based on testing
@@ -82,6 +79,6 @@ static int read_can_port(struct can_frame *frame) {
     return recvbytes;
 }
 
-static void close_can_port() {
+void CANHelpers::close_can_port() {
     close(soc);
 }

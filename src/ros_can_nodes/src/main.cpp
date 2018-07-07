@@ -1,4 +1,4 @@
-#include "RosCanNode.h"
+#include "RosCanNode.hpp"
 #include "network.h"
 #include <ros/ros.h>
 #include <csignal>

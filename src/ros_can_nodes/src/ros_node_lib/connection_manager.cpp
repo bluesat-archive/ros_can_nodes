@@ -27,7 +27,7 @@
 
 #include "common.h"
 #include "connection_manager.h"
-#include "RosCanNode.h"
+#include "RosCanNode.hpp"
 #include "network.h"
 #include "poll_manager.h"
 #include "transport_subscriber_link.h"
