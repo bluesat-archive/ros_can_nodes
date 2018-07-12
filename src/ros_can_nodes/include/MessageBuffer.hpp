@@ -8,10 +8,10 @@
 
 class MessageBuffer {
     public:
-        static MessageBuffer& instance() noexcept;
+        static MessageBuffer& instance();
 
         // thread-synchronised
-        void push(const struct can_frame& s);
+        void push(const can_frame& s);
 
         MessageBuffer(const MessageBuffer&) = delete;
         void operator=(const MessageBuffer&) = delete;
@@ -20,10 +20,9 @@ class MessageBuffer {
         // starts the sender thread
         MessageBuffer();
 
-        std::queue<struct can_frame> q;
+        std::queue<can_frame> q;
         std::condition_variable cv;
         std::mutex mutex;
-        const char *can_port = "can0";
 };
 
 #endif // MESSAGE_BUFFER_H
