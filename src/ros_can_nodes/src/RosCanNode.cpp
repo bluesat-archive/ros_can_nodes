@@ -13,6 +13,8 @@
 #include <xmlrpcpp/XmlRpcSocket.h>
 #include <unistd.h>
 #include "ROSCANConstants.hpp"
+#include <linux/can.h>
+#include "MessageBuffer.hpp"
 
 namespace roscan {
 
@@ -271,16 +273,16 @@ namespace roscan {
             printf(" %s = %f\n", key.c_str(), value.convert<double>()); //convert into CAN message set
         }
 
-        can_id header = 0x0;
+        canid_t header = 0x0;
 
         header |= (1 << ROSCANConstants::bitshift_ros_msg);
-        header |= (0 << ROSCANConstants::bitshift_priority);
+        header |= (1 << ROSCANConstants::bitshift_priority);
         header |= (0 << ROSCANConstants::bitshift_func);
         header |= (topicID << ROSCANConstants::bitshift_topic_id);
-        header |= (this.getID() << ROSCANConstants::bitshift_ros_nid);
+        header |= (getID() << ROSCANConstants::bitshift_nid);
         header |= (0 << ROSCANConstants::bitshift_msg_num);
         header |= (0 << ROSCANConstants::bitshift_seq);
-        header |= (1 << ROSCANConstants::bitshift_msg_len);
+        header |= (1 << ROSCANConstants::bitshift_len);
 
         can_frame frame;
 

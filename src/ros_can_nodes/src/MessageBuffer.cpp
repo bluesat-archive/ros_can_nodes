@@ -42,18 +42,18 @@ MessageBuffer::MessageBuffer() {
             }
             std::cout << "\n";
 
-            if (CANHelpers::open_can_port(can_port) < 0) {
-                std::cerr << "send failed: can port \"" << can_port << "\" open failed\n";
-                continue;
-            }
+        //    if (CANHelpers::open_can_port(can_port) < 0) {
+        //        std::cerr << "send failed: can port \"" << can_port << "\" open failed\n";
+        //        continue;
+        //    }
 
             if (CANHelpers::send_can_port(&data) < 0) {
                 std::cerr << "send failed: frame could not be sent\n";
-                CANHelpers::close_can_port();
+        //        CANHelpers::close_can_port();
                 continue;
             }
 
-            CANHelpers::close_can_port();
+        //    CANHelpers::close_can_port();
         }
     }};
     sender.detach();
