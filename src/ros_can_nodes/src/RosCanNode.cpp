@@ -12,6 +12,7 @@
 #include <ros/transport/transport_tcp.h>
 #include <xmlrpcpp/XmlRpcSocket.h>
 #include <unistd.h>
+#include "ROSCANConstants.hpp"
 
 namespace roscan {
 
@@ -264,10 +265,34 @@ namespace roscan {
         //print the content of the message
         printf("--------- %s ----------\n", topic_name.c_str());
         for (auto it: renamed_values) {
+
             const std::string& key = it.first;
             const RosIntrospection::Variant& value   = it.second;
             printf(" %s = %f\n", key.c_str(), value.convert<double>()); //convert into CAN message set
         }
+
+        can_id header = 0x0;
+
+        header |= (1 << ROSCANConstants::bitshift_ros_msg);
+        header |= (0 << ROSCANConstants::bitshift_priority);
+        header |= (0 << ROSCANConstants::bitshift_func);
+        header |= (topicID << ROSCANConstants::bitshift_topic_id);
+        header |= (this.getID() << ROSCANConstants::bitshift_ros_nid);
+        header |= (0 << ROSCANConstants::bitshift_msg_num);
+        header |= (0 << ROSCANConstants::bitshift_seq);
+        header |= (1 << ROSCANConstants::bitshift_msg_len);
+
+        can_frame frame;
+
+        frame.can_id = header;
+        frame.can_dlc = 8;
+
+        for (auto it: renamed_values) {
+            const RosIntrospection::Variant& value   = it.second;
+            *(double*) frame.data = value.convert<double>();
+        }
+
+        MessageBuffer::instance().push(frame);
 
     }
 
