@@ -59,11 +59,21 @@ void CANMsgRouter::subscriberTest() {
     uint8_t id = 0;
     uint8_t nodeId;
     std::string name = "testNode";
-    nodeId = RosCanNodeManager::instance().registerNode(name, id);
+    nodeId = RosCanNodeManager::instance().registerNode(name, id);    
+
+    for(int i = 0; i < 20; i++){
+        id++;
+        name = "testNode" + boost::lexical_cast<std::string>(i);
+
+        RosCanNodeManager::instance().registerNode(name, id);
+    }
 
     roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
 
     node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
+    node->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
+    node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
+    node->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
 
 }
 
