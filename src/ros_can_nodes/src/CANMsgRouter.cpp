@@ -20,7 +20,7 @@
 int main(int argc, char **argv) {
     ros::init(argc, argv, "can_ros_decoder");
 
-    //CANMsgRouter::init();
+    CANMsgRouter::init();
 
     CANMsgRouter::subscriberTest();
 
