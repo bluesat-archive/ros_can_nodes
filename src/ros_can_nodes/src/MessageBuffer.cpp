@@ -25,25 +25,25 @@ MessageBuffer::MessageBuffer() {
             std::unique_lock<std::mutex> lk(mutex);
             cv.wait(lk, [this](){ return q.size() > 0; });
 
-            auto data = q.front();
+            auto frame = q.front();
             q.pop();
             
             lk.unlock();
             
             // debug exit condition
-            if (data.__res0 == 8) {
+            if (frame.__res0 == 8) {
                 std::cout << "exit condition\n";
                 break;
             }
 
-            std::cout << data.can_id << ":";
-            for (const auto d : data.data) {
-                std::cout << d;
+            std::cout << "header = " << frame.can_id << ", data = ";
+            for (int i = 0; i < frame.can_dlc;++i) {
+                printf("%02X", frame.data[i]);
             }
             std::cout << "\n";
 
             // CAN port is assumed to be open
-            if (CANHelpers::send_can_port(&data) < 0) {
+            if (CANHelpers::send_can_port(&frame) < 0) {
                 std::cerr << "send failed: frame could not be sent\n";
             }
         }

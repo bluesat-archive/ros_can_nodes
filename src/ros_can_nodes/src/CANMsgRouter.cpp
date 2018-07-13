@@ -9,22 +9,27 @@
  */
 
 #include <linux/can.h>
+#include <thread>
+#include <chrono>
 #include "CANMsgRouter.hpp"
 #include "ROSCANConstants.hpp"
 #include "TopicBuffers.hpp"
 #include "CANHelpers.hpp"
+#include "ros_node_lib/network.h"
 #include "RosCanNode.hpp"
 #include "RosCanNodeManager.hpp"
 
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "can_ros_decoder");
+    roscan::network::init();
 
-    CANMsgRouter::init();
+    //CANMsgRouter::init();
 
     CANMsgRouter::subscriberTest();
 
-    while(1);
+    while (1) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 
     //CANMsgRouter::run();
 }
@@ -56,17 +61,8 @@ void CANMsgRouter::run() {
 }
 
 void CANMsgRouter::subscriberTest() {
-    uint8_t id = 0;
-    uint8_t nodeId;
     std::string name = "testNode";
-    nodeId = RosCanNodeManager::instance().registerNode(name, id);    
-
-    for(int i = 0; i < 20; i++){
-        id++;
-        name = "testNode" + boost::lexical_cast<std::string>(i);
-
-        RosCanNodeManager::instance().registerNode(name, id);
-    }
+    uint8_t nodeId = RosCanNodeManager::instance().registerNode(name, 0);
 
     roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
 

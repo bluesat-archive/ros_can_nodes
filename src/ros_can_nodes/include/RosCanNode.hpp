@@ -36,7 +36,7 @@ namespace roscan {
 
     class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
         public:
-            RosCanNode(std::string name, uint8_t id);
+            RosCanNode(std::string& name, uint8_t id);
             ~RosCanNode();
 
             inline const uint8_t getID() const { return id_; }
