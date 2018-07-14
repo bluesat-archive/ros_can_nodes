@@ -278,7 +278,7 @@ namespace roscan {
         header |= (1 << ROSCANConstants::bitshift_ros_msg);
         header |= (1 << ROSCANConstants::bitshift_priority);
         header |= (0 << ROSCANConstants::bitshift_func);
-        header |= (topicID << ROSCANConstants::bitshift_topic_id);
+        header |= ((topicID * 2) << ROSCANConstants::bitshift_topic_id);
         header |= (getID() << ROSCANConstants::bitshift_nid);
         header |= (0 << ROSCANConstants::bitshift_msg_num);
         header |= (0 << ROSCANConstants::bitshift_seq);

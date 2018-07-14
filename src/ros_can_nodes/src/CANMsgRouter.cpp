@@ -23,7 +23,7 @@
 int main(int argc, char **argv) {
     roscan::network::init();
 
-    //CANMsgRouter::init();
+    CANMsgRouter::init();
 
     CANMsgRouter::subscriberTest();
 
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 
 void CANMsgRouter::init() {
     // TODO: either fail on bad open_port OR have reconnect policy
-    int err = CANHelpers::open_can_port("vcan0");
+    int err = CANHelpers::open_can_port("can0");
 
     if (err) {
         throw "Failed to acuire can socket, exiting";
@@ -67,9 +67,9 @@ void CANMsgRouter::subscriberTest() {
     roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
 
     node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
-    node->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
     node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
-    node->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
+    node->registerSubscriber("/front_left_swerve_controller/command", "blah");
+    node->registerSubscriber("/back_left_swerve_controller/command", "blah");
 
 }
 
