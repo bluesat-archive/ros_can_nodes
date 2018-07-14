@@ -283,6 +283,7 @@ namespace roscan {
         header |= (0 << ROSCANConstants::bitshift_msg_num);
         header |= (0 << ROSCANConstants::bitshift_seq);
         header |= (1 << ROSCANConstants::bitshift_len);
+        header |= CAN_EFF_FLAG;
 
         can_frame frame;
 
