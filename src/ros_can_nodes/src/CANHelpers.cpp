@@ -53,8 +53,10 @@ int CANHelpers::send_can_port(struct can_frame *frame) {
     int retval;
     retval = write(soc, frame, sizeof(struct can_frame));
     if (retval != sizeof(struct can_frame)) {
+        printf("Failed to send !!\n");
         return (-1);
     } else {
+        printf("Sent !!\n");
         return (0);
     }
 }
