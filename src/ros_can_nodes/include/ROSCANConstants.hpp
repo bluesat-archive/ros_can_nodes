@@ -42,7 +42,7 @@ namespace ROSCANConstants{
     /* Bitshifting for rostopic msg fields */
     static const uint32_t bitshift_msg_num = 8;
     static const uint32_t bitshift_topic_id = 10;
-    static const uint32_t bitshift_len = 17;
+    static const uint32_t bitshift_len = 16;
     static const uint32_t bitshift_nid = 25;
 
     /* Bitmasking for ROS Topic Messages */
