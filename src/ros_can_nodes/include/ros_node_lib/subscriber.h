@@ -30,6 +30,8 @@
 
 #include "common.h"
 #include <ros/subscription_callback_helper.h>
+#include <cstdint>
+#include <string>
 
 namespace roscan {
 
@@ -42,7 +44,7 @@ class Subscriber {
     public:
         Subscriber() {}
         Subscriber(const std::string& topic, const RosCanNodePtr& node, const ros::SubscriptionCallbackHelperPtr& helper)
-            : topic_(topic), node_(node), helper_(helper), unsubscribed_(false) {}
+            : topic_{topic}, node_{node}, helper_{helper}, unsubscribed_{false} {}
         ~Subscriber() { unsubscribed_ = true; }
 
         // Unsubscribe the callback associated with this Subscriber
@@ -50,12 +52,19 @@ class Subscriber {
         // all copies of this Subscriber go out of scope
         // This method overrides the automatic reference counted unsubscribe, and immediately
         // unsubscribes the callback associated with this Subscriber
-        void shutdown();
+        void shutdown() {
+            if (!unsubscribed_) {
+                unsubscribed_ = true;
+                node_->topic_manager()->unsubscribe(topic_, helper_);
+                node_.reset();
+                helper_.reset();
+            }
+        }
 
-        std::string getTopic() const;
+        std::string getTopic() const { return unsubscribed_ ? std::string{} : topic_; }
 
         // Returns the number of publishers this subscriber is connected to
-        uint32_t getNumPublishers() const;
+        uint32_t getNumPublishers() const { return unsubscribed_ ? 0 : node_->topic_manager()->getNumPublishers(topic_); }
 
     private:
         std::string topic_;

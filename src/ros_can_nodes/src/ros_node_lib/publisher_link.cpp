@@ -32,13 +32,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "RosCanNode.hpp"
 #include "publisher_link.h"
 #include "connection_manager.h"
 #include "subscription.h"
 #include <ros/connection.h>
-#include <ros/file_log.h>
 #include <ros/header.h>
 #include <ros/transport/transport.h>
 
@@ -70,16 +68,10 @@ bool PublisherLink::setHeader(const ros::Header& header) {
     connection_id_ = node_->connection_manager()->getNewConnectionID();
     header_ = header;
 
-    if (SubscriptionPtr parent = parent_.lock()) {
+    if (const auto parent = parent_.lock()) {
         parent->headerReceived(shared_from_this(), header);
     }
-
     return true;
-}
-
-const std::string& PublisherLink::getMD5Sum() {
-    ROS_ASSERT(!md5sum_.empty());
-    return md5sum_;
 }
 
 } // namespace roscan

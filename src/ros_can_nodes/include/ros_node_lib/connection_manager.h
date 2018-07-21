@@ -29,16 +29,20 @@
 #define ROSCAN_CONNECTION_MANAGER_H
 
 #include "common.h"
+#include "rosdefs.h"
 #include <ros/connection.h>
 #include <ros/header.h>
-
-#define ROSCPP_CONN_LOG_DEBUG(...) ROS_DEBUG_NAMED("roscpp_internal.connections", __VA_ARGS__)
+#include <ros/transport/transport_tcp.h>
+#include <ros/transport/transport_udp.h>
+#include <cstdint>
+#include <mutex>
+#include <boost/signals2/connection.hpp>
 
 namespace roscan {
 
 class ConnectionManager {
     public:
-        ConnectionManager(const RosCanNodePtr& node) : node_(node), connection_id_counter_(0) {}
+        ConnectionManager(const RosCanNodePtr& node) : node_{node}, connection_id_counter_{0} {}
         ~ConnectionManager() { shutdown(); }
 
         // Get a new connection ID
@@ -49,11 +53,11 @@ class ConnectionManager {
 
         void clear(ros::Connection::DropReason reason);
 
-        uint32_t getTCPPort();
-        uint32_t getUDPPort();
+        uint32_t getTCPPort() const { return tcpserver_transport_->getServerPort(); }
+        uint32_t getUDPPort() const { return udpserver_transport_->getServerPort(); }
 
-        const ros::TransportTCPPtr& getTCPServerTransport() { return tcpserver_transport_; }
-        const ros::TransportUDPPtr& getUDPServerTransport() { return udpserver_transport_; }
+        const ros::TransportTCPPtr& getTCPServerTransport() const { return tcpserver_transport_; }
+        const ros::TransportUDPPtr& getUDPServerTransport() const { return udpserver_transport_; }
 
         void udprosIncomingConnection(const ros::TransportUDPPtr& transport, ros::Header& header);
 
@@ -73,15 +77,15 @@ class ConnectionManager {
 
         RosCanNodePtr node_;
 
-        ros::S_Connection connections_;
-        ros::V_Connection dropped_connections_;
-        boost::mutex connections_mutex_;
-        boost::mutex dropped_connections_mutex_;
+        std::set<ros::ConnectionPtr> connections_;
+        std::vector<ros::ConnectionPtr> dropped_connections_;
+        std::mutex connections_mutex_;
+        std::mutex dropped_connections_mutex_;
 
         // The connection ID counter, used to assign unique ID to each inbound or
         // outbound connection. Access via getNewConnectionID()
         uint32_t connection_id_counter_;
-        boost::mutex connection_id_counter_mutex_;
+        std::mutex connection_id_counter_mutex_;
 
         boost::signals2::connection poll_conn_;
 

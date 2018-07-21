@@ -25,18 +25,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "RosCanNode.hpp"
 #include "publisher.h"
 #include "publication.h"
 #include "topic_manager.h"
 
 namespace roscan {
-
-Publisher::~Publisher() {
-    ROS_DEBUG("Publisher on '%s' deregistering callbacks.", topic_.c_str());
-    unadvertise();
-}
 
 void Publisher::unadvertise() {
     if (!unadvertised_) {
@@ -48,7 +42,6 @@ void Publisher::unadvertise() {
 
 void Publisher::publish(const boost::function<ros::SerializedMessage(void)>& serfunc, ros::SerializedMessage& m) const {
     if (unadvertised_) {
-        ROS_ASSERT_MSG(false, "Call to publish() on an invalid Publisher (topic [%s])", topic_.c_str());
         return;
     }
     node_->topic_manager()->publish(topic_, serfunc, m);
@@ -70,7 +63,7 @@ std::string Publisher::getTopic() const {
     if (!unadvertised_) {
         return topic_;
     }
-    return std::string();
+    return std::string{};
 }
 
 uint32_t Publisher::getNumSubscribers() const {
@@ -81,19 +74,14 @@ uint32_t Publisher::getNumSubscribers() const {
 }
 
 bool Publisher::isLatched() const {
-    PublicationPtr publication_ptr;
-    if (!unadvertised_) {
-        publication_ptr = node_->topic_manager()->lookupPublication(topic_);
-    } else {
-        ROS_ASSERT_MSG(false, "Call to isLatched() on an invalid Publisher");
+    if (unadvertised_) {
         throw ros::Exception("Call to isLatched() on an invalid Publisher");
     }
-    if (publication_ptr) {
-        return publication_ptr->isLatched();
-    } else {
-        ROS_ASSERT_MSG(false, "Call to isLatched() on an invalid Publisher");
+    const auto publication_ptr = node_->topic_manager()->lookupPublication(topic_);
+    if (!publication_ptr) {
         throw ros::Exception("Call to isLatched() on an invalid Publisher");
     }
+    return publication_ptr->isLatched();
 }
 
 } // namespace roscan

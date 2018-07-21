@@ -35,9 +35,13 @@
 #ifndef ROSCAN_CALLBACK_QUEUE_INTERFACE_H
 #define ROSCAN_CALLBACK_QUEUE_INTERFACE_H
 
-#include "common.h"
+#include <cstdint>
+#include <boost/shared_ptr.hpp>
 
 namespace roscan {
+
+class CallbackInterface;
+typedef boost::shared_ptr<CallbackInterface> CallbackInterfacePtr;
 
 // Abstract interface for items which can be added to a CallbackQueueInterface
 class CallbackInterface {
@@ -57,7 +61,7 @@ class CallbackInterface {
 
         // Provides the opportunity for specifying that a callback is not ready to be called
         // before call() actually takes place.
-        virtual bool ready() { return true; }
+        virtual bool ready() const { return true; }
 };
 
 // Abstract interface for a queue used to handle all callbacks within roscpp.
@@ -69,10 +73,10 @@ class CallbackQueueInterface {
 
         // Add a callback, with an optional owner id.  The owner id can be used to
         // remove a set of callbacks from this queue.
-        virtual void addCallback(const CallbackInterfacePtr& callback, uint64_t owner_id = 0) = 0;
+        virtual void addCallback(const CallbackInterfacePtr& callback, const uint64_t owner_id = 0) = 0;
 
         // Remove all callbacks associated with an owner id
-        virtual void removeByID(uint64_t owner_id) = 0;
+        virtual void removeByID(const uint64_t owner_id) = 0;
 };
 
 } // namespace roscan

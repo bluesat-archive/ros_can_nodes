@@ -28,9 +28,14 @@
 #ifndef ROSCAN_SUBSCRIPTION_QUEUE_H
 #define ROSCAN_SUBSCRIPTION_QUEUE_H
 
-#include "common.h"
+#include "rosdefs.h"
 #include "callback_queue_interface.h"
-#include <ros/message_event.h>
+#include <boost/enable_shared_from_this.hpp>
+#include <deque>
+#include <mutex>
+#include <string>
+#include <cstdint>
+#include <ros/time.h>
 
 namespace ros {
 
@@ -59,31 +64,31 @@ class SubscriptionQueue : public CallbackInterface, public boost::enable_shared_
         typedef std::deque<Item> D_Item;
 
     public:
-        SubscriptionQueue(const std::string& topic, int32_t queue_size, bool allow_concurrent_callbacks)
-            : topic_(topic), size_(queue_size), full_(false), queue_size_(0), allow_concurrent_callbacks_(allow_concurrent_callbacks) {}
+        SubscriptionQueue(const std::string& topic, const int32_t queue_size, const bool allow_concurrent_callbacks)
+            : topic_{topic}, size_{queue_size}, full_{false}, queue_size_{0}, allow_concurrent_callbacks_{allow_concurrent_callbacks} {}
         ~SubscriptionQueue() {}
 
         void push(const ros::SubscriptionCallbackHelperPtr& helper, const ros::MessageDeserializerPtr& deserializer,
-                  bool has_tracked_object, const ros::VoidConstWPtr& tracked_object, bool nonconst_need_copy,
-                  ros::Time receipt_time = ros::Time(), bool* was_full = 0);
+                  const bool has_tracked_object, const ros::VoidConstWPtr& tracked_object, const bool nonconst_need_copy,
+                  const ros::Time receipt_time = ros::Time(), bool *const was_full = nullptr);
         void clear();
 
-        virtual CallbackInterface::CallResult call();
-        virtual bool ready() { return true; }
+        CallbackInterface::CallResult call() override;
+        bool ready() const override { return true; }
         bool full();
 
     private:
-        bool fullNoLock();
+        bool fullNoLock() const { return size_ > 0 && queue_size_ >= (uint32_t)size_; }
         std::string topic_;
         int32_t size_;
         bool full_;
 
-        boost::mutex queue_mutex_;
+        std::mutex queue_mutex_;
         D_Item queue_;
         uint32_t queue_size_;
         bool allow_concurrent_callbacks_;
 
-        boost::recursive_mutex callback_mutex_;
+        std::recursive_mutex callback_mutex_;
 };
 
 } // namespace roscan

@@ -25,20 +25,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "subscriber_link.h"
 #include "publication.h"
-#include <ros/assert.h>
 #include <ros/console.h>
 
 namespace roscan {
 
-bool SubscriberLink::verifyDatatype(const std::string& datatype) {
-    PublicationPtr parent = parent_.lock();
+bool SubscriberLink::verifyDatatype(const std::string& datatype) const {
+    const auto parent = parent_.lock();
     if (!parent) {
         ROS_ERROR("Trying to verify the datatype on a publisher without a parent");
-        ROS_BREAK();
-
         return false;
     }
 
@@ -48,22 +44,27 @@ bool SubscriberLink::verifyDatatype(const std::string& datatype) {
                   datatype.c_str(), parent->getDataType().c_str());
         return false; // todo: figure out a way to log this error
     }
-
     return true;
 }
 
-const std::string& SubscriberLink::getMD5Sum() {
-    PublicationPtr parent = parent_.lock();
+void SubscriberLink::getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti) {
+    (void)ti;
+    ser = true;
+    nocopy = false;
+}
+
+const std::string& SubscriberLink::getMD5Sum() const {
+    const auto parent = parent_.lock();
     return parent->getMD5Sum();
 }
 
-const std::string& SubscriberLink::getDataType() {
-    PublicationPtr parent = parent_.lock();
+const std::string& SubscriberLink::getDataType() const {
+    const auto parent = parent_.lock();
     return parent->getDataType();
 }
 
-const std::string& SubscriberLink::getMessageDefinition() {
-    PublicationPtr parent = parent_.lock();
+const std::string& SubscriberLink::getMessageDefinition() const {
+    const auto parent = parent_.lock();
     return parent->getMessageDefinition();
 }
 

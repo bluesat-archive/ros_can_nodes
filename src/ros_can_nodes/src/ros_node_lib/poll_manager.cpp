@@ -25,26 +25,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "poll_manager.h"
+#include <mutex>
+#include <thread>
 
 namespace roscan {
 
-void PollManager::start() {
-    shutting_down_ = false;
-    thread_ = boost::thread(&PollManager::threadFunc, this);
-}
-
 void PollManager::shutdown() {
-    if (shutting_down_)
+    if (shutting_down_) {
         return;
+    }
 
     shutting_down_ = true;
-    if (thread_.get_id() != boost::this_thread::get_id()) {
+    if (thread_.joinable()) {
         thread_.join();
     }
 
-    boost::recursive_mutex::scoped_lock lock(signal_mutex_);
+    std::lock_guard<std::recursive_mutex> lock{signal_mutex_};
     poll_signal_.disconnect_all_slots();
 }
 
@@ -53,7 +50,7 @@ void PollManager::threadFunc() {
 
     while (!shutting_down_) {
         {
-            boost::recursive_mutex::scoped_lock lock(signal_mutex_);
+            std::lock_guard<std::recursive_mutex> lock{signal_mutex_};
             poll_signal_();
         }
 
@@ -65,13 +62,13 @@ void PollManager::threadFunc() {
     }
 }
 
-boost::signals2::connection PollManager::addPollThreadListener(const ros::VoidFunc& func) {
-    boost::recursive_mutex::scoped_lock lock(signal_mutex_);
+boost::signals2::connection PollManager::addPollThreadListener(const boost::function<void(void)>& func) {
+    std::lock_guard<std::recursive_mutex> lock{signal_mutex_};
     return poll_signal_.connect(func);
 }
 
 void PollManager::removePollThreadListener(boost::signals2::connection c) {
-    boost::recursive_mutex::scoped_lock lock(signal_mutex_);
+    std::lock_guard<std::recursive_mutex> lock{signal_mutex_};
     c.disconnect();
 }
 

@@ -28,8 +28,9 @@
 #ifndef ROSCAN_INTERNAL_TIMER_MANAGER_H
 #define ROSCAN_INTERNAL_TIMER_MANAGER_H
 
-#include "common.h"
+#include "rosdefs.h"
 #include <ros/time.h>
+#include <boost/shared_ptr.hpp>
 
 namespace roscan {
 

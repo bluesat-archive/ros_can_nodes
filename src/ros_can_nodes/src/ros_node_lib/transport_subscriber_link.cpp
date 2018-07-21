@@ -25,14 +25,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "RosCanNode.hpp"
 #include "publication.h"
 #include "transport_subscriber_link.h"
 #include "topic_manager.h"
 #include "connection_manager.h"
 #include <ros/connection.h>
-#include <ros/file_log.h>
 #include <ros/header.h>
 #include <ros/transport/transport.h>
 
@@ -41,50 +39,41 @@ namespace roscan {
 bool TransportSubscriberLink::initialize(const ros::ConnectionPtr& connection) {
     connection_ = connection;
     dropped_conn_ = connection_->addDropListener(boost::bind(&TransportSubscriberLink::onConnectionDropped, this, _1));
-
     return true;
 }
 
 bool TransportSubscriberLink::handleHeader(const ros::Header& header) {
     std::string topic;
     if (!header.getValue("topic", topic)) {
-        std::string msg("Header from subscriber did not have the required element: topic");
-
+        std::string msg{"Header from subscriber did not have the required element: topic"};
         ROS_ERROR("%s", msg.c_str());
         connection_->sendHeaderError(msg);
-
         return false;
     }
 
     // This will get validated by validateHeader below
     std::string client_callerid;
     header.getValue("callerid", client_callerid);
-    PublicationPtr pt = node_->topic_manager()->lookupPublication(topic);
+    const auto pt = node_->topic_manager()->lookupPublication(topic);
     if (!pt) {
-        std::string msg = std::string("received a connection for a nonexistent topic [") +
-                          topic + std::string("] from [" + connection_->getTransport()->getTransportInfo() + "] [" + client_callerid + "].");
-
-        ROSCPP_LOG_DEBUG("%s", msg.c_str());
+        std::string msg{"received a connection for a nonexistent topic [" + topic + "] from [" + connection_->getTransport()->getTransportInfo() + "] [" + client_callerid + "]."};
         connection_->sendHeaderError(msg);
-
         return false;
     }
 
     std::string error_msg;
     if (!pt->validateHeader(header, error_msg)) {
-        ROSCPP_LOG_DEBUG("%s", error_msg.c_str());
         connection_->sendHeaderError(error_msg);
-
         return false;
     }
 
     destination_caller_id_ = client_callerid;
     connection_id_ = node_->connection_manager()->getNewConnectionID();
     topic_ = pt->getName();
-    parent_ = PublicationWPtr(pt);
+    parent_ = PublicationWPtr{pt};
 
     // Send back a success, with info
-    M_string m;
+    std::map<std::string, std::string> m;
     m["type"] = pt->getDataType();
     m["md5sum"] = pt->getMD5Sum();
     m["message_definition"] = pt->getMessageDefinition();
@@ -94,19 +83,12 @@ bool TransportSubscriberLink::handleHeader(const ros::Header& header) {
     connection_->writeHeader(m, boost::bind(&TransportSubscriberLink::onHeaderWritten, this, _1));
 
     pt->addSubscriberLink(shared_from_this());
-
     return true;
 }
 
 void TransportSubscriberLink::onConnectionDropped(const ros::ConnectionPtr& conn) {
     (void)conn;
-    ROS_ASSERT(conn == connection_);
-
-    PublicationPtr parent = parent_.lock();
-
-    if (parent) {
-        ROSCPP_CONN_LOG_DEBUG("Connection to subscriber [%s] to topic [%s] dropped", connection_->getRemoteString().c_str(), topic_.c_str());
-
+    if (const auto parent = parent_.lock()) {
         parent->removeSubscriberLink(shared_from_this());
     }
 }
@@ -123,12 +105,11 @@ void TransportSubscriberLink::onMessageWritten(const ros::ConnectionPtr& conn) {
     startMessageWrite(true);
 }
 
-void TransportSubscriberLink::startMessageWrite(bool immediate_write) {
-    boost::shared_array<uint8_t> dummy;
-    ros::SerializedMessage m(dummy, (uint32_t)0);
+void TransportSubscriberLink::startMessageWrite(const bool immediate_write) {
+    ros::SerializedMessage m;
 
     {
-        boost::mutex::scoped_lock lock(outbox_mutex_);
+        std::lock_guard<std::mutex> lock{outbox_mutex_};
         if (writing_message_ || !header_written_) {
             return;
         }
@@ -145,51 +126,34 @@ void TransportSubscriberLink::startMessageWrite(bool immediate_write) {
     }
 }
 
-void TransportSubscriberLink::enqueueMessage(const ros::SerializedMessage& m, bool ser, bool nocopy) {
+void TransportSubscriberLink::enqueueMessage(const ros::SerializedMessage& m, const bool ser, const bool nocopy) {
     (void)nocopy;
     if (!ser) {
         return;
     }
 
     {
-        boost::mutex::scoped_lock lock(outbox_mutex_);
+        std::lock_guard<std::mutex> lock{outbox_mutex_};
 
         int max_queue = 0;
-        if (PublicationPtr parent = parent_.lock()) {
+        if (const auto parent = parent_.lock()) {
             max_queue = parent->getMaxQueue();
         }
 
-        ROS_DEBUG_NAMED("superdebug", "TransportSubscriberLink on topic [%s] to caller [%s], queueing message (queue size [%d])", topic_.c_str(), destination_caller_id_.c_str(), (int)outbox_.size());
-
         if (max_queue > 0 && (int)outbox_.size() >= max_queue) {
-            if (!queue_full_) {
-                ROS_DEBUG("Outgoing queue full for topic [%s].  "
-                          "Discarding oldest message\n",
-                          topic_.c_str());
-            }
-
             outbox_.pop(); // toss out the oldest thing in the queue to make room for us
             queue_full_ = true;
         } else {
             queue_full_ = false;
         }
-
         outbox_.push(m);
     }
 
     startMessageWrite(false);
 
-    stats_.messages_sent_++;
+    ++stats_.messages_sent_;
     stats_.bytes_sent_ += m.num_bytes;
     stats_.message_data_sent_ += m.num_bytes;
-}
-
-std::string TransportSubscriberLink::getTransportType() {
-    return connection_->getTransport()->getType();
-}
-
-std::string TransportSubscriberLink::getTransportInfo() {
-    return connection_->getTransport()->getTransportInfo();
 }
 
 void TransportSubscriberLink::drop() {

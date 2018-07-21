@@ -35,9 +35,13 @@
 #ifndef ROSCAN_ROSOUT_APPENDER_H
 #define ROSCAN_ROSOUT_APPENDER_H
 
-#include "common.h"
+#include "RosCanNode.hpp"
 #include <ros/message_forward.h>
-#include <ros/console.h>
+#include <string>
+#include <vector>
+#include <mutex>
+#include <thread>
+#include <condition_variable>
 
 namespace rosgraph_msgs {
 ROS_DECLARE_MESSAGE(Log);
@@ -52,7 +56,7 @@ class ROSOutAppender : public ros::console::LogAppender {
 
         const std::string& getLastError() const { return last_error_; }
 
-        virtual void log(::ros::console::Level level, const char* str, const char* file, const char* function, int line);
+        void log(ros::console::Level level, const char *const str, const char *const file, const char *const function, const int line) override;
 
     protected:
         void logThread();
@@ -63,11 +67,11 @@ class ROSOutAppender : public ros::console::LogAppender {
 
         typedef std::vector<rosgraph_msgs::LogPtr> V_Log;
         V_Log log_queue_;
-        boost::mutex queue_mutex_;
-        boost::condition_variable queue_condition_;
+        std::mutex queue_mutex_;
+        std::condition_variable queue_condition_;
         bool shutting_down_;
 
-        boost::thread publish_thread_;
+        std::thread publish_thread_;
 };
 
 } // namespace roscan

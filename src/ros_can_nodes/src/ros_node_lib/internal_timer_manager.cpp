@@ -25,9 +25,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define BOOST_THREAD_HAS_CONDATTR_SET_CLOCK_MONOTONIC
-
-#include "common.h"
 #include "internal_timer_manager.h"
 #include "timer_manager.h"
 
@@ -41,7 +38,7 @@ InternalTimerManagerPtr getInternalTimerManager() {
 
 void initInternalTimerManager() {
     if (!g_timer_manager) {
-        g_timer_manager.reset(new InternalTimerManager);
+        g_timer_manager.reset(new InternalTimerManager{});
     }
 }
 

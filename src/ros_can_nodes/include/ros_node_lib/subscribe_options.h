@@ -28,16 +28,20 @@
 #ifndef ROSCAN_SUBSCRIBE_OPTIONS_H
 #define ROSCAN_SUBSCRIBE_OPTIONS_H
 
-#include "common.h"
+#include "rosdefs.h"
+#include "callback_queue_interface.h"
+#include <string>
 #include <ros/message_traits.h>
 #include <ros/transport_hints.h>
 #include <ros/subscription_callback_helper.h>
+#include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace roscan {
 
 // Encapsulates all options available for creating a Subscriber
 struct SubscribeOptions {
-    SubscribeOptions() : queue_size(1), callback_queue(0), allow_concurrent_callbacks(false) {}
+    SubscribeOptions() : queue_size{1}, callback_queue{0}, allow_concurrent_callbacks{false} {}
 
     /**
      * \brief Constructor
@@ -48,8 +52,8 @@ struct SubscribeOptions {
      * \param _md5sum
      * \param _datatype
      */
-    SubscribeOptions(const std::string& _topic, uint32_t _queue_size, const std::string& _md5sum, const std::string& _datatype)
-        : topic(_topic), queue_size(_queue_size), md5sum(_md5sum), datatype(_datatype), callback_queue(0), allow_concurrent_callbacks(false) {}
+    SubscribeOptions(const std::string& _topic, const uint32_t _queue_size, const std::string& _md5sum, const std::string& _datatype)
+        : topic{_topic}, queue_size{_queue_size}, md5sum{_md5sum}, datatype{_datatype}, callback_queue{0}, allow_concurrent_callbacks{false} {}
 
     /**
      * \brief Templated initialization, templated on callback parameter type.  Supports any callback parameters supported by the SubscriptionCallbackAdapter
@@ -60,9 +64,9 @@ struct SubscribeOptions {
      * \param _callback Callback to call when a message arrives on this topic
      */
     template <class P>
-    void initByFullCallbackType(const std::string& _topic, uint32_t _queue_size,
+    void initByFullCallbackType(const std::string& _topic, const uint32_t _queue_size,
                                 const boost::function<void(P)>& _callback,
-                                const boost::function<boost::shared_ptr<typename ros::ParameterAdapter<P>::Message>(void)>& factory_fn = ros::DefaultMessageCreator<typename ros::ParameterAdapter<P>::Message>()) {
+                                const boost::function<boost::shared_ptr<typename ros::ParameterAdapter<P>::Message>(void)>& factory_fn = ros::DefaultMessageCreator<typename ros::ParameterAdapter<P>::Message>{}) {
         typedef typename ros::ParameterAdapter<P>::Message MessageType;
         topic = _topic;
         queue_size = _queue_size;
@@ -80,9 +84,9 @@ struct SubscribeOptions {
      * \param _callback Callback to call when a message arrives on this topic
      */
     template <class M>
-    void init(const std::string& _topic, uint32_t _queue_size,
+    void init(const std::string& _topic, const uint32_t _queue_size,
                 const boost::function<void(const boost::shared_ptr<M const>&)>& _callback,
-                const boost::function<boost::shared_ptr<M>(void)>& factory_fn = ros::DefaultMessageCreator<M>()) {
+                const boost::function<boost::shared_ptr<M>(void)>& factory_fn = ros::DefaultMessageCreator<M>{}) {
         typedef typename ros::ParameterAdapter<M>::Message MessageType;
         topic = _topic;
         queue_size = _queue_size;
@@ -99,7 +103,7 @@ struct SubscribeOptions {
 
     ros::SubscriptionCallbackHelperPtr helper; ///< Helper object used to get create messages and call callbacks
 
-    CallbackQueueInterface* callback_queue; ///< Queue to add callbacks to.  If NULL, the global callback queue will be used
+    CallbackQueueInterface *callback_queue; ///< Queue to add callbacks to.  If NULL, the global callback queue will be used
 
     /// By default subscription callbacks are guaranteed to arrive in-order, with only one callback happening for this subscription at any given
     /// time.  Setting this to true allows you to receive multiple messages on the same topic from multiple threads at the same time
@@ -130,9 +134,9 @@ struct SubscribeOptions {
      * \param queue The callback queue to use (see SubscribeOptions::callback_queue)
      */
     template <class M>
-    static SubscribeOptions create(const std::string& topic, uint32_t queue_size,
+    static SubscribeOptions create(const std::string& topic, const uint32_t queue_size,
                                     const boost::function<void(const boost::shared_ptr<M const>&)>& callback,
-                                    const ros::VoidConstPtr& tracked_object, CallbackQueueInterface* queue) {
+                                    const ros::VoidConstPtr& tracked_object, CallbackQueueInterface *queue) {
         SubscribeOptions ops;
         ops.init<M>(topic, queue_size, callback);
         ops.tracked_object = tracked_object;

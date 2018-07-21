@@ -29,8 +29,10 @@
 #define ROSCAN_PUBLISHER_HANDLE_H
 
 #include "common.h"
-#include <ros/message.h>
+#include "subscriber_callbacks.h"
 #include <ros/serialization.h>
+#include <string>
+#include <boost/function.hpp>
 
 namespace roscan {
 
@@ -41,10 +43,10 @@ namespace roscan {
 // being called.  Once all Publishers for a given topic go out of scope the topic will be unadvertised.
 class Publisher {
     public:
-        Publisher() : unadvertised_(false) {}
+        Publisher() : unadvertised_{false} {}
         Publisher(const std::string& topic, const RosCanNodePtr& node, const std::string& md5sum, const std::string& datatype, const SubscriberCallbacksPtr& callbacks)
-            : topic_(topic), node_(node), md5sum_(md5sum), datatype_(datatype), callbacks_(callbacks), unadvertised_(false) {}
-        ~Publisher();
+            : topic_{topic}, node_{node}, md5sum_{md5sum}, datatype_{datatype}, callbacks_{callbacks}, unadvertised_{false} {}
+        ~Publisher() { unadvertise(); }
 
         // Publish a message on the topic associated with this Publisher.
         // This version of publish will allow fast intra-process message-passing in the future,
@@ -56,15 +58,8 @@ class Publisher {
             namespace mt = ros::message_traits;
 
             if (unadvertised_) {
-                ROS_ASSERT_MSG(false, "Call to publish() on an invalid Publisher (topic [%s])", topic_.c_str());
                 return;
             }
-
-            ROS_ASSERT_MSG(md5sum_ == "*" || std::string(mt::md5sum<M>(*message)) == "*" || md5sum_ == mt::md5sum<M>(*message),
-                    "Trying to publish message of type [%s/%s] on a publisher with type [%s/%s]",
-                    mt::datatype<M>(*message), mt::md5sum<M>(*message),
-                    datatype_.c_str(), md5sum_.c_str());
-
             ros::SerializedMessage m;
             m.type_info = &typeid(M);
             m.message = message;
@@ -79,15 +74,8 @@ class Publisher {
             namespace mt = ros::message_traits;
 
             if (unadvertised_) {
-                ROS_ASSERT_MSG(false, "Call to publish() on an invalid Publisher (topic [%s])", topic_.c_str());
                 return;
             }
-
-            ROS_ASSERT_MSG(md5sum_ == "*" || std::string(mt::md5sum<M>(message)) == "*" || md5sum_ == mt::md5sum<M>(message),
-                    "Trying to publish message of type [%s/%s] on a publisher with type [%s/%s]",
-                    mt::datatype<M>(message), mt::md5sum<M>(message),
-                    datatype_.c_str(), md5sum_.c_str());
-
             ros::SerializedMessage m;
             publish(boost::bind(serializeMessage<M>, boost::ref(message)), m);
         }

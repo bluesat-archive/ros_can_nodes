@@ -28,22 +28,23 @@
 #ifndef ROSCAN_POLL_MANAGER_H
 #define ROSCAN_POLL_MANAGER_H
 
-#include "common.h"
 #include <ros/poll_set.h>
+#include <thread>
+#include <mutex>
+#include <boost/signals2.hpp>
 
 namespace roscan {
 
 class PollManager {
     public:
-        PollManager() : shutting_down_(false) {}
+        PollManager() : shutting_down_{false}, thread_{&PollManager::threadFunc, this} {}
         ~PollManager() { shutdown(); }
 
         ros::PollSet& getPollSet() { return poll_set_; }
 
-        boost::signals2::connection addPollThreadListener(const ros::VoidFunc& func);
+        boost::signals2::connection addPollThreadListener(const boost::function<void(void)>& func);
         void removePollThreadListener(boost::signals2::connection c);
 
-        void start();
         void shutdown();
 
     private:
@@ -52,10 +53,10 @@ class PollManager {
         ros::PollSet poll_set_;
         volatile bool shutting_down_;
 
-        ros::VoidSignal poll_signal_;
-        boost::recursive_mutex signal_mutex_;
+        boost::signals2::signal<void(void)> poll_signal_;
+        std::recursive_mutex signal_mutex_;
 
-        boost::thread thread_;
+        std::thread thread_;
 };
 
 } // namespace roscan

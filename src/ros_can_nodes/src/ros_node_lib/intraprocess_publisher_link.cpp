@@ -32,13 +32,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "RosCanNode.hpp"
 #include "subscription.h"
 #include "intraprocess_publisher_link.h"
 #include "intraprocess_subscriber_link.h"
 #include <ros/connection.h>
-#include <ros/file_log.h>
 #include <ros/header.h>
 #include <ros/transport/transport.h>
 
@@ -47,8 +45,7 @@ namespace roscan {
 void IntraProcessPublisherLink::setPublisher(const IntraProcessSubscriberLinkPtr& publisher) {
     publisher_ = publisher;
 
-    SubscriptionPtr parent = parent_.lock();
-    ROS_ASSERT(parent);
+    const auto parent = parent_.lock();
 
     ros::Header header;
     ros::M_stringPtr values = header.getValues();
@@ -63,7 +60,7 @@ void IntraProcessPublisherLink::setPublisher(const IntraProcessSubscriberLinkPtr
 
 void IntraProcessPublisherLink::drop() {
     {
-        boost::recursive_mutex::scoped_lock lock(drop_mutex_);
+        std::lock_guard<std::recursive_mutex> lock{drop_mutex_};
         if (dropped_) {
             return;
         }
@@ -75,38 +72,34 @@ void IntraProcessPublisherLink::drop() {
         publisher_.reset();
     }
 
-    if (SubscriptionPtr parent = parent_.lock()) {
-        ROSCPP_LOG_DEBUG("Connection to local publisher on topic [%s] dropped", parent->getName().c_str());
+    if (const auto parent = parent_.lock()) {
         parent->removePublisherLink(shared_from_this());
     }
 }
 
 void IntraProcessPublisherLink::handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy) {
-    boost::recursive_mutex::scoped_lock lock(drop_mutex_);
+    std::lock_guard<std::recursive_mutex> lock{drop_mutex_};
     if (dropped_) {
         return;
     }
 
     stats_.bytes_received_ += m.num_bytes;
-    stats_.messages_received_++;
+    ++stats_.messages_received_;
 
-    SubscriptionPtr parent = parent_.lock();
-
-    if (parent) {
+    if (const auto parent = parent_.lock()) {
         stats_.drops_ += parent->handleMessage(m, ser, nocopy, header_.getValues(), shared_from_this());
     }
 }
 
 void IntraProcessPublisherLink::getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti) {
-    boost::recursive_mutex::scoped_lock lock(drop_mutex_);
+    std::lock_guard<std::recursive_mutex> lock{drop_mutex_};
     if (dropped_) {
         ser = false;
         nocopy = false;
         return;
     }
 
-    SubscriptionPtr parent = parent_.lock();
-    if (parent) {
+    if (const auto parent = parent_.lock()) {
         parent->getPublishTypes(ser, nocopy, ti);
     } else {
         ser = true;

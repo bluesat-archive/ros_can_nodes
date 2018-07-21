@@ -32,21 +32,20 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
-#include "RosCanNode.hpp"
 #include "rosout_appender.h"
-#include "topic_manager.h"
 #include "advertise_options.h"
+#include "subscriber_callbacks.h"
 #include <rosgraph_msgs/Log.h>
+#include <boost/make_shared.hpp>
 
 namespace roscan {
 
 ROSOutAppender::ROSOutAppender(const RosCanNodePtr& node)
-    : node_(node), shutting_down_(false), publish_thread_(boost::bind(&ROSOutAppender::logThread, this)) {
+    : node_{node}, shutting_down_{false}, publish_thread_{&ROSOutAppender::logThread, this} {
     AdvertiseOptions ops;
     ops.init<rosgraph_msgs::Log>("/rosout", 0);
     ops.latch = true;
-    SubscriberCallbacksPtr cbs(boost::make_shared<SubscriberCallbacks>());
+    SubscriberCallbacksPtr cbs{boost::make_shared<SubscriberCallbacks>()};
     node_->topic_manager()->advertise(ops, cbs);
 }
 
@@ -54,15 +53,17 @@ ROSOutAppender::~ROSOutAppender() {
     shutting_down_ = true;
 
     {
-        boost::mutex::scoped_lock lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock{queue_mutex_};
         queue_condition_.notify_all();
     }
 
-    publish_thread_.join();
+    if (publish_thread_.joinable()) {
+        publish_thread_.join();
+    }
 }
 
-void ROSOutAppender::log(::ros::console::Level level, const char* str, const char* file, const char* function, int line) {
-    rosgraph_msgs::LogPtr msg(boost::make_shared<rosgraph_msgs::Log>());
+void ROSOutAppender::log(ros::console::Level level, const char *const str, const char *const file, const char *const function, const int line) {
+    rosgraph_msgs::LogPtr msg{boost::make_shared<rosgraph_msgs::Log>()};
 
     msg->header.stamp = ros::Time::now();
     if (level == ros::console::levels::Debug) {
@@ -83,11 +84,11 @@ void ROSOutAppender::log(::ros::console::Level level, const char* str, const cha
     msg->line = line;
     node_->getAdvertisedTopics(msg->topics);
 
-    if (level == ::ros::console::levels::Fatal || level == ::ros::console::levels::Error) {
+    if (level == ros::console::levels::Fatal || level == ros::console::levels::Error) {
         last_error_ = str;
     }
 
-    boost::mutex::scoped_lock lock(queue_mutex_);
+    std::lock_guard<std::mutex> lock{queue_mutex_};
     log_queue_.push_back(msg);
     queue_condition_.notify_all();
 }
@@ -97,7 +98,7 @@ void ROSOutAppender::logThread() {
         V_Log local_queue;
 
         {
-            boost::mutex::scoped_lock lock(queue_mutex_);
+            std::unique_lock<std::mutex> lock{queue_mutex_};
 
             if (shutting_down_) {
                 return;
@@ -112,10 +113,8 @@ void ROSOutAppender::logThread() {
             local_queue.swap(log_queue_);
         }
 
-        V_Log::iterator it = local_queue.begin();
-        V_Log::iterator end = local_queue.end();
-        for (; it != end; ++it) {
-            node_->topic_manager()->publish("/rosout", *(*it));
+        for (const auto& l: local_queue) {
+            node_->topic_manager()->publish("/rosout", *l);
         }
     }
 }

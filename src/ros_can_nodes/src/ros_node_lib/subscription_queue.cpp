@@ -25,7 +25,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "subscription_queue.h"
 #include <ros/message_deserializer.h>
 #include <ros/subscription_callback_helper.h>
@@ -33,9 +32,9 @@
 namespace roscan {
 
 void SubscriptionQueue::push(const ros::SubscriptionCallbackHelperPtr& helper, const ros::MessageDeserializerPtr& deserializer,
-                             bool has_tracked_object, const ros::VoidConstWPtr& tracked_object, bool nonconst_need_copy,
-                             ros::Time receipt_time, bool* was_full) {
-    boost::mutex::scoped_lock lock(queue_mutex_);
+                             const bool has_tracked_object, const ros::VoidConstWPtr& tracked_object, const bool nonconst_need_copy,
+                             const ros::Time receipt_time, bool *const was_full) {
+    std::lock_guard<std::mutex> lock{queue_mutex_};
 
     if (was_full) {
         *was_full = false;
@@ -44,10 +43,6 @@ void SubscriptionQueue::push(const ros::SubscriptionCallbackHelperPtr& helper, c
     if (fullNoLock()) {
         queue_.pop_front();
         --queue_size_;
-
-        if (!full_) {
-            ROS_DEBUG("Incoming queue was full for topic \"%s\". Discarded oldest message (current queue size [%d])", topic_.c_str(), (int)queue_.size());
-        }
 
         full_ = true;
 
@@ -70,8 +65,8 @@ void SubscriptionQueue::push(const ros::SubscriptionCallbackHelperPtr& helper, c
 }
 
 void SubscriptionQueue::clear() {
-    boost::recursive_mutex::scoped_lock cb_lock(callback_mutex_);
-    boost::mutex::scoped_lock queue_lock(queue_mutex_);
+    std::lock_guard<std::recursive_mutex> cb_lock{callback_mutex_};
+    std::lock_guard<std::mutex> queue_lock{queue_mutex_};
 
     queue_.clear();
     queue_size_ = 0;
@@ -81,7 +76,8 @@ CallbackInterface::CallResult SubscriptionQueue::call() {
     // The callback may result in our own destruction.  Therefore, we may need to keep a reference to ourselves
     // that outlasts the scoped_try_lock
     boost::shared_ptr<SubscriptionQueue> self;
-    boost::recursive_mutex::scoped_try_lock lock(callback_mutex_, boost::defer_lock);
+    //boost::recursive_mutex::scoped_try_lock lock(callback_mutex_, boost::defer_lock);
+    std::unique_lock<std::recursive_mutex> lock{callback_mutex_, std::defer_lock};
 
     if (!allow_concurrent_callbacks_) {
         lock.try_lock();
@@ -94,7 +90,7 @@ CallbackInterface::CallResult SubscriptionQueue::call() {
     Item i;
 
     {
-        boost::mutex::scoped_lock lock(queue_mutex_);
+        std::lock_guard<std::mutex> lock{queue_mutex_};
 
         if (queue_.empty()) {
             return CallbackInterface::Invalid;
@@ -118,29 +114,22 @@ CallbackInterface::CallResult SubscriptionQueue::call() {
         --queue_size_;
     }
 
-    ros::VoidConstPtr msg = i.deserializer->deserialize();
-
     // msg can be null here if deserialization failed
-    if (msg) {
+    if (const auto msg = i.deserializer->deserialize()) {
         try {
             self = shared_from_this();
         } catch (boost::bad_weak_ptr&) {}// For the tests, where we don't create a shared_ptr
 
         ros::SubscriptionCallbackHelperCallParams params;
-        params.event = ros::MessageEvent<void const>(msg, i.deserializer->getConnectionHeader(), i.receipt_time, i.nonconst_need_copy, ros::MessageEvent<void const>::CreateFunction());
+        params.event = ros::MessageEvent<void const>{msg, i.deserializer->getConnectionHeader(), i.receipt_time, i.nonconst_need_copy, ros::MessageEvent<void const>::CreateFunction()};
         i.helper->call(params);
     }
-
     return CallbackInterface::Success;
 }
 
 bool SubscriptionQueue::full() {
-    boost::mutex::scoped_lock lock(queue_mutex_);
+    std::lock_guard<std::mutex> lock{queue_mutex_};
     return fullNoLock();
-}
-
-bool SubscriptionQueue::fullNoLock() {
-    return (size_ > 0) && (queue_size_ >= (uint32_t)size_);
 }
 
 } // namespace roscan

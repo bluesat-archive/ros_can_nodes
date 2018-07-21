@@ -8,10 +8,10 @@
 #include "ros_node_lib/internal_timer_manager.h"
 #include <iostream>
 #include <ros/console.h>
-#include <ros/file_log.h>
 #include <ros/transport/transport_tcp.h>
 #include <xmlrpcpp/XmlRpcSocket.h>
 #include <unistd.h>
+#include <cstring>
 #include "ROSCANConstants.hpp"
 #include <linux/can.h>
 #include "MessageBuffer.hpp"
@@ -34,33 +34,27 @@ namespace roscan {
             V_Subs subs_;
             //V_SrvCImpl srv_cs_;
 
-            boost::mutex mutex_;
+            std::mutex mutex_;
     };
 
     void RosCanNode::check_ipv6_environment() {
-        char* env_ipv6 = NULL;
-        env_ipv6 = getenv("ROS_IPV6");
-
-        bool use_ipv6 = (env_ipv6 && strcmp(env_ipv6, "on") == 0);
+        const auto env_ipv6 = getenv("ROS_IPV6");
+        const auto use_ipv6 = env_ipv6 && strcmp(env_ipv6, "on") == 0;
         ros::TransportTCP::s_use_ipv6_ = use_ipv6;
         XmlRpc::XmlRpcSocket::s_use_ipv6_ = use_ipv6;
     }
 
-    RosCanNode::RosCanNode(std::string& name, uint8_t id) : name_("can_node/" + name), id_(id), isZombie(false), g_started(false), g_shutting_down(false), callback_queue_(0), collection_(0) {
-
+    RosCanNode::RosCanNode(const std::string& name, const uint8_t id) : name_{"can_node/" + name}, id_{id}, isZombie{false}, g_started{false}, g_shutting_down{false}, callback_queue_{0}, collection_{0} {
         std::cout << "Creating node " << name_ << "\n";
-        g_global_queue.reset(new CallbackQueue);
+        g_global_queue.reset(new CallbackQueue{});
         ROSCONSOLE_AUTOINIT;
         check_ipv6_environment();
-        collection_ = new NodeBackingCollection;
-
+        collection_ = new NodeBackingCollection{};
         std::cout << "Created node " << name_ << "\n";
     }
 
     RosCanNode::~RosCanNode() {
         shutdown();
-        std::cout << "Deleting node " << name_ << "\n";
-        delete collection_;
         std::cout << "Deleted node " << name_ << "\n";
     }
 
@@ -71,22 +65,21 @@ namespace roscan {
     //NOTE: do at a later date
     void RosCanNode::heartbeat() {
         time_t t = time(0);
-        struct tm * now = localtime( & t );
+        tm *now = localtime(&t);
         std::cout  << now->tm_hour << ":" << now->tm_min << std::endl;
     }
 
-    int RosCanNode::registerSubscriber(std::string topic, std::string topic_type) {
-        std::cout << "Calling subscriber" << '\n';
+    int RosCanNode::registerSubscriber(const std::string& topic, const std::string& topic_type) {
+        std::cout << "Calling subscriber\n";
 
-        std::string name = topic;
         int topic_num = getFirstFreeTopic();
 
-        if(topic_num >= 0){
+        if (topic_num >= 0) {
             boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
-            callback = [this, topic_num, name](const topic_tools::ShapeShifter::ConstPtr& msg) {
-                rosCanCallback(msg, topic_num, name);
+            callback = [this, topic_num, topic](const topic_tools::ShapeShifter::ConstPtr& msg) {
+                rosCanCallback(msg, topic_num, topic);
             };
-            this->subscribe(name, 100, callback);
+            subscribe(topic, 100, callback);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
@@ -99,14 +92,14 @@ namespace roscan {
         }
     }
 
-    int RosCanNode::unregisterSubscriber(uint8_t topic) {
+    int RosCanNode::unregisterSubscriber(const uint8_t topic) {
         // TODO: at a later date, at this moment, just call unregister node
         std::cout << "Unregistering subscriber" << '\n';
 
         return 0;
     }
 
-    int RosCanNode::advertiseTopic(std::string topic, std::string topic_type) {
+    int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type) {
         std::cout << "Advertising topic" << '\n';
 
         std::string name = "/" + topic;
@@ -114,7 +107,7 @@ namespace roscan {
 
         if(topic_num >= 0){
 
-            //this->advertise<RosIntrospection::FlatMessage>(name, (uint32_t)10, false);
+            //advertise<RosIntrospection::FlatMessage>(name, (uint32_t)10, false);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
@@ -130,7 +123,7 @@ namespace roscan {
         return 0;
     }
 
-    int RosCanNode::unregisterPublisher(uint8_t topic) {
+    int RosCanNode::unregisterPublisher(const uint8_t topic) {
         // TODO: at a later date, at this moment, just call unregister node
 
         std::cout << "Unregistering publisher" << '\n';
@@ -235,7 +228,7 @@ namespace roscan {
     //               ROS Facing Methods
     // ==================================================
 
-    void RosCanNode::rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, uint8_t topicID, std::string topic_name) {
+    void RosCanNode::rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, const uint8_t topicID, const std::string& topic_name) {
         ROS_INFO_STREAM("callback: topic_id = " << (int)topicID << " topic_name = " << topic_name);
         RosIntrospection::Parser parser;
 
@@ -266,8 +259,7 @@ namespace roscan {
 
         //print the content of the message
         printf("--------- %s ----------\n", topic_name.c_str());
-        for (auto it: renamed_values) {
-
+        for (const auto& it: renamed_values) {
             const std::string& key = it.first;
             const RosIntrospection::Variant& value   = it.second;
             printf(" %s = %f\n", key.c_str(), value.convert<double>()); //convert into CAN message set
@@ -290,54 +282,52 @@ namespace roscan {
         frame.can_id = header;
         frame.can_dlc = 8;
 
-        for (auto it: renamed_values) {
-            const RosIntrospection::Variant& value   = it.second;
-            *(double*) frame.data = value.convert<double>();
+        for (const auto& it: renamed_values) {
+            *(double *)frame.data = it.second.convert<double>();
         }
 
         MessageBuffer::instance().push(frame);
-
     }
 
-    CallbackQueuePtr RosCanNode::getInternalCallbackQueue() {
+    const CallbackQueuePtr& RosCanNode::getInternalCallbackQueue() {
         if (!g_internal_callback_queue) {
-            g_internal_callback_queue.reset(new CallbackQueue);
+            g_internal_callback_queue.reset(new CallbackQueue{});
         }
         return g_internal_callback_queue;
     }
 
-    void RosCanNode::getAdvertisedTopics(V_string& topics) {
+    void RosCanNode::getAdvertisedTopics(std::vector<std::string>& topics) {
         topic_manager()->getAdvertisedTopics(topics);
     }
 
-    void RosCanNode::getSubscribedTopics(V_string& topics) {
+    void RosCanNode::getSubscribedTopics(std::vector<std::string>& topics) {
         topic_manager()->getSubscribedTopics(topics);
     }
 
     const TopicManagerPtr& RosCanNode::topic_manager() {
         if (!topicManager) {
-            topicManager.reset(new TopicManager(shared_from_this()));
+            topicManager.reset(new TopicManager{shared_from_this()});
         }
         return topicManager;
     }
 
     const ConnectionManagerPtr& RosCanNode::connection_manager() {
         if (!connectionManager) {
-            connectionManager.reset(new ConnectionManager(shared_from_this()));
+            connectionManager.reset(new ConnectionManager{shared_from_this()});
         }
         return connectionManager;
     }
 
     const PollManagerPtr& RosCanNode::poll_manager() {
         if (!pollManager) {
-            pollManager.reset(new PollManager());
+            pollManager.reset(new PollManager{});
         }
         return pollManager;
     }
 
     const XMLRPCManagerPtr& RosCanNode::xmlrpc_manager() {
         if (!xmlrpcManager) {
-            xmlrpcManager.reset(new XMLRPCManager());
+            xmlrpcManager.reset(new XMLRPCManager{});
         }
         return xmlrpcManager;
     }
@@ -348,7 +338,7 @@ namespace roscan {
         CallbackQueuePtr queue = getInternalCallbackQueue();
 
         while (!g_shutting_down) {
-            queue->callAvailable(ros::WallDuration(0.1));
+            queue->callAvailable(ros::WallDuration{0.1});
         }
     }
 
@@ -356,7 +346,7 @@ namespace roscan {
         std::cout << "Starting node " << name_ << "\n";
         initInternalTimerManager();
 
-        poll_manager()->start();
+        poll_manager();
         connection_manager()->start();
         topic_manager()->start();
         // xmlrpc manager must be started _after_ all functions are bound to it
@@ -364,10 +354,10 @@ namespace roscan {
 
         ros::Time::init();
 
-        g_rosout_appender = new ROSOutAppender(shared_from_this());
+        g_rosout_appender = new ROSOutAppender{shared_from_this()};
         ros::console::register_appender(g_rosout_appender);
 
-        g_internal_queue_thread = boost::thread(&RosCanNode::internalCallbackQueueThreadFunc, this);
+        g_internal_queue_thread = std::thread{&RosCanNode::internalCallbackQueueThreadFunc, this};
         getGlobalCallbackQueue()->enable();
         g_started = true;
         std::cout << "Started node " << name_ << "\n";
@@ -380,8 +370,10 @@ namespace roscan {
         std::cout << "Shutting down node " << name_ << "\n";
 
         // Wait for spinning thread to end.
-        this->isZombie = true;
-        this->spinThread.join();
+        isZombie = true;
+        if (spinThread.joinable()) {
+            spinThread.join();
+        }
 
         g_shutting_down = true;
         //ros::console::shutdown();
@@ -389,7 +381,7 @@ namespace roscan {
         g_global_queue->disable();
         g_global_queue->clear();
 
-        if (g_internal_queue_thread.get_id() != boost::this_thread::get_id()) {
+        if (g_internal_queue_thread.joinable()) {
             g_internal_queue_thread.join();
         }
 
@@ -417,13 +409,13 @@ namespace roscan {
             }
         }
 
-        SubscriberCallbacksPtr callbacks(boost::make_shared<SubscriberCallbacks>(ops.connect_cb, ops.disconnect_cb, ops.tracked_object, ops.callback_queue));
+        SubscriberCallbacksPtr callbacks{boost::make_shared<SubscriberCallbacks>(ops.connect_cb, ops.disconnect_cb, ops.tracked_object, ops.callback_queue)};
 
         if (topic_manager()->advertise(ops, callbacks)) {
-            PublisherPtr pub = boost::make_shared<Publisher>(ops.topic, shared_from_this(), ops.md5sum, ops.datatype, callbacks);
+            const auto pub = boost::make_shared<Publisher>(ops.topic, shared_from_this(), ops.md5sum, ops.datatype, callbacks);
 
             {
-                boost::mutex::scoped_lock lock(collection_->mutex_);
+                std::lock_guard<std::mutex> lock{collection_->mutex_};
                 collection_->pubs_.push_back(pub);
             }
             return pub;
@@ -441,10 +433,10 @@ namespace roscan {
         }
 
         if (topicManager->subscribe(ops)) {
-            SubscriberPtr sub = boost::make_shared<Subscriber>(ops.topic, shared_from_this(), ops.helper);
+            const auto sub = boost::make_shared<Subscriber>(ops.topic, shared_from_this(), ops.helper);
 
             {
-                boost::mutex::scoped_lock lock(collection_->mutex_);
+                std::lock_guard<std::mutex> lock{collection_->mutex_};
                 collection_->subs_.push_back(sub);
             }
             return sub;
@@ -453,31 +445,24 @@ namespace roscan {
     }
 
     void RosCanNode::spinOnce() {
-        g_global_queue->callAvailable(ros::WallDuration());
+        g_global_queue->callAvailable(ros::WallDuration{});
     }
 
-    void RosCanNode::spin(){
-        ros::Rate r(100); //100Hz
+    void RosCanNode::spin() {
+        ros::Rate r{100}; //100Hz
         while (!isZombie) {
-            this->spinOnce();
+            spinOnce();
             r.sleep();
         }
     }
 
     void RosCanNode::startSpinThread() {
-        spinThread = boost::thread(&RosCanNode::spin, this);
+        spinThread = std::thread{&RosCanNode::spin, this};
     }
 
-    int RosCanNode::getFirstFreeTopic(){
-        // TODO: make this more efficient
-        int i;
-        for(i = 0; i < topicIds.size(); i++){
-            if(!topicIds[i]){
-                return i;
-            }
-        }
-
-        return -1;
+    int RosCanNode::getFirstFreeTopic() {
+        // return the position of the first unset bit
+        return ffs(~topicIds.to_ulong()) - 1;
     }
 
 

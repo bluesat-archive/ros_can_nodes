@@ -32,6 +32,8 @@
 #include <ros/connection.h>
 #include <ros/header.h>
 #include <ros/transport_hints.h>
+#include <cstdint>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace roscan {
 
@@ -42,29 +44,29 @@ class PublisherLink : public boost::enable_shared_from_this<PublisherLink> {
         class Stats {
             public:
                 uint64_t bytes_received_, messages_received_, drops_;
-                Stats() : bytes_received_(0), messages_received_(0), drops_(0) {}
+                Stats() : bytes_received_{0}, messages_received_{0}, drops_{0} {}
         };
 
         PublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
-            : node_(node), parent_(parent), connection_id_(0), publisher_xmlrpc_uri_(xmlrpc_uri), transport_hints_(transport_hints), latched_(false) {}
+            : node_{node}, parent_{parent}, connection_id_{0}, publisher_xmlrpc_uri_{xmlrpc_uri}, transport_hints_{transport_hints}, latched_{false} {}
         
         virtual ~PublisherLink() {}
 
-        const Stats& getStats() { return stats_; }
-        const std::string& getPublisherXMLRPCURI() { return publisher_xmlrpc_uri_; }
+        const Stats& getStats() const { return stats_; }
+        const std::string& getPublisherXMLRPCURI() const { return publisher_xmlrpc_uri_; }
         int getConnectionID() const { return connection_id_; }
-        const std::string& getCallerID() { return caller_id_; }
-        bool isLatched() { return latched_; }
+        const std::string& getCallerID() const { return caller_id_; }
+        bool isLatched() const { return latched_; }
 
         bool setHeader(const ros::Header& header);
 
         // Handles handing off a received message to the subscription, where it will be deserialized and called back
-        virtual void handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy) = 0;
+        virtual void handleMessage(const ros::SerializedMessage& m, const bool ser, const bool nocopy) = 0;
         virtual std::string getTransportType() = 0;
         virtual std::string getTransportInfo() = 0;
         virtual void drop() = 0;
 
-        const std::string& getMD5Sum();
+        const std::string& getMD5Sum() const { return md5sum_; }
 
     protected:
         RosCanNodePtr node_;

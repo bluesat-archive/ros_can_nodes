@@ -25,20 +25,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "RosCanNode.hpp"
 #include "intraprocess_subscriber_link.h"
 #include "intraprocess_publisher_link.h"
 #include "publication.h"
 #include <ros/connection.h>
-#include <ros/file_log.h>
 #include <ros/header.h>
 #include <ros/transport/transport.h>
+#include <mutex>
 
 namespace roscan {
 
-IntraProcessSubscriberLink::IntraProcessSubscriberLink(const RosCanNodePtr& node, const PublicationPtr& parent) : SubscriberLink(node), dropped_(false) {
-    ROS_ASSERT(parent);
+IntraProcessSubscriberLink::IntraProcessSubscriberLink(const RosCanNodePtr& node, const PublicationPtr& parent) : SubscriberLink{node}, dropped_{false} {
     parent_ = parent;
     topic_ = parent->getName();
 }
@@ -49,26 +47,24 @@ void IntraProcessSubscriberLink::setSubscriber(const IntraProcessPublisherLinkPt
     destination_caller_id_ = node_->getName();
 }
 
-bool IntraProcessSubscriberLink::isLatching() {
-    if (PublicationPtr parent = parent_.lock()) {
+bool IntraProcessSubscriberLink::isLatching() const {
+    if (const auto parent = parent_.lock()) {
         return parent->isLatching();
     }
     return false;
 }
 
-void IntraProcessSubscriberLink::enqueueMessage(const ros::SerializedMessage& m, bool ser, bool nocopy) {
-    boost::recursive_mutex::scoped_lock lock(drop_mutex_);
+void IntraProcessSubscriberLink::enqueueMessage(const ros::SerializedMessage& m, const bool ser, const bool nocopy) {
+    std::lock_guard<std::recursive_mutex> lock{drop_mutex_};
     if (dropped_) {
         return;
     }
-
-    ROS_ASSERT(subscriber_);
     subscriber_->handleMessage(m, ser, nocopy);
 }
 
 void IntraProcessSubscriberLink::drop() {
     {
-        boost::recursive_mutex::scoped_lock lock(drop_mutex_);
+        std::lock_guard<std::recursive_mutex> lock{drop_mutex_};
         if (dropped_) {
             return;
         }
@@ -80,18 +76,16 @@ void IntraProcessSubscriberLink::drop() {
         subscriber_.reset();
     }
 
-    if (PublicationPtr parent = parent_.lock()) {
-        ROSCPP_LOG_DEBUG("Connection to local subscriber on topic [%s] dropped", topic_.c_str());
+    if (const auto parent = parent_.lock()) {
         parent->removeSubscriberLink(shared_from_this());
     }
 }
 
 void IntraProcessSubscriberLink::getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti) {
-    boost::recursive_mutex::scoped_lock lock(drop_mutex_);
+    std::lock_guard<std::recursive_mutex> lock{drop_mutex_};
     if (dropped_) {
         return;
     }
-
     subscriber_->getPublishTypes(ser, nocopy, ti);
 }
 

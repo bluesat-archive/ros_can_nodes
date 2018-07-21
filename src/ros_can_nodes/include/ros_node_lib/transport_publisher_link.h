@@ -31,6 +31,7 @@
 #include "common.h"
 #include "publisher_link.h"
 #include <ros/connection.h>
+#include <ros/transport/transport.h>
 
 namespace roscan {
 
@@ -39,27 +40,27 @@ namespace roscan {
 class TransportPublisherLink : public PublisherLink {
     public:
         TransportPublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
-            : PublisherLink(node, parent, xmlrpc_uri, transport_hints), retry_timer_handle_(-1), needs_retry_(false), dropping_(false) {}
-        virtual ~TransportPublisherLink();
+            : PublisherLink{node, parent, xmlrpc_uri, transport_hints}, retry_timer_handle_{-1}, needs_retry_{false}, dropping_{false} {}
+        ~TransportPublisherLink() override;
 
         bool initialize(const ros::ConnectionPtr& connection);
 
-        const ros::ConnectionPtr& getConnection() { return connection_; }
+        const ros::ConnectionPtr& getConnection() const { return connection_; }
 
-        virtual std::string getTransportType();
-        virtual std::string getTransportInfo();
-        virtual void drop();
+        std::string getTransportType() override { return connection_->getTransport()->getType(); }
+        std::string getTransportInfo() override { return connection_->getTransport()->getTransportInfo(); }
+        void drop() override;
 
     private:
-        void onConnectionDropped(const ros::ConnectionPtr& conn, ros::Connection::DropReason reason);
+        void onConnectionDropped(const ros::ConnectionPtr& conn, const ros::Connection::DropReason reason);
         bool onHeaderReceived(const ros::ConnectionPtr& conn, const ros::Header& header);
 
         // Handles handing off a received message to the subscription, where it will be deserialized and called back
-        virtual void handleMessage(const ros::SerializedMessage& m, bool ser, bool nocopy);
+        void handleMessage(const ros::SerializedMessage& m, const bool ser, const bool nocopy) override;
 
-        void onHeaderWritten(const ros::ConnectionPtr& conn);
-        void onMessageLength(const ros::ConnectionPtr& conn, const boost::shared_array<uint8_t>& buffer, uint32_t size, bool success);
-        void onMessage(const ros::ConnectionPtr& conn, const boost::shared_array<uint8_t>& buffer, uint32_t size, bool success);
+        void onHeaderWritten(const ros::ConnectionPtr&) {}
+        void onMessageLength(const ros::ConnectionPtr& conn, const boost::shared_array<uint8_t>& buffer, const uint32_t size, const bool success);
+        void onMessage(const ros::ConnectionPtr& conn, const boost::shared_array<uint8_t>& buffer, const uint32_t size, const bool success);
 
         void onRetryTimer(const ros::SteadyTimerEvent&);
 

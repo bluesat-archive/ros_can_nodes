@@ -21,9 +21,9 @@
 
 int soc;
 
-int CANHelpers::open_can_port(const char *port) {
-    struct ifreq ifr;
-    struct sockaddr_can addr;
+int CANHelpers::open_can_port(const char *const port) {
+    ifreq ifr;
+    sockaddr_can addr;
 
     /* open socket */
     soc = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -42,17 +42,16 @@ int CANHelpers::open_can_port(const char *port) {
 
     fcntl(soc, F_SETFL, O_NONBLOCK);
 
-    if (bind(soc, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    if (bind(soc, (sockaddr *)&addr, sizeof(addr)) < 0) {
         return (-1);
     }
 
     return 0;
 }
 
-int CANHelpers::send_can_port(struct can_frame *frame) {
-    int retval;
-    retval = write(soc, frame, sizeof(struct can_frame));
-    if (retval != sizeof(struct can_frame)) {
+int CANHelpers::send_can_port(const can_frame& frame) {
+    const int retval = write(soc, &frame, sizeof(can_frame));
+    if (retval != sizeof(can_frame)) {
         printf("Failed to send !!\n");
         return (-1);
     } else {
@@ -61,11 +60,11 @@ int CANHelpers::send_can_port(struct can_frame *frame) {
     }
 }
 
-int CANHelpers::read_can_port(struct can_frame *frame) {
+int CANHelpers::read_can_port(can_frame& frame) {
     int recvbytes = -1;
 
     // 1 second timeout on read, will adjust based on testing
-    struct timeval timeout = {1, 0};
+    timeval timeout = {1, 0};
     fd_set readSet;
     FD_ZERO(&readSet);
     FD_SET(soc, &readSet);
@@ -74,7 +73,7 @@ int CANHelpers::read_can_port(struct can_frame *frame) {
     // Possibly check errno for bad FD
     if (select((soc + 1), &readSet, NULL, NULL, &timeout) >= 0) {
         if (FD_ISSET(soc, &readSet)) {
-            recvbytes = read(soc, frame, sizeof(struct can_frame));
+            recvbytes = read(soc, &frame, sizeof(can_frame));
         }
     }
 

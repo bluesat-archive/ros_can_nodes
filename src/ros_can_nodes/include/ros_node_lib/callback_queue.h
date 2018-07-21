@@ -35,25 +35,14 @@
 #ifndef ROSCAN_CALLBACK_QUEUE_H
 #define ROSCAN_CALLBACK_QUEUE_H
 
-// check if we might need to include our own backported version boost::condition_variable
-// in order to use CLOCK_MONOTONIC for the condition variable
-// the include order here is important!
-#ifdef BOOST_THREAD_HAS_CONDATTR_SET_CLOCK_MONOTONIC
-#include <boost/version.hpp>
-#if BOOST_VERSION < 106100
-// use backported version of boost condition variable, see https://svn.boost.org/trac/boost/ticket/6377
-#include "boost_161_condition_variable.h"
-#else // Boost version is 1.61 or greater and has the steady clock fixes
-#include <boost/thread/condition_variable.hpp>
-#endif
-#else // !BOOST_THREAD_HAS_CONDATTR_SET_CLOCK_MONOTONIC
-#include <boost/thread/condition_variable.hpp>
-#endif // BOOST_THREAD_HAS_CONDATTR_SET_CLOCK_MONOTONIC
-
-#include "common.h"
 #include "callback_queue_interface.h"
 #include <ros/time.h>
-#include <boost/thread/shared_mutex.hpp>
+#include <map>
+#include <list>
+#include <deque>
+#include <mutex>
+#include <shared_mutex>
+#include <condition_variable>
 #include <boost/thread/tss.hpp>
 
 namespace roscan {
@@ -61,11 +50,11 @@ namespace roscan {
 // This is the default implementation of the ros::CallbackQueueInterface
 class CallbackQueue : public CallbackQueueInterface {
     public:
-        CallbackQueue(bool enabled = true) : calling_(0), enabled_(enabled) {}
+        CallbackQueue(const bool enabled = true) : calling_{0}, enabled_{enabled} {}
         virtual ~CallbackQueue() { disable(); }
 
-        virtual void addCallback(const CallbackInterfacePtr& callback, uint64_t removal_id = 0);
-        virtual void removeByID(uint64_t removal_id);
+        virtual void addCallback(const CallbackInterfacePtr& callback, const uint64_t removal_id = 0);
+        virtual void removeByID(const uint64_t removal_id);
 
         enum CallOneResult {
             Called,
@@ -76,23 +65,23 @@ class CallbackQueue : public CallbackQueueInterface {
 
         // Pop a single callback off the front of the queue and invoke it.  If the callback was not ready to be called,
         // pushes it back onto the queue.
-        CallOneResult callOne() { return callOne(ros::WallDuration()); }
+        CallOneResult callOne() { return callOne(ros::WallDuration{}); }
 
         // Pop a single callback off the front of the queue and invoke it.  If the callback was not ready to be called,
         // pushes it back onto the queue.  This version includes a timeout which lets you specify the amount of time to wait for
         // a callback to be available before returning.
         // \param timeout The amount of time to wait for a callback to be available.  If there is already a callback available,
         // this parameter does nothing.
-        CallOneResult callOne(ros::WallDuration timeout);
+        CallOneResult callOne(const ros::WallDuration timeout);
 
         // Invoke all callbacks currently in the queue.  If a callback was not ready to be called, pushes it back onto the queue.
-        void callAvailable() { callAvailable(ros::WallDuration()); }
+        void callAvailable() { callAvailable(ros::WallDuration{}); }
 
         // Invoke all callbacks currently in the queue.  If a callback was not ready to be called, pushes it back onto the queue.  This version
         // includes a timeout which lets you specify the amount of time to wait for a callback to be available before returning.
         // \param timeout The amount of time to wait for at least one callback to be available.  If there is already at least one callback available,
         // this parameter does nothing.
-        void callAvailable(ros::WallDuration timeout);
+        void callAvailable(const ros::WallDuration timeout);
 
         // returns whether or not the queue is empty
         bool empty() { return isEmpty(); }
@@ -116,19 +105,19 @@ class CallbackQueue : public CallbackQueueInterface {
         void setupTLS();
 
         struct TLS;
-        CallOneResult callOneCB(TLS* tls);
+        CallOneResult callOneCB(TLS *const tls);
 
         struct IDInfo {
             uint64_t id;
-            boost::shared_mutex calling_rw_mutex;
+            std::shared_timed_mutex calling_rw_mutex;
         };
         typedef boost::shared_ptr<IDInfo> IDInfoPtr;
         typedef std::map<uint64_t, IDInfoPtr> M_IDInfo;
 
-        IDInfoPtr getIDInfo(uint64_t id);
+        IDInfoPtr getIDInfo(const uint64_t id);
 
         struct CallbackInfo {
-            CallbackInfo() : removal_id(0), marked_for_removal(false) {}
+            CallbackInfo() : removal_id{0}, marked_for_removal{false} {}
             CallbackInterfacePtr callback;
             uint64_t removal_id;
             bool marked_for_removal;
@@ -137,10 +126,10 @@ class CallbackQueue : public CallbackQueueInterface {
         typedef std::deque<CallbackInfo> D_CallbackInfo;
         D_CallbackInfo callbacks_;
         size_t calling_;
-        boost::mutex mutex_;
-        boost::condition_variable condition_;
+        std::mutex mutex_;
+        std::condition_variable condition_;
 
-        boost::mutex id_info_mutex_;
+        std::mutex id_info_mutex_;
         M_IDInfo id_info_;
 
         struct TLS {

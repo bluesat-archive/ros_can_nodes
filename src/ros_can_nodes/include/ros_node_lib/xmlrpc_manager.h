@@ -28,18 +28,22 @@
 #ifndef ROSCAN_XMLRPC_MANAGER_H
 #define ROSCAN_XMLRPC_MANAGER_H
 
-#include "common.h"
 #include <XmlRpc.h>
 #include <XmlRpcValue.h>
 #include <ros/time.h>
+#include <thread>
+#include <mutex>
+#include <functional>
+#include <set>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace roscan {
 
 namespace xmlrpc {
 
-XmlRpc::XmlRpcValue responseStr(int code, const std::string& msg, const std::string& response);
-XmlRpc::XmlRpcValue responseInt(int code, const std::string& msg, int response);
-XmlRpc::XmlRpcValue responseBool(int code, const std::string& msg, bool response);
+XmlRpc::XmlRpcValue responseStr(const int code, const std::string& msg, const std::string& response);
+XmlRpc::XmlRpcValue responseInt(const int code, const std::string& msg, const int response);
+XmlRpc::XmlRpcValue responseBool(const int code, const std::string& msg, const bool response);
 
 } // namespace xmlrpc
 
@@ -50,8 +54,8 @@ class ASyncXMLRPCConnection : public boost::enable_shared_from_this<ASyncXMLRPCC
     public:
         virtual ~ASyncXMLRPCConnection() {}
 
-        virtual void addToDispatch(XmlRpc::XmlRpcDispatch* disp) = 0;
-        virtual void removeFromDispatch(XmlRpc::XmlRpcDispatch* disp) = 0;
+        virtual void addToDispatch(XmlRpc::XmlRpcDispatch *const disp) = 0;
+        virtual void removeFromDispatch(XmlRpc::XmlRpcDispatch *const disp) = 0;
 
         virtual bool check() = 0;
 };
@@ -60,11 +64,11 @@ typedef std::set<ASyncXMLRPCConnectionPtr> S_ASyncXMLRPCConnection;
 
 class CachedXmlRpcClient {
     public:
-        CachedXmlRpcClient(XmlRpc::XmlRpcClient* c) : in_use_(false), client_(c) {}
+        CachedXmlRpcClient(XmlRpc::XmlRpcClient *const c) : in_use_{false}, client_{c} {}
 
         bool in_use_;
         ros::WallTime last_use_time_; // for reaping
-        XmlRpc::XmlRpcClient* client_;
+        XmlRpc::XmlRpcClient *client_;
 
         static const ros::WallDuration s_zombie_time_; // how long before it is toasted
 };
@@ -72,11 +76,11 @@ class CachedXmlRpcClient {
 class XMLRPCManager;
 typedef boost::shared_ptr<XMLRPCManager> XMLRPCManagerPtr;
 
-typedef boost::function<void(XmlRpc::XmlRpcValue&, XmlRpc::XmlRpcValue&)> XMLRPCFunc;
+typedef std::function<void(XmlRpc::XmlRpcValue&, XmlRpc::XmlRpcValue&)> XMLRPCFunc;
 
 class XMLRPCManager {
     public:
-        XMLRPCManager() : port_(0), shutting_down_(false), unbind_requested_(false) {}
+        XMLRPCManager() : port_{0}, shutting_down_{false}, unbind_requested_{false} {}
         ~XMLRPCManager() { shutdown(); }
 
         // Validate an XML/RPC response
@@ -91,8 +95,8 @@ class XMLRPCManager {
         inline const std::string& getServerURI() const { return uri_; }
         inline uint32_t getServerPort() const { return port_; }
 
-        XmlRpc::XmlRpcClient* getXMLRPCClient(const std::string& host, const int port, const std::string& uri);
-        void releaseXMLRPCClient(XmlRpc::XmlRpcClient* c);
+        XmlRpc::XmlRpcClient *getXMLRPCClient(const std::string& host, const int port, const std::string& uri);
+        void releaseXMLRPCClient(XmlRpc::XmlRpcClient *const c);
 
         void addASyncConnection(const ASyncXMLRPCConnectionPtr& conn);
         void removeASyncConnection(const ASyncXMLRPCConnectionPtr& conn);
@@ -113,7 +117,7 @@ class XMLRPCManager {
         // @param wait_for_master Whether or not this call should loop until it can contact the master
         // Returns true if call succeeds, false otherwise.
         // Relevant reading: http://wiki.ros.org/ROS/Master_API
-        bool callMaster(const std::string& method, const XmlRpc::XmlRpcValue& request, XmlRpc::XmlRpcValue& response, XmlRpc::XmlRpcValue& payload, bool wait_for_master);
+        bool callMaster(const std::string& method, const XmlRpc::XmlRpcValue& request, XmlRpc::XmlRpcValue& response, XmlRpc::XmlRpcValue& payload, const bool wait_for_master);
 
         // Get the hostname where the master runs.
         const std::string& getMasterHost();
@@ -135,7 +139,7 @@ class XMLRPCManager {
         // Contains information retrieved from the master about a topic
         struct TopicInfo {
             TopicInfo() {}
-            TopicInfo(const std::string& _name, const std::string& _datatype) : name(_name), datatype(_datatype) {}
+            TopicInfo(const std::string& _name, const std::string& _datatype) : name{_name}, datatype{_datatype} {}
             std::string name;     // Name of the topic
             std::string datatype; // Datatype of the topic
         };
@@ -150,7 +154,7 @@ class XMLRPCManager {
         // in the format "package_name/MessageName", and is also retrievable
         // through message.__getDataType() or MessageName::__s_getDataType().
         // Return true on success, false otherwise (topics not filled in)
-        bool getAllTopics(std::string subgraph, V_TopicInfo& topics);
+        bool getAllTopics(const std::string& subgraph, V_TopicInfo& topics);
 
         // Retreives the currently-known list of nodes from the master
         bool getAllNodes(std::vector<std::string>& nodes);
@@ -164,21 +168,21 @@ class XMLRPCManager {
 
         std::string uri_;
         int port_;
-        boost::thread server_thread_;
+        std::thread server_thread_;
 
         XmlRpc::XmlRpcServer server_;
         typedef std::vector<CachedXmlRpcClient> V_CachedXmlRpcClient;
         V_CachedXmlRpcClient clients_;
-        boost::mutex clients_mutex_;
+        std::mutex clients_mutex_;
 
         bool shutting_down_;
 
         ros::WallDuration master_retry_timeout_;
 
         S_ASyncXMLRPCConnection added_connections_;
-        boost::mutex added_connections_mutex_;
+        std::mutex added_connections_mutex_;
         S_ASyncXMLRPCConnection removed_connections_;
-        boost::mutex removed_connections_mutex_;
+        std::mutex removed_connections_mutex_;
 
         S_ASyncXMLRPCConnection connections_;
 
@@ -188,7 +192,7 @@ class XMLRPCManager {
             XMLRPCCallWrapperPtr wrapper;
         };
         typedef std::map<std::string, FunctionInfo> M_StringToFuncInfo;
-        boost::mutex functions_mutex_;
+        std::mutex functions_mutex_;
         M_StringToFuncInfo functions_;
 
         volatile bool unbind_requested_;

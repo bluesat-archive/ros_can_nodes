@@ -15,11 +15,11 @@
 
 class CANHelpers{
     public:
-        static int open_can_port(const char *port);
+        static int open_can_port(const char *const port);
 
-        static int send_can_port(struct can_frame *frame);
+        static int send_can_port(const can_frame& frame);
 
-        static int read_can_port(struct can_frame *frame);
+        static int read_can_port(can_frame& frame);
 
         static void close_can_port();
 };

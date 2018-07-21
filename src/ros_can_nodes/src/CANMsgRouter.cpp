@@ -15,7 +15,7 @@
 #include "ROSCANConstants.hpp"
 #include "TopicBuffers.hpp"
 #include "CANHelpers.hpp"
-#include "ros_node_lib/network.h"
+#include "network.h"
 #include "RosCanNode.hpp"
 #include "RosCanNodeManager.hpp"
 
@@ -23,7 +23,7 @@
 int main(int argc, char **argv) {
     roscan::network::init();
 
-    CANMsgRouter::init();
+    //CANMsgRouter::init();
 
     CANMsgRouter::subscriberTest();
 
@@ -51,7 +51,7 @@ void CANMsgRouter::run() {
     while (1) {
         // Check for Messages
         // TODO add reconnection ability
-        int numbytes = CANHelpers::read_can_port(&can_msg);
+        int numbytes = CANHelpers::read_can_port(can_msg);
 
         if (numbytes >= 0){
             // Pass to processCANMsg

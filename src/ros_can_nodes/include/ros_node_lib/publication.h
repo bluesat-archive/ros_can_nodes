@@ -29,9 +29,17 @@
 #define ROSCAN_PUBLICATION_H
 
 #include "common.h"
+#include "subscriber_callbacks.h"
 #include <ros/serialized_message.h>
 #include <ros/header.h>
 #include <xmlrpcpp/XmlRpc.h>
+#include <string>
+#include <vector>
+#include <cstdint>
+#include <typeinfo>
+#include <mutex>
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 namespace roscan {
 
@@ -42,19 +50,19 @@ class Publication {
                     const std::string& datatype,
                     const std::string& _md5sum,
                     const std::string& message_definition,
-                    size_t max_queue,
-                    bool latch,
-                    bool has_header)
-                    : name_(name),
-                    datatype_(datatype),
-                    md5sum_(_md5sum),
-                    message_definition_(message_definition),
-                    max_queue_(max_queue),
-                    seq_(0),
-                    dropped_(false),
-                    latch_(latch),
-                    has_header_(has_header),
-                    intraprocess_subscriber_count_(0) {}
+                    const size_t max_queue,
+                    const bool latch,
+                    const bool has_header)
+                    : name_{name},
+                    datatype_{datatype},
+                    md5sum_{_md5sum},
+                    message_definition_{message_definition},
+                    max_queue_{max_queue},
+                    seq_{0},
+                    dropped_{false},
+                    latch_{latch},
+                    has_header_{has_header},
+                    intraprocess_subscriber_count_{0} {}
 
         ~Publication() { drop(); }
 
@@ -65,7 +73,7 @@ class Publication {
         bool enqueueMessage(const ros::SerializedMessage& m);
 
         // returns the max queue size of this publication
-        inline size_t getMaxQueue() { return max_queue_; }
+        inline size_t getMaxQueue() const { return max_queue_; }
         
         // Get the accumulated stats for this publication
         XmlRpc::XmlRpcValue getStats();
@@ -94,9 +102,9 @@ class Publication {
         const std::string& getMessageDefinition() const { return message_definition_; }
 
         // Returns the sequence number
-        uint32_t getSequence() { return seq_; }
+        uint32_t getSequence() const { return seq_; }
 
-        bool isLatched() { return latch_; }
+        bool isLatched() const { return latch_; }
 
         // Adds a publisher to our list
         void addSubscriberLink(const SubscriberLinkPtr& sub_link);
@@ -108,13 +116,13 @@ class Publication {
         void drop();
 
         // Returns if this publication is valid or not
-        bool isDropped() { return dropped_; }
+        bool isDropped() const { return dropped_; }
 
         uint32_t incrementSequence();
 
         size_t getNumCallbacks();
 
-        bool isLatching() { return latch_; }
+        bool isLatching() const { return latch_; }
 
         void publish(ros::SerializedMessage& m);
         void processPublishQueue();
@@ -136,15 +144,15 @@ class Publication {
         std::string message_definition_;
         size_t max_queue_;
         uint32_t seq_;
-        boost::mutex seq_mutex_;
+        std::mutex seq_mutex_;
 
         typedef std::vector<SubscriberCallbacksPtr> V_Callback;
         V_Callback callbacks_;
-        boost::mutex callbacks_mutex_;
+        std::mutex callbacks_mutex_;
 
         V_SubscriberLink subscriber_links_;
         // We use a recursive mutex here for the rare case that a publish call causes another one (like in the case of a rosconsole call)
-        boost::mutex subscriber_links_mutex_;
+        std::mutex subscriber_links_mutex_;
 
         bool dropped_;
 
@@ -156,7 +164,7 @@ class Publication {
 
         typedef std::vector<ros::SerializedMessage> V_SerializedMessage;
         V_SerializedMessage publish_queue_;
-        boost::mutex publish_queue_mutex_;
+        std::mutex publish_queue_mutex_;
 };
 
 } // namespace roscan

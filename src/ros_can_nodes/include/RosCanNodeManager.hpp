@@ -4,15 +4,15 @@
 #include <string>
 #include <cstdint>
 #include "RosCanNode.hpp"
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 
 class RosCanNodeManager {
     public:
         static RosCanNodeManager& instance();
 
-        roscan::RosCanNodePtr getNode(uint8_t id);
-        uint8_t registerNode(std::string& name, uint8_t hashName);
-        void deregisterNode(uint8_t id);
+        roscan::RosCanNodePtr getNode(const uint8_t id);
+        uint8_t registerNode(const std::string& name, const uint8_t hashName);
+        void deregisterNode(const uint8_t id);
 
     private:
         RosCanNodeManager() {}
@@ -20,7 +20,7 @@ class RosCanNodeManager {
         RosCanNodeManager(const RosCanNodeManager&) = delete;
         void operator=(const RosCanNodeManager&) = delete;
 
-        boost::mutex nodeListMutex;
+        std::mutex nodeListMutex;
         roscan::RosCanNodePtr nodeList[MAX_NODES];
 };
 

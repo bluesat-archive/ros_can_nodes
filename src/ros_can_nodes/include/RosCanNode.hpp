@@ -21,8 +21,9 @@
 #include "ros_node_lib/publisher.h"
 #include "ros_node_lib/advertise_options.h"
 #include "ros_node_lib/callback_queue.h"
-#include <std_msgs/String.h>
+#include <thread>
 #include <bitset>
+#include <mutex>
 #include <ros_type_introspection/ros_introspection.hpp>
 #include <topic_tools/shape_shifter.h>
 
@@ -36,11 +37,11 @@ namespace roscan {
 
     class RosCanNode : public boost::enable_shared_from_this<RosCanNode> {
         public:
-            RosCanNode(std::string& name, uint8_t id);
+            RosCanNode(const std::string& name, const uint8_t id = 0);
             ~RosCanNode();
 
-            inline const uint8_t getID() const { return id_; }
-            inline const std::string getName() const { return name_; }
+            uint8_t getID() const { return id_; }
+            const std::string& getName() const { return name_; }
 
             void startSpinThread();
             void spin();
@@ -51,10 +52,10 @@ namespace roscan {
 
             void deregisterNode();
             void heartbeat();
-            int registerSubscriber(std::string topic, std::string topic_type);
-            int unregisterSubscriber(uint8_t topic);
-            int advertiseTopic(std::string topic, std::string topic_type);
-            int unregisterPublisher(uint8_t topic);
+            int registerSubscriber(const std::string& topic, const std::string& topic_type);
+            int unregisterSubscriber(const uint8_t topic);
+            int advertiseTopic(const std::string& topic, const std::string& topic_type);
+            int unregisterPublisher(const uint8_t topic);
             int setParam(std::string key);
             int deleteParam(std::string key);
             int advertiseService(std::string service);
@@ -67,12 +68,12 @@ namespace roscan {
             int getParam(std::string key);
 
         private:
-            std::string name_;
-            uint8_t id_;
+            const std::string name_;
+            const uint8_t id_;
 
             bool g_started;
             volatile bool g_shutting_down;
-            boost::thread spinThread;
+            std::thread spinThread;
 
             TopicManagerPtr topicManager;
             ConnectionManagerPtr connectionManager;
@@ -80,13 +81,13 @@ namespace roscan {
             XMLRPCManagerPtr xmlrpcManager;
 
             CallbackQueuePtr g_global_queue;
-            ROSOutAppender* g_rosout_appender;
+            ROSOutAppender *g_rosout_appender;
             CallbackQueuePtr g_internal_callback_queue;
-            boost::thread g_internal_queue_thread;
+            std::thread g_internal_queue_thread;
             void check_ipv6_environment();
 
-            CallbackQueueInterface* callback_queue_;
-            NodeBackingCollection* collection_;
+            CallbackQueueInterface *callback_queue_;
+            NodeBackingCollection *collection_;
             void internalCallbackQueueThreadFunc();
 
             // ==================================================
@@ -95,11 +96,11 @@ namespace roscan {
         public:
             void spinOnce();
 
-            CallbackQueuePtr getInternalCallbackQueue();
-            CallbackQueue* getGlobalCallbackQueue() { return g_global_queue.get(); }
+            const CallbackQueuePtr& getInternalCallbackQueue();
+            CallbackQueue *getGlobalCallbackQueue() const { return g_global_queue.get(); }
 
-            void getAdvertisedTopics(V_string& topics);
-            void getSubscribedTopics(V_string& topics);
+            void getAdvertisedTopics(std::vector<std::string>& topics);
+            void getSubscribedTopics(std::vector<std::string>& topics);
 
             void start();
             void shutdown();
@@ -233,9 +234,9 @@ namespace roscan {
             }
 
         private:
-            void rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, uint8_t topic_num, std::string topic_name);
+            void rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, const uint8_t topic_num, const std::string& topic_name);
 
-            boost::mutex topicLock;
+            std::mutex topicLock;
             std::bitset<MAX_TOPICS> topicIds;
 
             bool isZombie;

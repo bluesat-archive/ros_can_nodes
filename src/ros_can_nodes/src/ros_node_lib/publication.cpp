@@ -25,7 +25,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "publication.h"
 #include "subscriber_link.h"
 #include "single_subscriber_publisher.h"
@@ -38,22 +37,18 @@ namespace roscan {
 
 class PeerConnDisconnCallback : public CallbackInterface {
     public:
-        PeerConnDisconnCallback(const SubscriberStatusCallback& callback, const SubscriberLinkPtr& sub_link, bool use_tracked_object, const ros::VoidConstWPtr& tracked_object)
-            : callback_(callback), sub_link_(sub_link), use_tracked_object_(use_tracked_object), tracked_object_(tracked_object) {}
+        PeerConnDisconnCallback(const SubscriberStatusCallback& callback, const SubscriberLinkPtr& sub_link, const bool use_tracked_object, const ros::VoidConstWPtr& tracked_object)
+            : callback_{callback}, sub_link_{sub_link}, use_tracked_object_{use_tracked_object}, tracked_object_{tracked_object} {}
 
-        virtual CallbackInterface::CallResult call() {
-            ros::VoidConstPtr tracker;
+        CallbackInterface::CallResult call() override {
             if (use_tracked_object_) {
-                tracker = tracked_object_.lock();
-
+                const auto tracker = tracked_object_.lock();
                 if (!tracker) {
                     return Invalid;
                 }
             }
-
-            SingleSubscriberPublisher pub(sub_link_);
+            SingleSubscriberPublisher pub{sub_link_};
             callback_(pub);
-
             return CallbackInterface::Success;
         }
 
@@ -65,31 +60,27 @@ class PeerConnDisconnCallback : public CallbackInterface {
 };
 
 void Publication::addCallbacks(const SubscriberCallbacksPtr& callbacks) {
-    boost::mutex::scoped_lock lock(callbacks_mutex_);
+    std::lock_guard<std::mutex> lock{callbacks_mutex_};
 
     callbacks_.push_back(callbacks);
 
     // Add connect callbacks for all current subscriptions if this publisher wants them
     if (callbacks->connect_ && callbacks->callback_queue_) {
-        boost::mutex::scoped_lock lock(subscriber_links_mutex_);
-        V_SubscriberLink::iterator it = subscriber_links_.begin();
-        V_SubscriberLink::iterator end = subscriber_links_.end();
-        for (; it != end; ++it) {
-            const SubscriberLinkPtr& sub_link = *it;
-            CallbackInterfacePtr cb(boost::make_shared<PeerConnDisconnCallback>(callbacks->connect_, sub_link, callbacks->has_tracked_object_, callbacks->tracked_object_));
+        std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
+        for (const auto& sub_link: subscriber_links_) {
+            CallbackInterfacePtr cb{boost::make_shared<PeerConnDisconnCallback>(callbacks->connect_, sub_link, callbacks->has_tracked_object_, callbacks->tracked_object_)};
             callbacks->callback_queue_->addCallback(cb, (uint64_t)callbacks.get());
         }
     }
 }
 
 void Publication::removeCallbacks(const SubscriberCallbacksPtr& callbacks) {
-    boost::mutex::scoped_lock lock(callbacks_mutex_);
+    std::lock_guard<std::mutex> lock{callbacks_mutex_};
 
-    V_Callback::iterator it = std::find(callbacks_.begin(), callbacks_.end(), callbacks);
+    const auto it = std::find(callbacks_.begin(), callbacks_.end(), callbacks);
     if (it != callbacks_.end()) {
-        const SubscriberCallbacksPtr& cb = *it;
-        if (cb->callback_queue_) {
-            cb->callback_queue_->removeByID((uint64_t)cb.get());
+        if ((*it)->callback_queue_) {
+            (*it)->callback_queue_->removeByID((uint64_t)it->get());
         }
         callbacks_.erase(it);
     }
@@ -99,56 +90,49 @@ void Publication::drop() {
     // grab a lock here, to ensure that no subscription callback will
     // be invoked after we return
     {
-        boost::mutex::scoped_lock lock(publish_queue_mutex_);
-        boost::mutex::scoped_lock lock2(subscriber_links_mutex_);
+        std::lock_guard<std::mutex> lock{publish_queue_mutex_};
+        std::lock_guard<std::mutex> lock2{subscriber_links_mutex_};
 
         if (dropped_) {
             return;
         }
-
         dropped_ = true;
     }
-
     dropAllConnections();
 }
 
 bool Publication::enqueueMessage(const ros::SerializedMessage& m) {
-    boost::mutex::scoped_lock lock(subscriber_links_mutex_);
+    std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
     if (dropped_) {
         return false;
     }
 
-    ROS_ASSERT(m.buf);
-
-    uint32_t seq = incrementSequence();
+    const auto seq = incrementSequence();
     if (has_header_) {
         // If we have a header, we know it's immediately after the message length
         // Deserialize it, write the sequence, and then serialize it again.
         namespace ser = ros::serialization;
         std_msgs::Header header;
-        ser::IStream istream(m.buf.get() + 4, m.num_bytes - 4);
+        ser::IStream istream{m.buf.get() + 4, (uint32_t)m.num_bytes - 4};
         ser::deserialize(istream, header);
         header.seq = seq;
-        ser::OStream ostream(m.buf.get() + 4, m.num_bytes - 4);
+        ser::OStream ostream{m.buf.get() + 4, (uint32_t)m.num_bytes - 4};
         ser::serialize(ostream, header);
     }
 
-    for (V_SubscriberLink::iterator i = subscriber_links_.begin();
-         i != subscriber_links_.end(); ++i) {
-        const SubscriberLinkPtr& sub_link = (*i);
+    for (const auto& sub_link: subscriber_links_) {
         sub_link->enqueueMessage(m, true, false);
     }
 
     if (latch_) {
         last_message_ = m;
     }
-
     return true;
 }
 
 void Publication::addSubscriberLink(const SubscriberLinkPtr& sub_link) {
     {
-        boost::mutex::scoped_lock lock(subscriber_links_mutex_);
+        std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
 
         if (dropped_) {
             return;
@@ -174,7 +158,7 @@ void Publication::addSubscriberLink(const SubscriberLinkPtr& sub_link) {
 void Publication::removeSubscriberLink(const SubscriberLinkPtr& sub_link) {
     SubscriberLinkPtr link;
     {
-        boost::mutex::scoped_lock lock(subscriber_links_mutex_);
+        std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
 
         if (dropped_) {
             return;
@@ -184,8 +168,8 @@ void Publication::removeSubscriberLink(const SubscriberLinkPtr& sub_link) {
             --intraprocess_subscriber_count_;
         }
 
-        V_SubscriberLink::iterator it = std::find(subscriber_links_.begin(), subscriber_links_.end(), sub_link);
-        if (it != subscriber_links_.end()) {
+        const auto it = std::find(subscriber_links_.cbegin(), subscriber_links_.cend(), sub_link);
+        if (it != subscriber_links_.cend()) {
             link = *it;
             subscriber_links_.erase(it);
         }
@@ -202,13 +186,12 @@ XmlRpc::XmlRpcValue Publication::getStats() {
     XmlRpc::XmlRpcValue conn_data;
     conn_data.setSize(0); // force to be an array, even if it's empty
 
-    boost::mutex::scoped_lock lock(subscriber_links_mutex_);
+    std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
 
     uint32_t cidx = 0;
-    for (V_SubscriberLink::iterator c = subscriber_links_.begin();
-         c != subscriber_links_.end(); ++c, cidx++) {
-        const SubscriberLink::Stats& s = (*c)->getStats();
-        conn_data[cidx][0] = (*c)->getConnectionID();
+    for (const auto& c: subscriber_links_) {
+        const SubscriberLink::Stats& s = c->getStats();
+        conn_data[cidx][0] = c->getConnectionID();
         // todo: figure out what to do here... the bytes_sent will wrap around
         // on some flows within a reasonable amount of time. xmlrpc++ doesn't
         // seem to give me a nice way to do 64-bit ints, perhaps that's a
@@ -218,6 +201,7 @@ XmlRpc::XmlRpcValue Publication::getStats() {
         conn_data[cidx][2] = (int)s.message_data_sent_;
         conn_data[cidx][3] = (int)s.messages_sent_;
         conn_data[cidx][4] = 0; // not sure what is meant by connected
+        ++cidx;
     }
 
     stats[1] = conn_data;
@@ -227,18 +211,17 @@ XmlRpc::XmlRpcValue Publication::getStats() {
 // Publisher : [(connection_id, destination_caller_id, direction, transport, topic_name, connected, connection_info_string)*]
 // e.g. [(2, '/listener', 'o', 'TCPROS', '/chatter', 1, 'TCPROS connection on port 55878 to [127.0.0.1:44273 on socket 7]')]
 void Publication::getInfo(XmlRpc::XmlRpcValue& info) {
-    boost::mutex::scoped_lock lock(subscriber_links_mutex_);
+    std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
 
-    for (V_SubscriberLink::iterator c = subscriber_links_.begin();
-         c != subscriber_links_.end(); ++c) {
+    for (const auto& c: subscriber_links_) {
         XmlRpc::XmlRpcValue curr_info;
-        curr_info[0] = (int)(*c)->getConnectionID();
-        curr_info[1] = (*c)->getDestinationCallerID();
+        curr_info[0] = (int)c->getConnectionID();
+        curr_info[1] = c->getDestinationCallerID();
         curr_info[2] = "o";
-        curr_info[3] = (*c)->getTransportType();
+        curr_info[3] = c->getTransportType();
         curr_info[4] = name_;
         curr_info[5] = true; // For length compatibility with rospy
-        curr_info[6] = (*c)->getTransportInfo();
+        curr_info[6] = c->getTransportInfo();
         info[info.size()] = curr_info;
     }
 }
@@ -249,67 +232,55 @@ void Publication::dropAllConnections() {
     V_SubscriberLink local_publishers;
 
     {
-        boost::mutex::scoped_lock lock(subscriber_links_mutex_);
-
+        std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
         local_publishers.swap(subscriber_links_);
     }
 
-    for (V_SubscriberLink::iterator i = local_publishers.begin();
-         i != local_publishers.end(); ++i) {
-        (*i)->drop();
+    for (const auto& p: local_publishers) {
+        p->drop();
     }
 }
 
 void Publication::peerConnect(const SubscriberLinkPtr& sub_link) {
-    V_Callback::iterator it = callbacks_.begin();
-    V_Callback::iterator end = callbacks_.end();
-    for (; it != end; ++it) {
-        const SubscriberCallbacksPtr& cbs = *it;
+    for (const auto& cbs: callbacks_) {
         if (cbs->connect_ && cbs->callback_queue_) {
-            CallbackInterfacePtr cb(boost::make_shared<PeerConnDisconnCallback>(cbs->connect_, sub_link, cbs->has_tracked_object_, cbs->tracked_object_));
+            CallbackInterfacePtr cb{boost::make_shared<PeerConnDisconnCallback>(cbs->connect_, sub_link, cbs->has_tracked_object_, cbs->tracked_object_)};
             cbs->callback_queue_->addCallback(cb, (uint64_t)cbs.get());
         }
     }
 }
 
 void Publication::peerDisconnect(const SubscriberLinkPtr& sub_link) {
-    V_Callback::iterator it = callbacks_.begin();
-    V_Callback::iterator end = callbacks_.end();
-    for (; it != end; ++it) {
-        const SubscriberCallbacksPtr& cbs = *it;
+    for (const auto& cbs: callbacks_) {
         if (cbs->disconnect_ && cbs->callback_queue_) {
-            CallbackInterfacePtr cb(boost::make_shared<PeerConnDisconnCallback>(cbs->disconnect_, sub_link, cbs->has_tracked_object_, cbs->tracked_object_));
+            CallbackInterfacePtr cb{boost::make_shared<PeerConnDisconnCallback>(cbs->disconnect_, sub_link, cbs->has_tracked_object_, cbs->tracked_object_)};
             cbs->callback_queue_->addCallback(cb, (uint64_t)cbs.get());
         }
     }
 }
 
 size_t Publication::getNumCallbacks() {
-    boost::mutex::scoped_lock lock(callbacks_mutex_);
+    std::lock_guard<std::mutex> lock{callbacks_mutex_};
     return callbacks_.size();
 }
 
 uint32_t Publication::incrementSequence() {
-    boost::mutex::scoped_lock lock(seq_mutex_);
-    uint32_t old_seq = seq_;
+    std::lock_guard<std::mutex> lock{seq_mutex_};
+    const auto old_seq = seq_;
     ++seq_;
-
     return old_seq;
 }
 
 uint32_t Publication::getNumSubscribers() {
-    boost::mutex::scoped_lock lock(subscriber_links_mutex_);
+    std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
     return (uint32_t)subscriber_links_.size();
 }
 
 void Publication::getPublishTypes(bool& serialize, bool& nocopy, const std::type_info& ti) {
-    boost::mutex::scoped_lock lock(subscriber_links_mutex_);
-    V_SubscriberLink::const_iterator it = subscriber_links_.begin();
-    V_SubscriberLink::const_iterator end = subscriber_links_.end();
-    for (; it != end; ++it) {
-        const SubscriberLinkPtr& sub = *it;
-        bool s = false;
-        bool n = false;
+    std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
+    for (const auto& sub: subscriber_links_) {
+        auto s = false;
+        auto n = false;
         sub->getPublishTypes(s, n, ti);
         serialize = serialize || s;
         nocopy = nocopy || n;
@@ -321,27 +292,23 @@ void Publication::getPublishTypes(bool& serialize, bool& nocopy, const std::type
 }
 
 bool Publication::hasSubscribers() {
-    boost::mutex::scoped_lock lock(subscriber_links_mutex_);
+    std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
     return !subscriber_links_.empty();
 }
 
 void Publication::publish(ros::SerializedMessage& m) {
     if (m.message) {
-        boost::mutex::scoped_lock lock(subscriber_links_mutex_);
-        V_SubscriberLink::const_iterator it = subscriber_links_.begin();
-        V_SubscriberLink::const_iterator end = subscriber_links_.end();
-        for (; it != end; ++it) {
-            const SubscriberLinkPtr& sub = *it;
+        std::lock_guard<std::mutex> lock{subscriber_links_mutex_};
+        for (const auto& sub: subscriber_links_) {
             if (sub->isIntraprocess()) {
                 sub->enqueueMessage(m, false, true);
             }
         }
-
         m.message.reset();
     }
 
     if (m.buf) {
-        boost::mutex::scoped_lock lock(publish_queue_mutex_);
+        std::lock_guard<std::mutex> lock{publish_queue_mutex_};
         publish_queue_.push_back(m);
     }
 }
@@ -349,7 +316,7 @@ void Publication::publish(ros::SerializedMessage& m) {
 void Publication::processPublishQueue() {
     V_SerializedMessage queue;
     {
-        boost::mutex::scoped_lock lock(publish_queue_mutex_);
+        std::lock_guard<std::mutex> lock{publish_queue_mutex_};
 
         if (dropped_) {
             return;
@@ -359,14 +326,8 @@ void Publication::processPublishQueue() {
         publish_queue_.clear();
     }
 
-    if (queue.empty()) {
-        return;
-    }
-
-    V_SerializedMessage::iterator it = queue.begin();
-    V_SerializedMessage::iterator end = queue.end();
-    for (; it != end; ++it) {
-        enqueueMessage(*it);
+    for (const auto& m: queue) {
+        enqueueMessage(m);
     }
 }
 
@@ -374,10 +335,8 @@ bool Publication::validateHeader(const ros::Header& header, std::string& error_m
     std::string md5sum, topic, client_callerid;
     if (!header.getValue("md5sum", md5sum) || !header.getValue("topic", topic) || !header.getValue("callerid", client_callerid)) {
         std::string msg("Header from subscriber did not have the required elements: md5sum, topic, callerid");
-
         ROS_ERROR("%s", msg.c_str());
         error_msg = msg;
-
         return false;
     }
 
@@ -386,31 +345,21 @@ bool Publication::validateHeader(const ros::Header& header, std::string& error_m
     // have happened while we were waiting for the subscriber to
     // provide the md5sum.
     if (isDropped()) {
-        std::string msg = std::string("received a tcpros connection for a nonexistent topic [") +
-                          topic + std::string("] from [" + client_callerid + "].");
-
+        std::string msg{"received a tcpros connection for a nonexistent topic [" + topic + "] from [" + client_callerid + "]."};
         ROS_ERROR("%s", msg.c_str());
         error_msg = msg;
-
         return false;
     }
 
-    if (getMD5Sum() != md5sum &&
-        (md5sum != std::string("*") && getMD5Sum() != std::string("*"))) {
+    if (getMD5Sum() != md5sum && (md5sum != std::string{"*"} && getMD5Sum() != std::string{"*"})) {
         std::string datatype;
         header.getValue("type", datatype);
 
-        std::string msg = std::string("Client [") + client_callerid + std::string("] wants topic ") + topic +
-                          std::string(" to have datatype/md5sum [") + datatype + "/" + md5sum +
-                          std::string("], but our version has [") + getDataType() + "/" + getMD5Sum() +
-                          std::string("]. Dropping connection.");
-
+        std::string msg{"Client [" + client_callerid + "] wants topic " + topic + " to have datatype/md5sum [" + datatype + "/" + md5sum + "], but our version has [" + getDataType() + "/" + getMD5Sum() + "]. Dropping connection."};
         ROS_ERROR("%s", msg.c_str());
         error_msg = msg;
-
         return false;
     }
-
     return true;
 }
 

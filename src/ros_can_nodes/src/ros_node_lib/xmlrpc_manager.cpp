@@ -25,15 +25,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "xmlrpc_manager.h"
 #include "network.h"
+#include "rosdefs.h"
 #include <XmlRpc.h>
-#include <ros/assert.h>
 #include <ros/console.h>
-#include <ros/file_log.h>
-#include <ros/io.h>
-#include <ros/param.h>
+#include <mutex>
+#include <thread>
+#include <algorithm>
 
 using namespace XmlRpc;
 
@@ -41,7 +40,7 @@ namespace roscan {
 
 namespace xmlrpc {
 
-XmlRpc::XmlRpcValue responseStr(int code, const std::string& msg, const std::string& response) {
+XmlRpc::XmlRpcValue responseStr(const int code, const std::string& msg, const std::string& response) {
     XmlRpc::XmlRpcValue v;
     v[0] = code;
     v[1] = msg;
@@ -49,19 +48,19 @@ XmlRpc::XmlRpcValue responseStr(int code, const std::string& msg, const std::str
     return v;
 }
 
-XmlRpc::XmlRpcValue responseInt(int code, const std::string& msg, int response) {
+XmlRpc::XmlRpcValue responseInt(const int code, const std::string& msg, const int response) {
     XmlRpc::XmlRpcValue v;
-    v[0] = int(code);
+    v[0] = code;
     v[1] = msg;
     v[2] = response;
     return v;
 }
 
-XmlRpc::XmlRpcValue responseBool(int code, const std::string& msg, bool response) {
+XmlRpc::XmlRpcValue responseBool(const int code, const std::string& msg, const bool response) {
     XmlRpc::XmlRpcValue v;
-    v[0] = int(code);
+    v[0] = code;
     v[1] = msg;
-    v[2] = XmlRpc::XmlRpcValue(response);
+    v[2] = XmlRpc::XmlRpcValue{response};
     return v;
 }
 
@@ -69,12 +68,10 @@ XmlRpc::XmlRpcValue responseBool(int code, const std::string& msg, bool response
 
 class XMLRPCCallWrapper : public XmlRpcServerMethod {
     public:
-        XMLRPCCallWrapper(const std::string& function_name, const XMLRPCFunc& cb, XmlRpcServer* s)
-            : XmlRpcServerMethod(function_name, s), name_(function_name), func_(cb) {}
+        XMLRPCCallWrapper(const std::string& function_name, const XMLRPCFunc& cb, XmlRpcServer *s)
+            : XmlRpcServerMethod{function_name, s}, name_{function_name}, func_{cb} {}
 
-        void execute(XmlRpcValue& params, XmlRpcValue& result) {
-            func_(params, result);
-        }
+        void execute(XmlRpcValue& params, XmlRpcValue& result) { func_(params, result); }
 
     private:
         std::string name_;
@@ -86,7 +83,7 @@ void getPid(const XmlRpcValue& params, XmlRpcValue& result) {
     result = xmlrpc::responseInt(1, "", (int)getpid());
 }
 
-const ros::WallDuration CachedXmlRpcClient::s_zombie_time_(30.0); // reap after 30 seconds
+const ros::WallDuration CachedXmlRpcClient::s_zombie_time_{30.0}; // reap after 30 seconds
 
 uint32_t g_port = 0;
 std::string g_host;
@@ -95,7 +92,7 @@ ros::WallDuration g_retry_timeout;
 
 void XMLRPCManager::start() {
     if (g_uri.empty()) {
-        char* master_uri_env = getenv("ROS_MASTER_URI");
+        char *master_uri_env = getenv("ROS_MASTER_URI");
         if (!master_uri_env) {
             ROS_FATAL("ROS_MASTER_URI is not defined in the environment. Either "
                       "type the following or (preferrably) add this to your "
@@ -104,7 +101,6 @@ void XMLRPCManager::start() {
                       "export ROS_MASTER_URI=http://localhost:11311\n\n"
                       "then, type 'roscore' in another shell to actually launch "
                       "the master program.");
-            ROS_BREAK();
         }
 
         g_uri = master_uri_env;
@@ -113,18 +109,14 @@ void XMLRPCManager::start() {
     // Split URI into
     if (!network::splitURI(g_uri, g_host, g_port)) {
         ROS_FATAL("Couldn't parse the master URI [%s] into a host:port pair.", g_uri.c_str());
-        ROS_BREAK();
     }
 
     shutting_down_ = false;
     port_ = 0;
     bind("getPid", getPid);
 
-    bool bound = server_.bindAndListen(0);
-    (void)bound;
-    ROS_ASSERT(bound);
+    auto bound = server_.bindAndListen(0);
     port_ = server_.get_port();
-    ROS_ASSERT(port_ != 0);
 
     std::stringstream ss;
     // TODO: modify network so we can init() it so this works
@@ -132,7 +124,7 @@ void XMLRPCManager::start() {
     //ss << "http://localhost:" << port_ << "/";
     uri_ = ss.str();
 
-    server_thread_ = boost::thread(boost::bind(&XMLRPCManager::serverThreadFunc, this));
+    server_thread_ = std::thread(&XMLRPCManager::serverThreadFunc, this);
 }
 
 void XMLRPCManager::shutdown() {
@@ -141,76 +133,62 @@ void XMLRPCManager::shutdown() {
     }
 
     shutting_down_ = true;
-    server_thread_.join();
+    if (server_thread_.joinable()) {
+        server_thread_.join();
+    }
 
     server_.close();
 
     // kill the last few clients that were started in the shutdown process
     {
-        boost::mutex::scoped_lock lock(clients_mutex_);
+        std::lock_guard<std::mutex> lock{clients_mutex_};
 
-        for (V_CachedXmlRpcClient::iterator i = clients_.begin(); i != clients_.end();) {
-            if (!i->in_use_) {
-                i->client_->close();
-                delete i->client_;
-                i = clients_.erase(i);
-            } else {
-                ++i;
-            }
-        }
+        const auto remove_begin = std::remove_if(clients_.begin(), clients_.end(), [](const auto& c){ return !c.in_use_; });
+        std::for_each(remove_begin, clients_.end(), [](const auto& c) { delete c.client_; });
+        clients_.erase(remove_begin, clients_.end());
     }
 
     // Wait for the clients that are in use to finish and remove themselves from clients_
-    for (int wait_count = 0; !clients_.empty() && wait_count < 10; wait_count++) {
-        ROSCPP_LOG_DEBUG("waiting for xmlrpc connection to finish...");
-        ros::WallDuration(0.01).sleep();
+    for (auto wait_count = 0; !clients_.empty() && wait_count < 10; ++wait_count) {
+        ros::WallDuration{0.01}.sleep();
     }
 
-    boost::mutex::scoped_lock lock(functions_mutex_);
+    std::lock_guard<std::mutex> lock{functions_mutex_};
     functions_.clear();
 
-    {
-        S_ASyncXMLRPCConnection::iterator it = connections_.begin();
-        S_ASyncXMLRPCConnection::iterator end = connections_.end();
-        for (; it != end; ++it) {
-            (*it)->removeFromDispatch(server_.get_dispatch());
-        }
+    for (const auto& c: connections_) {
+        c->removeFromDispatch(server_.get_dispatch());
     }
 
     connections_.clear();
 
     {
-        boost::mutex::scoped_lock lock(added_connections_mutex_);
+        std::lock_guard<std::mutex> lock{added_connections_mutex_};
         added_connections_.clear();
     }
 
     {
-        boost::mutex::scoped_lock lock(removed_connections_mutex_);
+        std::lock_guard<std::mutex> lock{removed_connections_mutex_};
         removed_connections_.clear();
     }
 }
 
 bool XMLRPCManager::validateXmlrpcResponse(const std::string& method, XmlRpcValue& response, XmlRpcValue& payload) {
     if (response.getType() != XmlRpcValue::TypeArray) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return an array", method.c_str());
         return false;
     }
     if (response.size() != 2 && response.size() != 3) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a 2 or 3-element array", method.c_str());
         return false;
     }
     if (response[0].getType() != XmlRpcValue::TypeInt) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a int as the 1st element", method.c_str());
         return false;
     }
     int status_code = response[0];
     if (response[1].getType() != XmlRpcValue::TypeString) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] didn't return a string as the 2nd element", method.c_str());
         return false;
     }
     std::string status_string = response[1];
     if (status_code != 1) {
-        ROSCPP_LOG_DEBUG("XML-RPC call [%s] returned an error (%d): [%s]", method.c_str(), status_code, status_string.c_str());
         return false;
     }
     if (response.size() > 2) {
@@ -228,62 +206,52 @@ void XMLRPCManager::serverThreadFunc() {
 
     while (!shutting_down_) {
         {
-            boost::mutex::scoped_lock lock(added_connections_mutex_);
-            S_ASyncXMLRPCConnection::iterator it = added_connections_.begin();
-            S_ASyncXMLRPCConnection::iterator end = added_connections_.end();
-            for (; it != end; ++it) {
-                (*it)->addToDispatch(server_.get_dispatch());
-                connections_.insert(*it);
+            std::lock_guard<std::mutex> lock{added_connections_mutex_};
+            for (const auto& c: added_connections_) {
+                c->addToDispatch(server_.get_dispatch());
+                connections_.insert(c);
             }
-
             added_connections_.clear();
         }
 
         // Update the XMLRPC server, blocking for at most 100ms in select()
         {
-            boost::mutex::scoped_lock lock(functions_mutex_);
+            std::lock_guard<std::mutex> lock{functions_mutex_};
             server_.work(0.1);
         }
 
         while (unbind_requested_) {
-            ros::WallDuration(0.01).sleep();
+            ros::WallDuration{0.01}.sleep();
         }
 
         if (shutting_down_) {
             return;
         }
 
-        {
-            S_ASyncXMLRPCConnection::iterator it = connections_.begin();
-            S_ASyncXMLRPCConnection::iterator end = connections_.end();
-            for (; it != end; ++it) {
-                if ((*it)->check()) {
-                    removeASyncConnection(*it);
-                }
+        for (const auto& c: connections_) {
+            if (c->check()) {
+                removeASyncConnection(c);
             }
         }
 
         {
-            boost::mutex::scoped_lock lock(removed_connections_mutex_);
-            S_ASyncXMLRPCConnection::iterator it = removed_connections_.begin();
-            S_ASyncXMLRPCConnection::iterator end = removed_connections_.end();
-            for (; it != end; ++it) {
-                (*it)->removeFromDispatch(server_.get_dispatch());
-                connections_.erase(*it);
+            std::lock_guard<std::mutex> lock{removed_connections_mutex_};
+            for (const auto& c: removed_connections_) {
+                c->removeFromDispatch(server_.get_dispatch());
+                connections_.erase(c);
             }
-
             removed_connections_.clear();
         }
     }
 }
 
-XmlRpcClient* XMLRPCManager::getXMLRPCClient(const std::string& host, const int port, const std::string& uri) {
+XmlRpcClient *XMLRPCManager::getXMLRPCClient(const std::string& host, const int port, const std::string& uri) {
     // go through our vector of clients and grab the first available one
-    XmlRpcClient* c = NULL;
+    XmlRpcClient *c = nullptr;
 
-    boost::mutex::scoped_lock lock(clients_mutex_);
+    std::lock_guard<std::mutex> lock{clients_mutex_};
 
-    for (V_CachedXmlRpcClient::iterator i = clients_.begin(); !c && i != clients_.end();) {
+    for (auto i = clients_.begin(); !c && i != clients_.end();) {
         if (!i->in_use_) {
             // see where it's pointing
             if (i->client_->getHost() == host && i->client_->getPort() == port && i->client_->getUri() == uri) {
@@ -306,48 +274,42 @@ XmlRpcClient* XMLRPCManager::getXMLRPCClient(const std::string& host, const int 
 
     if (!c) {
         // allocate a new one
-        c = new XmlRpcClient(host.c_str(), port, uri.c_str());
-        CachedXmlRpcClient mc(c);
+        c = new XmlRpcClient{host.c_str(), port, uri.c_str()};
+        CachedXmlRpcClient mc{c};
         mc.in_use_ = true;
         mc.last_use_time_ = ros::WallTime::now();
         clients_.push_back(mc);
-        //ROS_INFO("%d xmlrpc clients allocated\n", xmlrpc_clients.size());
     }
     // ONUS IS ON THE RECEIVER TO UNSET THE IN_USE FLAG
     // by calling releaseXMLRPCClient
     return c;
 }
 
-void XMLRPCManager::releaseXMLRPCClient(XmlRpcClient* c) {
-    boost::mutex::scoped_lock lock(clients_mutex_);
+void XMLRPCManager::releaseXMLRPCClient(XmlRpcClient *const c) {
+    std::lock_guard<std::mutex> lock{clients_mutex_};
 
-    for (V_CachedXmlRpcClient::iterator i = clients_.begin(); i != clients_.end(); ++i) {
-        if (c == i->client_) {
-            if (shutting_down_) {
-                // if we are shutting down we won't be re-using the client
-                i->client_->close();
-                delete i->client_;
-                clients_.erase(i);
-            } else {
-                i->in_use_ = false;
-            }
-            break;
-        }
+    const auto it = std::find_if(clients_.begin(), clients_.end(), [c](const auto& cl){ return c == cl.client_; });
+    if (shutting_down_) {
+        // if we are shutting down we won't be re-using the client
+        delete it->client_;
+        clients_.erase(it);
+    } else {
+        it->in_use_ = false;
     }
 }
 
 void XMLRPCManager::addASyncConnection(const ASyncXMLRPCConnectionPtr& conn) {
-    boost::mutex::scoped_lock lock(added_connections_mutex_);
+    std::lock_guard<std::mutex> lock{added_connections_mutex_};
     added_connections_.insert(conn);
 }
 
 void XMLRPCManager::removeASyncConnection(const ASyncXMLRPCConnectionPtr& conn) {
-    boost::mutex::scoped_lock lock(removed_connections_mutex_);
+    std::lock_guard<std::mutex> lock{removed_connections_mutex_};
     removed_connections_.insert(conn);
 }
 
 bool XMLRPCManager::bind(const std::string& function_name, const XMLRPCFunc& cb) {
-    boost::mutex::scoped_lock lock(functions_mutex_);
+    std::lock_guard<std::mutex> lock{functions_mutex_};
     if (functions_.find(function_name) != functions_.end()) {
         return false;
     }
@@ -355,15 +317,14 @@ bool XMLRPCManager::bind(const std::string& function_name, const XMLRPCFunc& cb)
     FunctionInfo info;
     info.name = function_name;
     info.function = cb;
-    info.wrapper.reset(new XMLRPCCallWrapper(function_name, cb, &server_));
+    info.wrapper.reset(new XMLRPCCallWrapper{function_name, cb, &server_});
     functions_[function_name] = info;
-
     return true;
 }
 
 void XMLRPCManager::unbind(const std::string& function_name) {
     unbind_requested_ = true;
-    boost::mutex::scoped_lock lock(functions_mutex_);
+    std::lock_guard<std::mutex> lock{functions_mutex_};
     functions_.erase(function_name);
     unbind_requested_ = false;
 }
@@ -381,9 +342,8 @@ const std::string& XMLRPCManager::getMasterURI() {
 }
 
 void XMLRPCManager::setMasterRetryTimeout(ros::WallDuration timeout) {
-    if (timeout < ros::WallDuration(0)) {
+    if (timeout < ros::WallDuration{0}) {
         ROS_FATAL("retry timeout must not be negative.");
-        ROS_BREAK();
     }
     g_retry_timeout = timeout;
 }
@@ -394,7 +354,7 @@ bool XMLRPCManager::checkMaster() {
     return callMaster("getPid", args, result, payload, false);
 }
 
-bool XMLRPCManager::getAllTopics(std::string subgraph, V_TopicInfo& topics) {
+bool XMLRPCManager::getAllTopics(const std::string& subgraph, V_TopicInfo& topics) {
     XmlRpc::XmlRpcValue args, result, payload;
     args[0] = ""; // caller_id
     args[1] = subgraph;
@@ -404,10 +364,9 @@ bool XMLRPCManager::getAllTopics(std::string subgraph, V_TopicInfo& topics) {
     }
 
     topics.clear();
-    for (int i = 0; i < payload.size(); i++) {
-        topics.push_back(TopicInfo(std::string(payload[i][0]), std::string(payload[i][1])));
+    for (int i = 0; i < payload.size(); ++i) {
+        topics.push_back(TopicInfo{std::string(payload[i][0]), std::string(payload[i][1])});
     }
-
     return true;
 }
 
@@ -429,21 +388,20 @@ bool XMLRPCManager::getAllNodes(std::vector<std::string>& nodes) {
     }
 
     nodes.clear();
-    std::copy(node_set.begin(), node_set.end(), std::back_inserter(nodes));
-
+    std::copy(node_set.cbegin(), node_set.cend(), std::back_inserter(nodes));
     return true;
 }
 
-bool XMLRPCManager::callMaster(const std::string& method, const XmlRpc::XmlRpcValue& request, XmlRpc::XmlRpcValue& response, XmlRpc::XmlRpcValue& payload, bool wait_for_master) {
+bool XMLRPCManager::callMaster(const std::string& method, const XmlRpc::XmlRpcValue& request, XmlRpc::XmlRpcValue& response, XmlRpc::XmlRpcValue& payload, const bool wait_for_master) {
     ros::WallTime start_time = ros::WallTime::now();
 
-    std::string master_host = getMasterHost();
-    uint32_t master_port = getMasterPort();
-    XmlRpc::XmlRpcClient* c = getXMLRPCClient(master_host, master_port, "/");
-    bool printed = false;
-    bool slept = false;
-    bool ok = true;
-    bool b = false;
+    const auto& master_host = getMasterHost();
+    const uint32_t master_port = getMasterPort();
+    XmlRpc::XmlRpcClient *const c = getXMLRPCClient(master_host, master_port, "/");
+    auto printed = false;
+    auto slept = false;
+    auto ok = true;
+    auto b = false;
     do {
         b = c->execute(method.c_str(), request, response);
         ok = !isShuttingDown();
@@ -465,15 +423,13 @@ bool XMLRPCManager::callMaster(const std::string& method, const XmlRpc::XmlRpcVa
                 return false;
             }
 
-            ros::WallDuration(0.05).sleep();
+            ros::WallDuration{0.05}.sleep();
             slept = true;
         } else {
             if (!validateXmlrpcResponse(method, response, payload)) {
                 releaseXMLRPCClient(c);
-
                 return false;
             }
-
             break;
         }
 
@@ -485,7 +441,6 @@ bool XMLRPCManager::callMaster(const std::string& method, const XmlRpc::XmlRpcVa
     }
 
     releaseXMLRPCClient(c);
-
     return b;
 }
 

@@ -28,16 +28,19 @@
 #ifndef ROSCAN_SINGLE_SUBSCRIBER_PUBLISHER_H
 #define ROSCAN_SINGLE_SUBSCRIBER_PUBLISHER_H
 
-#include "common.h"
+#include "subscriber_link.h"
 #include <ros/serialization.h>
 #include <boost/utility.hpp>
+#include <string>
+#include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 
 namespace roscan {
 
 // Allows publication of a message to a single subscriber. Only available inside subscriber connection callbacks
 class SingleSubscriberPublisher : public boost::noncopyable {
     public:
-        SingleSubscriberPublisher(const SubscriberLinkPtr& link) : link_(link) {}
+        SingleSubscriberPublisher(const SubscriberLinkPtr& link) : link_{link} {}
         ~SingleSubscriberPublisher() {}
 
         // Publish a message on the topic associated with this Publisher.
@@ -59,16 +62,17 @@ class SingleSubscriberPublisher : public boost::noncopyable {
         void publish(const M& message) const { publish(ros::serialization::serializeMessage(message)); }
 
         // Returns the topic this publisher publishes on
-        std::string getTopic() const;
+        const std::string& getTopic() const { return link_->getTopic(); }
 
         // Returns the name of the subscriber node
-        std::string getSubscriberName() const;
+        const std::string& getSubscriberName() const { return link_->getDestinationCallerID(); }
 
     private:
-        void publish(const ros::SerializedMessage& m) const;
+        void publish(const ros::SerializedMessage& m) const { link_->enqueueMessage(m, true, true); }
 
         SubscriberLinkPtr link_;
 };
+typedef boost::function<void(const SingleSubscriberPublisher&)> SubscriberStatusCallback;
 
 } // namespace roscan
 

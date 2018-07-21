@@ -25,18 +25,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "common.h"
 #include "connection_manager.h"
 #include "RosCanNode.hpp"
 #include "network.h"
 #include "poll_manager.h"
 #include "transport_subscriber_link.h"
-#include <ros/assert.h>
 #include <ros/connection.h>
-#include <ros/file_log.h>
-#include <ros/service_client_link.h>
-#include <ros/transport/transport_tcp.h>
-#include <ros/transport/transport_udp.h>
+#include <boost/make_shared.hpp>
 
 namespace roscan {
 
@@ -47,14 +42,12 @@ void ConnectionManager::start() {
     tcpserver_transport_ = boost::make_shared<ros::TransportTCP>(&node_->poll_manager()->getPollSet());
     if (!tcpserver_transport_->listen(network::getTCPROSPort(), MAX_TCPROS_CONN_QUEUE, boost::bind(&ConnectionManager::tcprosAcceptConnection, this, _1))) {
         ROS_FATAL("Listen on port [%d] failed", network::getTCPROSPort());
-        ROS_BREAK();
     }
 
     // Bring up the UDP listener socket
     udpserver_transport_ = boost::make_shared<ros::TransportUDP>(&node_->poll_manager()->getPollSet());
     if (!udpserver_transport_->createIncoming(0, true)) {
         ROS_FATAL("Listen failed");
-        ROS_BREAK();
     }
 }
 
@@ -70,74 +63,60 @@ void ConnectionManager::shutdown() {
     }
 
     node_->poll_manager()->removePollThreadListener(poll_conn_);
-
     clear(ros::Connection::Destructing);
 }
 
 void ConnectionManager::clear(ros::Connection::DropReason reason) {
-    ros::S_Connection local_connections;
+    std::set<ros::ConnectionPtr> local_connections;
     {
-        boost::mutex::scoped_lock conn_lock(connections_mutex_);
+        std::lock_guard<std::mutex> conn_lock{connections_mutex_};
         local_connections.swap(connections_);
     }
 
-    for (ros::S_Connection::iterator itr = local_connections.begin(); itr != local_connections.end(); itr++) {
-        const ros::ConnectionPtr& conn = *itr;
+    for (const auto& conn: local_connections) {
         conn->drop(reason);
     }
 
-    boost::mutex::scoped_lock dropped_lock(dropped_connections_mutex_);
+    std::lock_guard<std::mutex> dropped_lock{dropped_connections_mutex_};
     dropped_connections_.clear();
 }
 
-uint32_t ConnectionManager::getTCPPort() {
-    return tcpserver_transport_->getServerPort();
-}
-
-uint32_t ConnectionManager::getUDPPort() {
-    return udpserver_transport_->getServerPort();
-}
-
 uint32_t ConnectionManager::getNewConnectionID() {
-    boost::mutex::scoped_lock lock(connection_id_counter_mutex_);
-    uint32_t ret = connection_id_counter_++;
+    std::lock_guard<std::mutex> lock{connection_id_counter_mutex_};
+    const auto ret = connection_id_counter_++;
     return ret;
 }
 
 void ConnectionManager::addConnection(const ros::ConnectionPtr& conn) {
-    boost::mutex::scoped_lock lock(connections_mutex_);
+    std::lock_guard<std::mutex> lock{connections_mutex_};
 
     connections_.insert(conn);
     conn->addDropListener(boost::bind(&ConnectionManager::onConnectionDropped, this, _1));
 }
 
 void ConnectionManager::onConnectionDropped(const ros::ConnectionPtr& conn) {
-    boost::mutex::scoped_lock lock(dropped_connections_mutex_);
+    std::lock_guard<std::mutex> lock{dropped_connections_mutex_};
     dropped_connections_.push_back(conn);
 }
 
 void ConnectionManager::removeDroppedConnections() {
-    ros::V_Connection local_dropped;
+    std::vector<ros::ConnectionPtr> local_dropped;
     {
-        boost::mutex::scoped_lock dropped_lock(dropped_connections_mutex_);
+        std::lock_guard<std::mutex> dropped_lock{dropped_connections_mutex_};
         dropped_connections_.swap(local_dropped);
     }
 
-    boost::mutex::scoped_lock conn_lock(connections_mutex_);
+    std::lock_guard<std::mutex> conn_lock{connections_mutex_};
 
-    ros::V_Connection::iterator conn_it = local_dropped.begin();
-    ros::V_Connection::iterator conn_end = local_dropped.end();
-    for (; conn_it != conn_end; ++conn_it) {
-        const ros::ConnectionPtr& conn = *conn_it;
+    for (const auto& conn: local_dropped) {
         connections_.erase(conn);
     }
 }
 
 void ConnectionManager::udprosIncomingConnection(const ros::TransportUDPPtr& transport, ros::Header& header) {
-    std::string client_uri = ""; // TODO: transport->getClientURI();
-    ROSCPP_LOG_DEBUG("UDPROS received a connection from [%s]", client_uri.c_str());
+    const auto client_uri = std::string{""}; // TODO: transport->getClientURI();
 
-    ros::ConnectionPtr conn(boost::make_shared<ros::Connection>());
+    ros::ConnectionPtr conn{boost::make_shared<ros::Connection>()};
     addConnection(conn);
 
     conn->initialize(transport, true, NULL);
@@ -145,32 +124,26 @@ void ConnectionManager::udprosIncomingConnection(const ros::TransportUDPPtr& tra
 }
 
 void ConnectionManager::tcprosAcceptConnection(const ros::TransportTCPPtr& transport) {
-    std::string client_uri = transport->getClientURI();
-    ROSCPP_LOG_DEBUG("TCPROS received a connection from [%s]", client_uri.c_str());
+    const auto client_uri = transport->getClientURI();
 
-    ros::ConnectionPtr conn(boost::make_shared<ros::Connection>());
+    ros::ConnectionPtr conn{boost::make_shared<ros::Connection>()};
     addConnection(conn);
 
     conn->initialize(transport, true, boost::bind(&ConnectionManager::onConnectionHeaderReceived, this, _1, _2));
 }
 
 bool ConnectionManager::onConnectionHeaderReceived(const ros::ConnectionPtr& conn, const ros::Header& header) {
-    bool ret = false;
+    auto ret = false;
     std::string val;
     if (header.getValue("topic", val)) {
-        ROSCPP_CONN_LOG_DEBUG("Connection: Creating TransportSubscriberLink for topic [%s] connected to [%s]", val.c_str(), conn->getRemoteString().c_str());
-
-        TransportSubscriberLinkPtr sub_link(boost::make_shared<TransportSubscriberLink>(node_));
+        TransportSubscriberLinkPtr sub_link{boost::make_shared<TransportSubscriberLink>(node_)};
         sub_link->initialize(conn);
         ret = sub_link->handleHeader(header);
-    } else if (header.getValue("service", val)) {
-        ROSCPP_LOG_DEBUG("Connection: Creating ServiceClientLink for service [%s] connected to [%s]", val.c_str(), conn->getRemoteString().c_str());
-
-        ros::ServiceClientLinkPtr link(boost::make_shared<ros::ServiceClientLink>());
-        link->initialize(conn);
-        ret = link->handleHeader(header);
+    // } else if (header.getValue("service", val)) {
+    //     ros::ServiceClientLinkPtr link{boost::make_shared<ros::ServiceClientLink>()};
+    //     link->initialize(conn);
+    //     ret = link->handleHeader(header);
     } else {
-        ROSCPP_LOG_DEBUG("Got a connection for a type other than 'topic' or 'service' from [%s].  Fail.", conn->getRemoteString().c_str());
         return false;
     }
     return ret;

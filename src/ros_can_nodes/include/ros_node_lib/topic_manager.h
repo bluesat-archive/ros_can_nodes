@@ -28,17 +28,20 @@
 #ifndef ROSCAN_TOPIC_MANAGER_H
 #define ROSCAN_TOPIC_MANAGER_H
 
-#include "common.h"
 #include "subscribe_options.h"
 #include "advertise_options.h"
+#include "subscriber_callbacks.h"
 #include <XmlRpcValue.h>
 #include <ros/serialization.h>
+#include <mutex>
+#include <vector>
+#include <boost/bind.hpp>
 
 namespace roscan {
 
 class TopicManager {
     public:
-        TopicManager(const RosCanNodePtr& node) : node_(node), shutting_down_(false) {}
+        TopicManager(const RosCanNodePtr& node) : node_{node}, shutting_down_{false} {}
         ~TopicManager() { shutdown(); }
 
         void start();
@@ -51,10 +54,10 @@ class TopicManager {
         bool unadvertise(const std::string& topic, const SubscriberCallbacksPtr& callbacks);
 
         // Get the list of topics advertised by this node
-        void getAdvertisedTopics(V_string& topics);
+        void getAdvertisedTopics(std::vector<std::string>& topics);
 
         // Get the list of topics subscribed to by this node
-        void getSubscribedTopics(V_string& topics);
+        void getSubscribedTopics(std::vector<std::string>& topics);
 
         // Lookup an advertised topic.
         // This method iterates over advertised_topics, looking for one with name
@@ -147,20 +150,20 @@ class TopicManager {
         void getSubscriptionsCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);
         void getPublicationsCallback(XmlRpc::XmlRpcValue& params, XmlRpc::XmlRpcValue& result);
 
-        bool isShuttingDown() { return shutting_down_; }
+        bool isShuttingDown() const { return shutting_down_; }
 
         RosCanNodePtr node_;
 
-        boost::mutex subs_mutex_;
-        L_Subscription subscriptions_;
+        std::mutex subs_mutex_;
+        std::list<SubscriptionPtr> subscriptions_;
 
-        boost::recursive_mutex advertised_topics_mutex_;
+        std::recursive_mutex advertised_topics_mutex_;
         V_Publication advertised_topics_;
         std::list<std::string> advertised_topic_names_;
-        boost::mutex advertised_topic_names_mutex_;
+        std::mutex advertised_topic_names_mutex_;
 
         volatile bool shutting_down_;
-        boost::mutex shutting_down_mutex_;
+        std::mutex shutting_down_mutex_;
 };
 
 } // namespace roscan

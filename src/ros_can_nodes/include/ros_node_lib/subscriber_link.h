@@ -29,7 +29,13 @@
 #define ROSCAN_SUBSCRIBER_LINK_H
 
 #include "common.h"
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <typeinfo>
 #include <ros/serialized_message.h>
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 namespace roscan {
 
@@ -38,38 +44,34 @@ class SubscriberLink : public boost::enable_shared_from_this<SubscriberLink> {
         class Stats {
             public:
                 uint64_t bytes_sent_, message_data_sent_, messages_sent_;
-                Stats() : bytes_sent_(0), message_data_sent_(0), messages_sent_(0) {}
+                Stats() : bytes_sent_{0}, message_data_sent_{0}, messages_sent_{0} {}
         };
 
-        SubscriberLink(const RosCanNodePtr& node) : node_(node), connection_id_(0) {}
+        SubscriberLink(const RosCanNodePtr& node) : node_{node}, connection_id_{0} {}
         virtual ~SubscriberLink() {}
 
         const std::string& getTopic() const { return topic_; }
-        const Stats& getStats() { return stats_; }
+        const Stats& getStats() const { return stats_; }
         const std::string& getDestinationCallerID() const { return destination_caller_id_; }
         int getConnectionID() const { return connection_id_; }
 
         // Queue up a message for publication.  Throws out old messages if we've reached our Publication's max queue size
-        virtual void enqueueMessage(const ros::SerializedMessage& m, bool ser, bool nocopy) = 0;
+        virtual void enqueueMessage(const ros::SerializedMessage& m, const bool ser, const bool nocopy) = 0;
 
         virtual void drop() = 0;
 
         virtual std::string getTransportType() = 0;
         virtual std::string getTransportInfo() = 0;
 
-        virtual bool isIntraprocess() { return false; }
-        virtual void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti) {
-            (void)ti;
-            ser = true;
-            nocopy = false;
-        }
+        virtual bool isIntraprocess() const { return false; }
+        virtual void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti);
 
-        const std::string& getMD5Sum();
-        const std::string& getDataType();
-        const std::string& getMessageDefinition();
+        const std::string& getMD5Sum() const;
+        const std::string& getDataType() const;
+        const std::string& getMessageDefinition() const;
 
     protected:
-        bool verifyDatatype(const std::string& datatype);
+        bool verifyDatatype(const std::string& datatype) const;
 
         RosCanNodePtr node_;
 

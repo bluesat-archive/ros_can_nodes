@@ -30,6 +30,8 @@
 
 #include "common.h"
 #include "subscriber_link.h"
+#include <typeinfo>
+#include <mutex>
 
 namespace roscan {
 
@@ -37,23 +39,23 @@ namespace roscan {
 class IntraProcessSubscriberLink : public SubscriberLink {
     public:
         IntraProcessSubscriberLink(const RosCanNodePtr& node, const PublicationPtr& parent);
-        virtual ~IntraProcessSubscriberLink() {}
+        ~IntraProcessSubscriberLink() override {}
 
         void setSubscriber(const IntraProcessPublisherLinkPtr& subscriber);
-        bool isLatching();
+        bool isLatching() const;
 
-        virtual void enqueueMessage(const ros::SerializedMessage& m, bool ser, bool nocopy);
-        virtual void drop();
-        virtual std::string getTransportType() { return std::string("INTRAPROCESS"); }
-        virtual std::string getTransportInfo() { return getTransportType(); }
-        virtual bool isIntraprocess() { return true; }
-        virtual void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti);
+        void enqueueMessage(const ros::SerializedMessage& m, const bool ser, const bool nocopy) override;
+        void drop() override;
+        std::string getTransportType() override { return std::string("INTRAPROCESS"); }
+        std::string getTransportInfo() override { return getTransportType(); }
+        bool isIntraprocess() const override { return true; }
+        void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti) override;
 
     private:
         RosCanNodePtr node_;
         IntraProcessPublisherLinkPtr subscriber_;
         bool dropped_;
-        boost::recursive_mutex drop_mutex_;
+        std::recursive_mutex drop_mutex_;
 };
 
 } // namespace roscan
