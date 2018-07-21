@@ -85,7 +85,7 @@ namespace roscan {
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
                 //-1: FAILURE: Method failed to complete correctly. In general, this means that the master/slave attempted the action and failed, and there may have been side-effects as a result.
                 //0: SUCCESS: Method completed successfully
-            return 0;
+            return topic_num;
         } else {
             // TODO handle error, no free topic ids
             return 0;

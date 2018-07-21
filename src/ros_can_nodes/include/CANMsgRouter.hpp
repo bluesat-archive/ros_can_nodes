@@ -24,11 +24,13 @@ class CANMsgRouter {
 
         static void subscriberTest();
 
-        static void processCANMsg(can_frame msg);
+        static void processCANMsg(const can_frame& msg);
 
-        static void routeControlMsg(can_frame msg);
+        static void routeControlMsg(const can_frame& msg);
 
-        static void routePublishMsg(can_frame msg);
+        static void routePublishMsg(const can_frame& msg);
+
+        static void extractTopic(const can_frame& first, std::string& topic, std::string& topic_type);
 
     private:
 

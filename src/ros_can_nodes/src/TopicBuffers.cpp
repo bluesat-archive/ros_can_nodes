@@ -20,18 +20,15 @@ void TopicBuffers::initBuffers() {
 
 }
 
-void TopicBuffers::appendData(short key, uint8_t data) {
+void TopicBuffers::appendData(const short key, const uint8_t data) {
     //TODO: append data
     topic_buffers[key][0] = data;
 }
 
-void TopicBuffers::processData(short key, uint8_t* data, int d_len, bool last_msg) {
-
+void TopicBuffers::processData(const short key, const uint8_t *const data, const int d_len, const bool last_msg) {
     appendData(key, *data);
 
     if (last_msg) {
         // TODO: Convert to flattype and publish to ros network
-
-
     }
 }
