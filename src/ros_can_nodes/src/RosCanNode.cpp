@@ -70,7 +70,7 @@ namespace roscan {
     }
 
     int RosCanNode::registerSubscriber(const std::string& topic, const std::string& topic_type) {
-        std::cout << "Calling subscriber\n";
+        std::cout << "node id " << id_ << " subscribing to topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
 
         int topic_num = getFirstFreeTopic();
 
@@ -94,18 +94,15 @@ namespace roscan {
 
     int RosCanNode::unregisterSubscriber(const uint8_t topic) {
         // TODO: at a later date, at this moment, just call unregister node
-        std::cout << "Unregistering subscriber" << '\n';
-
+        std::cout << "node id " << id_ << " unsubscribing from topic id " << topic << "\n";
         return 0;
     }
 
     int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type) {
-        std::cout << "Advertising topic" << '\n';
+        std::cout << "node id " << id_ << " advertising topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
 
-        std::string name = "/" + topic;
         int topic_num = getFirstFreeTopic();
-
-        if(topic_num >= 0){
+        if (topic_num >= 0) {
 
             //advertise<RosIntrospection::FlatMessage>(name, (uint32_t)10, false);
 
@@ -125,9 +122,7 @@ namespace roscan {
 
     int RosCanNode::unregisterPublisher(const uint8_t topic) {
         // TODO: at a later date, at this moment, just call unregister node
-
-        std::cout << "Unregistering publisher" << '\n';
-
+        std::cout << "node id " << id_ << " unadvertising topic id " << topic << "\n";
         return 0;
     }
 

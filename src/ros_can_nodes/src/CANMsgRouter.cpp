@@ -124,7 +124,6 @@ void CANMsgRouter::processCANMsg(const can_frame& msg) {
 // appropriate Node function.
 void CANMsgRouter::routeControlMsg(const can_frame& msg) {
     uint32_t mode = ((msg.can_id & ROSCANConstants::bitmask_mode) >> ROSCANConstants::bitshift_mode);
-    uint32_t mode_info = ((msg.can_id & ROSCANConstants::bitmask_mode_specific) >> ROSCANConstants::bitshift_mode_specific);
 
     std::cout << "mode = " << mode << "\n";
 
@@ -168,30 +167,38 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             extractTopic(msg, topic, topic_type);
             int topicID = RosCanNodeManager::instance().getNode(nodeID)->registerSubscriber(topic, topic_type);
             if (topicID < 0) {
-                std::cout << "subscriber register failed\n";
+                std::cout << "subscribe register failed\n";
             } else {
-                std::cout << "topic \"" << topic << "\" assigned to topic id " << topicID << " of node id " << (int)nodeID << "\n";
+                std::cout << "subscription of topic \"" << topic << "\" assigned to topic id " << topicID << " of node id " << (int)nodeID << "\n";
             }
             break;
         }
         case ROSCANConstants::UNREGISTER_TOPIC:
         {
             uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
-            uint32_t topicID = (mode_info >> 4) & 0x3F;
+            uint8_t topicID = ((msg.can_id & ROSCANConstants::bitmask_topicid) >> ROSCANConstants::bitshift_topicid);
             RosCanNodeManager::instance().getNode(nodeID)->unregisterSubscriber(topicID);
             break;
         }
         case ROSCANConstants::ADVERTISE_TOPIC:
         {
             uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
-            //TODO: get data content for function call
-            //roscan::RosCanNode::getNode(nodeID)->advertiseTopic(std::string topic, std::string topic_type);
+            std::cout << "advertising for node id " << (int)nodeID << "\n";
+
+            std::string topic, topic_type;
+            extractTopic(msg, topic, topic_type);
+            int topicID = RosCanNodeManager::instance().getNode(nodeID)->advertiseTopic(topic, topic_type);
+            if (topicID < 0) {
+                std::cout << "advertise register failed\n";
+            } else {
+                std::cout << "advertisement of topic \"" << topic << "\" assigned to topic id " << topicID << " of node id " << (int)nodeID << "\n";
+            }
             break;
         }
         case ROSCANConstants::UNREGISTER_PUBLISHER:
         {
             uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
-            uint32_t topicID = (mode_info >> 4) & 0x3F;
+            uint8_t topicID = ((msg.can_id & ROSCANConstants::bitmask_topicid) >> ROSCANConstants::bitshift_topicid);
             RosCanNodeManager::instance().getNode(nodeID)->unregisterPublisher(topicID);
             break;
         }

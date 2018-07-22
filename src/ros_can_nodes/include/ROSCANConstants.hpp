@@ -101,6 +101,12 @@ namespace ROSCANConstants {
     constexpr uint32_t bitmask_hash = (0x7 << bitshift_hash);
     constexpr uint32_t bitmask_seqnum = (0xF << bitshift_seqnum);
     constexpr uint32_t bitmask_topiclen = (0xF << bitshift_topiclen);
+
+    /* Bitshifting for Control modes 3/5 */
+    constexpr uint32_t bitshift_topicid = 7;
+
+    /* Bitmasking for Control modes 3/5 */
+    constexpr uint32_t bitmask_topicid = (0x3F << bitshift_topicid);
 }
 
 #endif // ROSCANCONSTANTS_H
