@@ -70,7 +70,7 @@ namespace roscan {
     }
 
     int RosCanNode::registerSubscriber(const std::string& topic, const std::string& topic_type) {
-        std::cout << "node id " << id_ << " subscribing to topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
+        std::cout << "node id " << (int)id_ << " subscribing to topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
 
         int topic_num = getFirstFreeTopic();
 
@@ -94,12 +94,12 @@ namespace roscan {
 
     int RosCanNode::unregisterSubscriber(const uint8_t topic) {
         // TODO: at a later date, at this moment, just call unregister node
-        std::cout << "node id " << id_ << " unsubscribing from topic id " << topic << "\n";
+        std::cout << "node id " << (int)id_ << " unsubscribing from topic id " << (int)topic << "\n";
         return 0;
     }
 
     int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type) {
-        std::cout << "node id " << id_ << " advertising topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
+        std::cout << "node id " << (int)id_ << " advertising topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
 
         int topic_num = getFirstFreeTopic();
         if (topic_num >= 0) {
@@ -122,7 +122,7 @@ namespace roscan {
 
     int RosCanNode::unregisterPublisher(const uint8_t topic) {
         // TODO: at a later date, at this moment, just call unregister node
-        std::cout << "node id " << id_ << " unadvertising topic id " << topic << "\n";
+        std::cout << "node id " << (int)id_ << " unadvertising topic id " << (int)topic << "\n";
         return 0;
     }
 
@@ -262,14 +262,14 @@ namespace roscan {
 
         canid_t header = 0x0;
 
-        header |= (1 << ROSCANConstants::bitshift_ros_msg);
-        header |= (1 << ROSCANConstants::bitshift_priority);
-        header |= (0 << ROSCANConstants::bitshift_func);
-        header |= ((topicID * 2) << ROSCANConstants::bitshift_topic_id);
-        header |= (getID() << ROSCANConstants::bitshift_nid);
-        header |= (0 << ROSCANConstants::bitshift_msg_num);
-        header |= (0 << ROSCANConstants::bitshift_seq);
-        header |= (1 << ROSCANConstants::bitshift_len);
+        header |= (1 << ROSCANConstants::Common::bitshift_mode);
+        header |= (1 << ROSCANConstants::Common::bitshift_priority);
+        header |= (0 << ROSCANConstants::Common::bitshift_func);
+        header |= (0 << ROSCANConstants::Common::bitshift_seq);
+        header |= ((topicID * 2) << ROSCANConstants::ROSTopic::bitshift_topic_id);
+        header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
+        header |= (0 << ROSCANConstants::ROSTopic::bitshift_msg_num);
+        header |= (1 << ROSCANConstants::ROSTopic::bitshift_len);
         header |= CAN_EFF_FLAG;
 
         can_frame frame;

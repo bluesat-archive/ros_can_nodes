@@ -8,7 +8,6 @@
  * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
  */
 
-#include "ROSCANConstants.hpp"
 #include "TopicBuffers.hpp"
 
 TopicBuffers& TopicBuffers::instance() {

@@ -77,16 +77,16 @@ void CANMsgRouter::processCANMsg(const can_frame& msg) {
     uint32_t msg_header = msg.can_id & CAN_ERR_MASK;
     printf("header %#X\n", msg_header);
 
-    if ((msg_header & ROSCANConstants::bitmask_ros_msg) == 0) {
+    if ((msg_header & ROSCANConstants::Common::bitmask_mode) == 0) {
             // Out-of-Channel communication handling
             // Currently unimplemented
             std::cout << "out of channel unimplemented\n";
     } else {
         // Check the function
-        uint32_t msg_function = ((msg_header & ROSCANConstants::bitmask_func) >> ROSCANConstants::bitshift_func);
+        uint8_t msg_function = ((msg_header & ROSCANConstants::Common::bitmask_func) >> ROSCANConstants::Common::bitshift_func);
 
         switch (msg_function) {
-            case ROSCANConstants::ROS_TOPIC:
+            case ROSCANConstants::Common::ROS_TOPIC:
             {
                 // Start thread to handle a ros message packet
                 // Mutex is placed within handler on a per-node basis, so that
@@ -95,13 +95,13 @@ void CANMsgRouter::processCANMsg(const can_frame& msg) {
                 CANMsgRouter::routePublishMsg(msg);
                 break;
             }
-            case ROSCANConstants::ROS_SERVICE:
+            case ROSCANConstants::Common::ROS_SERVICE:
             {
                 // ROS_SERVICE message handling
                 // Currently unimplemented
                 break;
             }
-            case ROSCANConstants::CONTROL:
+            case ROSCANConstants::Common::CONTROL:
             {
                 // Assume control messages are valid and intended for main controller
                 // Start a thread to handle control message.
@@ -123,15 +123,15 @@ void CANMsgRouter::processCANMsg(const can_frame& msg) {
 // Function to cut the control msg into its components, and then call the
 // appropriate Node function.
 void CANMsgRouter::routeControlMsg(const can_frame& msg) {
-    uint32_t mode = ((msg.can_id & ROSCANConstants::bitmask_mode) >> ROSCANConstants::bitshift_mode);
+    uint32_t mode = ((msg.can_id & ROSCANConstants::Control::bitmask_mode) >> ROSCANConstants::Control::bitshift_mode);
 
     std::cout << "mode = " << mode << "\n";
 
     switch (mode) {
-        case ROSCANConstants::REGISTER_NODE:
+        case ROSCANConstants::Control::REGISTER_NODE:
         {
-            uint8_t step = ((msg.can_id & ROSCANConstants::bitmask_mode0_step) >> ROSCANConstants::bitshift_mode0_step);
-            uint8_t hashName = ((msg.can_id & ROSCANConstants::bitmask_mode0_hash) >> ROSCANConstants::bitshift_mode0_hash);
+            uint8_t step = ((msg.can_id & ROSCANConstants::Control::bitmask_mode0_step) >> ROSCANConstants::Control::bitshift_mode0_step);
+            uint8_t hashName = ((msg.can_id & ROSCANConstants::Control::bitmask_mode0_hash) >> ROSCANConstants::Control::bitshift_mode0_hash);
 
             printf("step %u, hashname %X\n", step, hashName);
 
@@ -149,18 +149,18 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             }
             break;
         }
-        case ROSCANConstants::DEREGISTER_NODE:
+        case ROSCANConstants::Control::DEREGISTER_NODE:
         {
-            uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
+            uint8_t nodeID = ((msg.can_id & ROSCANConstants::Control::bitmask_nid) >> ROSCANConstants::Control::bitshift_nid);
             std::cout << "deregistering node id " << (int)nodeID << "\n";
             RosCanNodeManager::instance().deregisterNode(nodeID);
             break;
         }
-        case ROSCANConstants::SUBSCRIBE_TOPIC:
+        case ROSCANConstants::Control::SUBSCRIBE_TOPIC:
         {
             //TODO: get data content for function call
             // extract node id
-            uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
+            uint8_t nodeID = ((msg.can_id & ROSCANConstants::Control::bitmask_nid) >> ROSCANConstants::Control::bitshift_nid);
             std::cout << "subscribing for node id " << (int)nodeID << "\n";
 
             std::string topic, topic_type;
@@ -173,16 +173,16 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             }
             break;
         }
-        case ROSCANConstants::UNREGISTER_TOPIC:
+        case ROSCANConstants::Control::UNREGISTER_TOPIC:
         {
-            uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
-            uint8_t topicID = ((msg.can_id & ROSCANConstants::bitmask_topicid) >> ROSCANConstants::bitshift_topicid);
+            uint8_t nodeID = ((msg.can_id & ROSCANConstants::Control::bitmask_nid) >> ROSCANConstants::Control::bitshift_nid);
+            uint8_t topicID = ((msg.can_id & ROSCANConstants::Control::bitmask_topic_id) >> ROSCANConstants::Control::bitshift_topic_id);
             RosCanNodeManager::instance().getNode(nodeID)->unregisterSubscriber(topicID);
             break;
         }
-        case ROSCANConstants::ADVERTISE_TOPIC:
+        case ROSCANConstants::Control::ADVERTISE_TOPIC:
         {
-            uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
+            uint8_t nodeID = ((msg.can_id & ROSCANConstants::Control::bitmask_nid) >> ROSCANConstants::Control::bitshift_nid);
             std::cout << "advertising for node id " << (int)nodeID << "\n";
 
             std::string topic, topic_type;
@@ -195,37 +195,37 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             }
             break;
         }
-        case ROSCANConstants::UNREGISTER_PUBLISHER:
+        case ROSCANConstants::Control::UNREGISTER_PUBLISHER:
         {
-            uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
-            uint8_t topicID = ((msg.can_id & ROSCANConstants::bitmask_topicid) >> ROSCANConstants::bitshift_topicid);
+            uint8_t nodeID = ((msg.can_id & ROSCANConstants::Control::bitmask_nid) >> ROSCANConstants::Control::bitshift_nid);
+            uint8_t topicID = ((msg.can_id & ROSCANConstants::Control::bitmask_topic_id) >> ROSCANConstants::Control::bitshift_topic_id);
             RosCanNodeManager::instance().getNode(nodeID)->unregisterPublisher(topicID);
             break;
         }
-        case ROSCANConstants::ADVERTISE_SERVICE:
+        case ROSCANConstants::Control::ADVERTISE_SERVICE:
         {
-            uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
+            uint8_t nodeID = ((msg.can_id & ROSCANConstants::Control::bitmask_nid) >> ROSCANConstants::Control::bitshift_nid);
             //roscan::RosCanNode::getNode(nodeID)->advertiseService(std::string service);
             break;
         }
-        case ROSCANConstants::UNREGISTER_SERVICE:
+        case ROSCANConstants::Control::UNREGISTER_SERVICE:
         {
-            uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
+            uint8_t nodeID = ((msg.can_id & ROSCANConstants::Control::bitmask_nid) >> ROSCANConstants::Control::bitshift_nid);
             //roscan::RosCanNode::getNode(nodeID)->unregisterService(std::string service);
             break;
         }
-        case ROSCANConstants::PARAMETERS:
+        case ROSCANConstants::Control::PARAMETERS:
         {
             //TODO: later
             break;
         }
-        case ROSCANConstants::HEARTBEAT:
+        case ROSCANConstants::Control::HEARTBEAT:
         {
-            uint8_t nodeID = ((msg.can_id & ROSCANConstants::bitmask_nodeid) >> ROSCANConstants::bitshift_nodeid);
+            uint8_t nodeID = ((msg.can_id & ROSCANConstants::Control::bitmask_nid) >> ROSCANConstants::Control::bitshift_nid);
             //roscan::RosCanNode::getNode(nodeID)->heartbeat(void);
             break;
         }
-        case ROSCANConstants::EXTENDED:
+        case ROSCANConstants::Control::EXTENDED:
         {
             //TODO: later
             break;
@@ -245,13 +245,13 @@ void CANMsgRouter::routePublishMsg(const can_frame& msg) {
     bool last_msg = (msg.can_dlc < 8) ? false : true;
 
     // Grab attributes needed for accessing the buffer
-    uint32_t topic = (msg_header >> ROSCANConstants::bitshift_topic_id) & ROSCANConstants::bitmask_topic_id;
-    uint32_t nid = (msg_header >> ROSCANConstants::bitshift_nid) & ROSCANConstants::bitmask_nid;
-    uint32_t seq = (msg_header >> ROSCANConstants::bitshift_seq) & ROSCANConstants::bitmask_seq;
+    uint8_t topic = (msg_header >> ROSCANConstants::ROSTopic::bitshift_topic_id) & ROSCANConstants::ROSTopic::bitmask_topic_id;
+    uint8_t nid = (msg_header >> ROSCANConstants::ROSTopic::bitshift_nid) & ROSCANConstants::ROSTopic::bitmask_nid;
+    uint8_t seq = (msg_header >> ROSCANConstants::Common::bitshift_seq) & ROSCANConstants::Common::bitmask_seq;
 
     // Special case for messages that are made up of 7 or more can packets
     if (seq == 7) {
-        seq = (msg_header >> ROSCANConstants::bitshift_len) & ROSCANConstants::bitmask_len;
+        seq = (msg_header >> ROSCANConstants::ROSTopic::bitshift_len) & ROSCANConstants::ROSTopic::bitmask_len;
     }
 
     // Key will be concatenation of topicid, and nid
@@ -265,13 +265,13 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
     std::cout << "entered topic buffering area\n";
 
     // extract total number of frames to wait for
-    uint8_t topiclen = ((first.can_id & ROSCANConstants::bitmask_topiclen) >> ROSCANConstants::bitshift_topiclen);
-    std::cout << "waiting for " << (int)topiclen << " total frames\n";
+    uint8_t len = ((first.can_id & ROSCANConstants::Control::bitmask_len) >> ROSCANConstants::Control::bitshift_len);
+    std::cout << "waiting for " << (int)len << " total frames\n";
     buf.insert(buf.end(), first.data, first.data + first.can_dlc);
 
-    // read until we have 'topiclen' frames worth of data
+    // read until we have 'len' frames worth of data
     can_frame msg;
-    for (int i = 1;i < topiclen;++i) {
+    for (int i = 1;i < len;++i) {
         while (1) {
             if (CANHelpers::read_can_port(msg) >= 0) {
                 buf.insert(buf.end(), msg.data, msg.data + msg.can_dlc);
