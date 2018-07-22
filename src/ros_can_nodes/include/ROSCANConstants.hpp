@@ -42,6 +42,12 @@ namespace ROSCANConstants {
         constexpr uint32_t ROS_SERVICE = 1;
         constexpr uint32_t CONTROL = 2;
         constexpr uint32_t RESERVED = 3;
+
+        /* Value extractors */
+        constexpr auto mode = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_mode, bitmask_mode); };
+        constexpr auto priority = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_priority, bitmask_priority); };
+        constexpr auto func = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_func, bitmask_func); };
+        constexpr auto seq = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_seq, bitmask_seq); };
     }
 
     namespace ROSTopic {
@@ -61,6 +67,12 @@ namespace ROSCANConstants {
         constexpr uint32_t bitmask_topic_id = (0x3F << bitshift_topic_id);
         constexpr uint32_t bitmask_len = (0x1FF << bitshift_len);
         constexpr uint32_t bitmask_nid = (0xF << bitshift_nid);
+
+        /* Value extractors */
+        constexpr auto msg_num = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_msg_num, bitmask_msg_num); };
+        constexpr auto topic_id = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_topic_id, bitmask_topic_id); };
+        constexpr auto len = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_len, bitmask_len); };
+        constexpr auto nid = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_nid, bitmask_nid); };
     }
 
     namespace Control {
@@ -119,6 +131,17 @@ namespace ROSCANConstants {
 
         /* Bitmasking for Control modes 3/5 */
         constexpr uint32_t bitmask_topic_id = (0x3F << bitshift_topic_id);
+
+        /* Value extractors */
+        constexpr auto mode = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_mode, bitmask_mode); };
+        constexpr auto mode0_step = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_mode0_step, bitmask_mode0_step); };
+        constexpr auto mode0_hash = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_mode0_hash, bitmask_mode0_hash); };
+        constexpr auto nid = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_nid, bitmask_nid); };
+        constexpr auto step = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_step, bitmask_step); };
+        constexpr auto hash = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_hash, bitmask_hash); };
+        constexpr auto seq = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_seq, bitmask_seq); };
+        constexpr auto len = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_len, bitmask_len); };
+        constexpr auto topic_id = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_topic_id, bitmask_topic_id); };
     }
 }
 
