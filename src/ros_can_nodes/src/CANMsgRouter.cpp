@@ -61,10 +61,12 @@ void CANMsgRouter::subscriberTest() {
     ROS_INFO("Registering\n");
 
     uint32_t nodeId = RosCanNodeManager::instance().registerNode("testNode", 0);
+    uint32_t nodeId2 = RosCanNodeManager::instance().registerNode("left_loco", 0);
+
 
     ROS_INFO("Regitered***");
 
-    roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
+    roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId2);
 
     node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
     node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");

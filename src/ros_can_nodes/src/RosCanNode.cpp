@@ -263,13 +263,13 @@ namespace roscan {
         canid_t header = 0x0;
 
         header |= (1 << ROSCANConstants::Common::bitshift_mode);
-        header |= (1 << ROSCANConstants::Common::bitshift_priority);
+        header |= (0 << ROSCANConstants::Common::bitshift_priority);
         header |= (0 << ROSCANConstants::Common::bitshift_func);
         header |= (0 << ROSCANConstants::Common::bitshift_seq);
         header |= ((topicID * 2) << ROSCANConstants::ROSTopic::bitshift_topic_id);
         header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
         header |= (0 << ROSCANConstants::ROSTopic::bitshift_msg_num);
-        header |= (1 << ROSCANConstants::ROSTopic::bitshift_len);
+        header |= (2 << ROSCANConstants::ROSTopic::bitshift_len);
         header |= CAN_EFF_FLAG;
 
         can_frame frame;
@@ -282,6 +282,14 @@ namespace roscan {
         }
 
         MessageBuffer::instance().push(frame);
+
+        // Second msg is empty data to indicate EOM
+        header |= (1 << ROSCANConstants::ROSTopic::bitshift_msg_num);
+        frame.can_id = header;
+        frame.can_dlc = 0;
+        frame.data = 0;
+        MessageBuffer::instance().push(frame);
+
     }
 
     const CallbackQueuePtr& RosCanNode::getInternalCallbackQueue() {
