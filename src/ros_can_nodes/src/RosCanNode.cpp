@@ -287,7 +287,7 @@ namespace roscan {
         header |= (1 << ROSCANConstants::ROSTopic::bitshift_msg_num);
         frame.can_id = header;
         frame.can_dlc = 0;
-        frame.data = 0;
+        *(double *)frame.data = 0;
         MessageBuffer::instance().push(frame);
 
     }

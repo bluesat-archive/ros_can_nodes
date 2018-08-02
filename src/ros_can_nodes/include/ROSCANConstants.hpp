@@ -127,10 +127,10 @@ namespace ROSCANConstants {
         constexpr uint32_t bitmask_len = (0xF << bitshift_len);
 
         /* Bitshifting for Control modes 3/5 */
-        constexpr uint32_t bitshift_topic_id_response = 24;
+        constexpr uint32_t bitshift_topic_id = 7;
 
         /* Bitmasking for Control modes 3/5 */
-        constexpr uint32_t bitmask_topic_id_response = (0x3F << bitshift_topic_id_response);
+        constexpr uint32_t bitmask_topic_id = (0x3F << bitshift_topic_id);
 
         /* Value extractors */
         constexpr auto mode = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_mode, bitmask_mode); };
