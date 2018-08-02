@@ -43,9 +43,9 @@ MessageBuffer::MessageBuffer() {
             printf("\n");
 
             // CAN port is assumed to be open
-            // if (CANHelpers::send_can_port(frame) < 0) {
-            //     std::cerr << "send failed: frame could not be sent\n";
-            // }
+            if (CANHelpers::send_can_port(frame) < 0) {
+            	std::cerr << "send failed: frame could not be sent\n";
+            }
         }
     }};
     sender.detach();

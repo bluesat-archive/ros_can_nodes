@@ -27,14 +27,14 @@ int main(int argc, char **argv) {
 
     CANMsgRouter::init();
 
-    //CANMsgRouter::subscriberTest();
+    CANMsgRouter::subscriberTest();
 
-    CANMsgRouter::run();
+    //CANMsgRouter::run();
 }
 
 void CANMsgRouter::init() {
     // TODO: either fail on bad open_port OR have reconnect policy
-    int err = CANHelpers::open_can_port("vcan0");
+    int err = CANHelpers::open_can_port("can0");
 
     if (err) {
         throw "Failed to acuire can socket, exiting";
@@ -58,7 +58,11 @@ void CANMsgRouter::run() {
 }
 
 void CANMsgRouter::subscriberTest() {
+    ROS_INFO("Registering\n");
+
     uint32_t nodeId = RosCanNodeManager::instance().registerNode("testNode", 0);
+
+    ROS_INFO("Regitered***");
 
     roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
 
@@ -66,6 +70,8 @@ void CANMsgRouter::subscriberTest() {
     node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
     node->registerSubscriber("/front_left_swerve_controller/command", "blah");
     node->registerSubscriber("/back_left_swerve_controller/command", "blah");
+
+    ROS_INFO("Subscribed");
 
     while (1) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
