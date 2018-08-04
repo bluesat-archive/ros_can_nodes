@@ -465,7 +465,13 @@ namespace roscan {
 
     int RosCanNode::getFirstFreeTopic() {
         // return the position of the first unset bit
-        return ffs(~topicIds.to_ulong()) - 1;
+        int id = ffs(~topicIds.to_ulong()) - 1;
+
+        if(id >= 0){
+	    topicIds[id] = 1;
+	}
+
+        return id;
     }
 
 
