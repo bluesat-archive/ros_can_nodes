@@ -23,6 +23,7 @@
 #include "ros_node_lib/callback_queue.h"
 #include <thread>
 #include <bitset>
+#include <unordered_map>
 #include <mutex>
 #include <ros_type_introspection/ros_introspection.hpp>
 #include <topic_tools/shape_shifter.h>
@@ -56,6 +57,7 @@ namespace roscan {
             int unregisterSubscriber(const uint8_t topic);
             int advertiseTopic(const std::string& topic, const std::string& topic_type);
             int unregisterPublisher(const uint8_t topic);
+            void publish(const uint8_t topicID, const double value);
             int setParam(std::string key);
             int deleteParam(std::string key);
             int advertiseService(std::string service);
@@ -241,6 +243,7 @@ namespace roscan {
 
             bool isZombie;
             int getFirstFreeTopic();
+            std::unordered_map<uint8_t, PublisherPtr> publishers;
     };
 
 } // namespace roscan

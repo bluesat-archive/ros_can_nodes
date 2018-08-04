@@ -102,7 +102,7 @@ namespace ROSCANConstants {
 
         /* Bitshifting for Control mode 0 */
         constexpr uint32_t bitshift_mode0_step = 12;
-        constexpr uint32_t bitshift_mode0_hash = 3;
+        constexpr uint32_t bitshift_mode0_hash = 13;
 
         /* Bitmasking for  Control mode 0 */
         constexpr uint32_t bitmask_mode0_step = (0x1 << bitshift_mode0_step);

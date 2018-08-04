@@ -9,25 +9,34 @@
  */
 
 #include "TopicBuffers.hpp"
+#include <algorithm>
 
 TopicBuffers& TopicBuffers::instance() {
     static TopicBuffers instance;
     return instance;
 }
 
-void TopicBuffers::initBuffers() {
+void TopicBuffers::initBuffers() {}
 
-}
+void TopicBuffers::processData(const short key, const uint8_t data[CAN_MAX_DLEN], const int dlc, const bool last_msg, double& value) {
+    // get buffer by key
+    auto& buffer = topic_buffers[key];
 
-void TopicBuffers::appendData(const short key, const uint8_t data) {
-    //TODO: append data
-    topic_buffers[key][0] = data;
-}
-
-void TopicBuffers::processData(const short key, const uint8_t *const data, const int d_len, const bool last_msg) {
-    appendData(key, *data);
+    // reserve max buffer size if buffer was never used before
+    if (buffer.capacity() < TOPIC_BUFFER_SIZE) {
+        buffer.reserve(TOPIC_BUFFER_SIZE);
+    }
+    // append buffer
+    buffer.insert(buffer.end(), data, data + dlc);
 
     if (last_msg) {
-        // TODO: Convert to flattype and publish to ros network
+        // reverse endianness
+        std::reverse(buffer.begin(), buffer.end());
+
+        // convert buffer to data
+        value = *(double *)buffer.data();
+
+        // recycle the buffer
+        buffer.clear();
     }
 }

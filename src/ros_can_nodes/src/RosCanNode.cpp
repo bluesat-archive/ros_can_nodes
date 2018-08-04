@@ -15,6 +15,7 @@
 #include "ROSCANConstants.hpp"
 #include <linux/can.h>
 #include "MessageBuffer.hpp"
+#include <std_msgs/Float64.h>
 
 namespace roscan {
 
@@ -103,8 +104,7 @@ namespace roscan {
 
         int topic_num = getFirstFreeTopic();
         if (topic_num >= 0) {
-
-            //advertise<RosIntrospection::FlatMessage>(name, (uint32_t)10, false);
+            publishers[(uint8_t)topic_num] = advertise<std_msgs::Float64>(topic, 10);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
@@ -124,6 +124,13 @@ namespace roscan {
         // TODO: at a later date, at this moment, just call unregister node
         std::cout << "node id " << (int)id_ << " unadvertising topic id " << (int)topic << "\n";
         return 0;
+    }
+
+    void RosCanNode::publish(const uint8_t topicID, const double value) {
+        std_msgs::Float64 msg;
+        msg.data = value;
+        publishers[topicID]->publish(msg);
+        std::cout << "node id " << (int)id_ << " publishing value " << msg.data << " on topic id " << (int)topicID << "\n";
     }
 
     int RosCanNode::setParam(std::string key) {

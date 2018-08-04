@@ -27,9 +27,9 @@ int main(int argc, char **argv) {
 
     CANMsgRouter::init();
 
-    CANMsgRouter::subscriberTest();
+    //CANMsgRouter::subscriberTest();
 
-    //CANMsgRouter::run();
+    CANMsgRouter::run();
 }
 
 void CANMsgRouter::init() {
@@ -89,6 +89,7 @@ void CANMsgRouter::subscriberTest() {
 
 void CANMsgRouter::processCANMsg(const can_frame& msg) {
     // Check the CAN Msg Header to perform routing
+    printf("raw header %#X\n", msg.can_id);
     uint32_t header = msg.can_id & CAN_ERR_MASK;
     printf("header %#X\n", header);
 
@@ -253,23 +254,36 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
 void CANMsgRouter::routePublishMsg(const can_frame& msg) {
     uint32_t header = msg.can_id & CAN_ERR_MASK;
 
-    // Check if we have reached the last expected msg
-    bool last_msg = (msg.can_dlc < 8) ? false : true;
-
     // Grab attributes needed for accessing the buffer
-    uint8_t topic = ROSCANConstants::ROSTopic::topic_id(header);
-    uint8_t nid = ROSCANConstants::ROSTopic::nid(header);
+    uint8_t nodeID = ROSCANConstants::ROSTopic::nid(header);
+    uint8_t topicID = ROSCANConstants::ROSTopic::topic_id(header);
+    uint8_t len = ROSCANConstants::ROSTopic::len(header);
     uint8_t seq = ROSCANConstants::Common::seq(header);
+    printf("node id %d, topic id %d, message len %d\n", nodeID, topicID, len);
+    printf("seq raw %d\n", seq);
 
     // Special case for messages that are made up of 7 or more can packets
     if (seq == 7) {
-        seq = ROSCANConstants::ROSTopic::len(header);
+        seq = len;
+        printf("seq len %d\n", seq);
     }
 
-    // Key will be concatenation of topicid, and nid
-    short key = (topic << 5) | nid;
+    printf("received frame %d of %d\n", seq+1, len);
 
-    TopicBuffers::instance().processData(key, msg.data, seq, last_msg);
+    // Check if we have reached the last expected msg
+    // ie if the sequence number +1 is equal to the message length
+    bool last_msg = seq+1 == len;
+    std::cout << (last_msg ? "" : "NOT ") << "last msg" << "\n";
+
+    // Key will be concatenation of topicid, and nid
+    short key = (topicID << 4) | nodeID;
+
+    double val;
+    TopicBuffers::instance().processData(key, msg.data, msg.can_dlc, last_msg, val);
+    if (last_msg) {
+        std::cout << "got fully formed float64 message: \"" << val << "\"\n";
+        RosCanNodeManager::instance().getNode(nodeID)->publish(topicID, val);
+    }
 }
 
 void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std::string& topic_type) {

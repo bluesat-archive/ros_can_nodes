@@ -12,11 +12,14 @@
 #define TOPICBUFFERS_H
 
 #include <unordered_map>
+#include <vector>
 #include <cstdint>
+#include <linux/can.h>
 
 
 #define MAX_CAN_MSGS 32
-#define TOPIC_BUFFER_SIZE (MAX_CAN_MSGS)
+//#define TOPIC_BUFFER_SIZE (MAX_CAN_MSGS)
+#define TOPIC_BUFFER_SIZE (MAX_CAN_MSGS * CAN_MAX_DLEN)
 
 typedef uint8_t buffer[TOPIC_BUFFER_SIZE];
 
@@ -29,16 +32,14 @@ class TopicBuffers {
 
         void initBuffers();
 
-        void appendData(const short key, const uint8_t data);
-
-        void processData(const short key, const uint8_t *const data, const int d_len, const bool last_msg);
+        void processData(const short key, const uint8_t data[CAN_MAX_DLEN], const int dlc, const bool last_msg, double& value);
 
         // TODO: Possible Custom Hash function for unordered_map
         // TODO: Possible Custom Equality function for unordered_map
     private:
         TopicBuffers() {}
 
-        std::unordered_map<short, buffer> topic_buffers;
+        std::unordered_map<short, std::vector<uint8_t>> topic_buffers;
 
         TopicBuffers(const TopicBuffers&) = delete;
         void operator=(const TopicBuffers&) = delete;
