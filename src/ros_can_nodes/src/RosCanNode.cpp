@@ -12,10 +12,12 @@
 #include <xmlrpcpp/XmlRpcSocket.h>
 #include <unistd.h>
 #include <cstring>
+#include <utility>
 #include "ROSCANConstants.hpp"
 #include <linux/can.h>
 #include "MessageBuffer.hpp"
 #include <std_msgs/Float64.h>
+#include "owr_messages/pwm.h"
 
 namespace roscan {
 
@@ -104,16 +106,25 @@ namespace roscan {
 
         int topic_num = getFirstFreeTopic();
         if (topic_num >= 0) {
-            publishers[(uint8_t)topic_num] = advertise<std_msgs::Float64>(topic, 10);
+            PublisherPtr pub;
+            if (topic_type == "std_msgs/Float64") {
+                pub = advertise<std_msgs::Float64>(topic, 10);
+            } else if (topic_type == "owr_messages/pwm") {
+                pub = advertise<owr_messages::pwm>(topic, 10);
+            } else {
+                std::cout << "unimplemented advertise topic: " << topic_type << "\n";
+                return -1;
+            }
+            publishers[(uint8_t)topic_num] = std::make_pair(pub, topic_type);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
                 //-1: FAILURE: Method failed to complete correctly. In general, this means that the master/slave attempted the action and failed, and there may have been side-effects as a result.
                 //0: SUCCESS: Method completed successfully
-            return 0;
+            return topic_num;
         } else {
             // TODO handle error, no free topic ids
-            return 0;
+            return -1;
         }
 
         //TODO: return the CODE to see if success or fail from the ROS master unregisterSubscriber
@@ -126,11 +137,18 @@ namespace roscan {
         return 0;
     }
 
-    void RosCanNode::publish(const uint8_t topicID, const double value) {
-        std_msgs::Float64 msg;
-        msg.data = value;
-        publishers[topicID]->publish(msg);
-        std::cout << "node id " << (int)id_ << " publishing value " << msg.data << " on topic id " << (int)topicID << "\n";
+    void RosCanNode::publish(const uint8_t topicID, const uint8_t *const value) {
+        const auto& topic_type = publishers[topicID].second;
+        if (topic_type == "std_msgs/Float64") {
+            std_msgs::Float64 msg;
+            msg = *(std_msgs::Float64 *)value;
+            publishers[topicID].first->publish(msg);
+        } else if (topic_type == "owr_messages/pwm") {
+            owr_messages::pwm msg;
+            msg = *(owr_messages::pwm *)value;
+            publishers[topicID].first->publish(msg);
+        }
+        std::cout << "node id " << (int)id_ << " published message on topic id " << (int)topicID << "\n";
     }
 
     int RosCanNode::setParam(std::string key) {
@@ -474,9 +492,9 @@ namespace roscan {
         // return the position of the first unset bit
         int id = ffs(~topicIds.to_ulong()) - 1;
 
-        if(id >= 0){
-	    topicIds[id] = 1;
-	}
+        if (id >= 0) {
+            topicIds[id] = 1;
+        }
 
         return id;
     }

@@ -9,34 +9,28 @@
  */
 
 #include "TopicBuffers.hpp"
-#include <algorithm>
+#include <vector>
+#include <cstdint>
 
 TopicBuffers& TopicBuffers::instance() {
     static TopicBuffers instance;
     return instance;
 }
 
-void TopicBuffers::initBuffers() {}
+void TopicBuffers::reset(const short key, uint8_t can_frames) {
+    auto& topic = topic_buffers[key];
+    topic.first.clear();
+    topic.second.first = can_frames;
+    topic.second.second = 0;
+}
 
-void TopicBuffers::processData(const short key, const uint8_t data[CAN_MAX_DLEN], const int dlc, const bool last_msg, double& value) {
-    // get buffer by key
-    auto& buffer = topic_buffers[key];
+bool TopicBuffers::append(const short key, const uint8_t data[CAN_MAX_DLEN], const int dlc) {
+    auto& topic = topic_buffers[key];
+    topic.first.insert(topic.first.end(), data, data + dlc);
+    ++topic.second.second;
+    return topic.second.first == topic.second.second;
+}
 
-    // reserve max buffer size if buffer was never used before
-    if (buffer.capacity() < TOPIC_BUFFER_SIZE) {
-        buffer.reserve(TOPIC_BUFFER_SIZE);
-    }
-    // append buffer
-    buffer.insert(buffer.end(), data, data + dlc);
-
-    if (last_msg) {
-        // reverse endianness
-        std::reverse(buffer.begin(), buffer.end());
-
-        // convert buffer to data
-        value = *(double *)buffer.data();
-
-        // recycle the buffer
-        buffer.clear();
-    }
+const std::vector<uint8_t>& TopicBuffers::get(const short key) {
+    return topic_buffers[key].first;
 }

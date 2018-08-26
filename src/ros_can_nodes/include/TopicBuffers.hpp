@@ -13,33 +13,33 @@
 
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include <cstdint>
 #include <linux/can.h>
 
 
 #define MAX_CAN_MSGS 32
-//#define TOPIC_BUFFER_SIZE (MAX_CAN_MSGS)
 #define TOPIC_BUFFER_SIZE (MAX_CAN_MSGS * CAN_MAX_DLEN)
-
-typedef uint8_t buffer[TOPIC_BUFFER_SIZE];
-
-// NOTE: above line is bad style, as calling sizeof will produce incorrect
-// results if not aware of the array type of 'buffer'
 
 class TopicBuffers {
     public:
         static TopicBuffers& instance();
 
-        void initBuffers();
+        void reset(const short key, uint8_t can_frames);
 
-        void processData(const short key, const uint8_t data[CAN_MAX_DLEN], const int dlc, const bool last_msg, double& value);
+        // returns whether the buffer for the topic is ready to be collected
+        bool append(const short key, const uint8_t data[CAN_MAX_DLEN], const int dlc);
+
+        const std::vector<uint8_t>& get(const short key);
 
         // TODO: Possible Custom Hash function for unordered_map
         // TODO: Possible Custom Equality function for unordered_map
     private:
         TopicBuffers() {}
 
-        std::unordered_map<short, std::vector<uint8_t>> topic_buffers;
+        // map key to pair containing the buffer array and
+        // pair of expected can frames count and actual frames received
+        std::unordered_map<short, std::pair<std::vector<uint8_t>, std::pair<uint8_t, uint8_t>>> topic_buffers;
 
         TopicBuffers(const TopicBuffers&) = delete;
         void operator=(const TopicBuffers&) = delete;
