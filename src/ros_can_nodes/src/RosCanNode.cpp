@@ -18,6 +18,7 @@
 #include "MessageBuffer.hpp"
 #include <std_msgs/Float64.h>
 #include "owr_messages/pwm.h"
+#include "owr_messages/motor.h"
 
 namespace roscan {
 
@@ -111,6 +112,8 @@ namespace roscan {
                 pub = advertise<std_msgs::Float64>(topic, 10);
             } else if (topic_type == "owr_messages/pwm") {
                 pub = advertise<owr_messages::pwm>(topic, 10);
+            } else if (topic_type == "owr_messages/motor") {
+                pub = advertise<owr_messages::motor>(topic, 10);
             } else {
                 std::cout << "unimplemented advertise topic: " << topic_type << "\n";
                 return -1;
@@ -141,11 +144,19 @@ namespace roscan {
         const auto& topic_type = publishers[topicID].second;
         if (topic_type == "std_msgs/Float64") {
             std_msgs::Float64 msg;
+            std::cout << "std_msgs/Float64 message size " << sizeof(msg) << "\n";
             msg = *(std_msgs::Float64 *)value;
+            std::cout << "std_msgs/Float64 data: " << msg.data << "\n";
             publishers[topicID].first->publish(msg);
         } else if (topic_type == "owr_messages/pwm") {
             owr_messages::pwm msg;
+            std::cout << "owr_messages/pwm message size " << sizeof(msg) << "\n";
             msg = *(owr_messages::pwm *)value;
+            publishers[topicID].first->publish(msg);
+        } else if (topic_type == "owr_messages/motor") {
+            owr_messages::motor msg;
+            std::cout << "owr_messages/motor message size " << sizeof(msg) << "\n";
+            msg = *(owr_messages::motor *)value;
             publishers[topicID].first->publish(msg);
         }
         std::cout << "node id " << (int)id_ << " published message on topic id " << (int)topicID << "\n";

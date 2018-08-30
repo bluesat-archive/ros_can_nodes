@@ -28,8 +28,9 @@ int main(int argc, char **argv) {
     CANMsgRouter::init();
 
     //CANMsgRouter::subscriberTest();
+    CANMsgRouter::publisherTest();
 
-    CANMsgRouter::run();
+    //CANMsgRouter::run();
 }
 
 void CANMsgRouter::init() {
@@ -39,8 +40,6 @@ void CANMsgRouter::init() {
     if (err) {
         throw "Failed to acuire can socket, exiting";
     }
-
-    //TopicBuffers::instance().initBuffers();
 }
 
 void CANMsgRouter::run() {
@@ -60,20 +59,21 @@ void CANMsgRouter::run() {
 void CANMsgRouter::publisherTest() {
     ROS_INFO("Registering\n");
 
-    uint32_t nodeId = RosCanNodeManager::instance().registerNode("right_loco", 0);
+    int nodeId = RosCanNodeManager::instance().registerNode("can_publish_test", 5, 5);
+    if (nodeId < 0) {
+        ROS_INFO("unable to register node");
+        return;
+    }
 
-
-    ROS_INFO("Regitered***");
+    ROS_INFO("Registered***");
 
     roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
 
-    node->advertiseTopic("aaa", "owr_msgs/pwm");
+    node->advertiseTopic("/aaa", "std_msgs/Float64");
 
-    ROS_INFO("publishing");
+    ROS_INFO("publishing...");
 
-    while (1) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    CANMsgRouter::run();
 }
 
 void CANMsgRouter::subscriberTest() {
@@ -300,6 +300,7 @@ void CANMsgRouter::routePublishMsg(const can_frame& msg) {
             printf(" %02x", b);
         }
         printf("\n");
+        printf("buffer size %lu\n", buf.size());
         RosCanNodeManager::instance().getNode(nodeID)->publish(topicID, buf.data());
     }
 }

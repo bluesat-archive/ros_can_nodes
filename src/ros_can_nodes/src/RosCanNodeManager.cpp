@@ -12,17 +12,21 @@ roscan::RosCanNodePtr RosCanNodeManager::getNode(const uint8_t id) {
     return nodeList[id];
 }
 
-int RosCanNodeManager::registerNode(const std::string& name, const uint8_t hashName) {
+int RosCanNodeManager::registerNode(const std::string& name, const uint8_t hashName, const int request_nid) {
     uint8_t index = 0;
     //get the first id
 
     {
         std::lock_guard<std::mutex> nodeListLock{nodeListMutex};
 
-        while (index < MAX_NODES && nodeList[index]) {
-            ++index;
-            if (index >= MAX_NODES) {
-                return -1;
+        if (request_nid != -1 && request_nid < MAX_NODES) {
+            index = request_nid;
+        } else {
+            while (index < MAX_NODES && nodeList[index]) {
+                ++index;
+                if (index >= MAX_NODES) {
+                    return -1;
+                }
             }
         }
 
