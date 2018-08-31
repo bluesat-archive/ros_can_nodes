@@ -58,7 +58,7 @@ namespace roscan {
             int unregisterSubscriber(const uint8_t topic);
             int advertiseTopic(const std::string& topic, const std::string& topic_type);
             int unregisterPublisher(const uint8_t topic);
-            void publish(const uint8_t topicID, const uint8_t *const value);
+            void publish(const uint8_t topicID, const std::vector<uint8_t>& value);
             int setParam(std::string key);
             int deleteParam(std::string key);
             int advertiseService(std::string service);

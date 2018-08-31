@@ -69,7 +69,8 @@ void CANMsgRouter::publisherTest() {
 
     roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
 
-    node->advertiseTopic("/aaa", "std_msgs/Float64");
+    //node->advertiseTopic("/aaa", "std_msgs/Float64");
+    node->advertiseTopic("/aaa", "owr_messages/motor");
 
     ROS_INFO("publishing...");
 
@@ -300,8 +301,7 @@ void CANMsgRouter::routePublishMsg(const can_frame& msg) {
             printf(" %02x", b);
         }
         printf("\n");
-        printf("buffer size %lu\n", buf.size());
-        RosCanNodeManager::instance().getNode(nodeID)->publish(topicID, buf.data());
+        RosCanNodeManager::instance().getNode(nodeID)->publish(topicID, buf);
     }
 }
 

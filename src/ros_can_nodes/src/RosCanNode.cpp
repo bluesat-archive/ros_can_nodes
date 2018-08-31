@@ -140,23 +140,39 @@ namespace roscan {
         return 0;
     }
 
-    void RosCanNode::publish(const uint8_t topicID, const uint8_t *const value) {
+    void RosCanNode::publish(const uint8_t topicID, const std::vector<uint8_t>& buf) {
+        std::cout << "buffer size " << buf.size() << "\n";
+        auto value = std::vector<uint8_t>(buf.cbegin(), buf.cend());
+
+        auto pad_buf = [](auto& buf, const auto sz) {
+            std::cout << "converting buffer: appending " << sz << " 0s to buffer\n";
+            buf.insert(buf.end(), sz, 0);
+        };
+
         const auto& topic_type = publishers[topicID].second;
         if (topic_type == "std_msgs/Float64") {
             std_msgs::Float64 msg;
             std::cout << "std_msgs/Float64 message size " << sizeof(msg) << "\n";
-            msg = *(std_msgs::Float64 *)value;
-            std::cout << "std_msgs/Float64 data: " << msg.data << "\n";
+            if (sizeof(msg) > buf.size()) {
+                pad_buf(value, sizeof(msg) - buf.size());
+            }
+            msg = *(std_msgs::Float64 *)value.data();
             publishers[topicID].first->publish(msg);
         } else if (topic_type == "owr_messages/pwm") {
             owr_messages::pwm msg;
             std::cout << "owr_messages/pwm message size " << sizeof(msg) << "\n";
-            msg = *(owr_messages::pwm *)value;
+            if (sizeof(msg) > buf.size()) {
+                pad_buf(value, sizeof(msg) - buf.size());
+            }
+            msg = *(owr_messages::pwm *)value.data();
             publishers[topicID].first->publish(msg);
         } else if (topic_type == "owr_messages/motor") {
             owr_messages::motor msg;
             std::cout << "owr_messages/motor message size " << sizeof(msg) << "\n";
-            msg = *(owr_messages::motor *)value;
+            if (sizeof(msg) > buf.size()) {
+                pad_buf(value, sizeof(msg) - buf.size());
+            }
+            msg = *(owr_messages::motor *)value.data();
             publishers[topicID].first->publish(msg);
         }
         std::cout << "node id " << (int)id_ << " published message on topic id " << (int)topicID << "\n";
