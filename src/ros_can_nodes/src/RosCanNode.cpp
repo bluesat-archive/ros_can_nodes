@@ -102,20 +102,27 @@ namespace roscan {
         return 0;
     }
 
+    PublisherPtr RosCanNode::make_publisher(const std::string& topic, const std::string& topic_type) {
+        constexpr uint32_t queue_size = 10;
+        if (topic_type == "std_msgs/Float64") {
+            return advertise<std_msgs::Float64>(topic, queue_size);
+        } else if (topic_type == "owr_messages/pwm") {
+            return advertise<owr_messages::pwm>(topic, queue_size);
+        } else if (topic_type == "owr_messages/motor") {
+            return advertise<owr_messages::motor>(topic, queue_size);
+        }
+        // ...other message types if needed
+        std::cout << "unimplemented advertise topic: " << topic_type << "\n";
+        return PublisherPtr{};
+    }
+
     int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type) {
         std::cout << "node id " << (int)id_ << " advertising topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
 
         int topic_num = getFirstFreeTopic();
         if (topic_num >= 0) {
-            PublisherPtr pub;
-            if (topic_type == "std_msgs/Float64") {
-                pub = advertise<std_msgs::Float64>(topic, 10);
-            } else if (topic_type == "owr_messages/pwm") {
-                pub = advertise<owr_messages::pwm>(topic, 10);
-            } else if (topic_type == "owr_messages/motor") {
-                pub = advertise<owr_messages::motor>(topic, 10);
-            } else {
-                std::cout << "unimplemented advertise topic: " << topic_type << "\n";
+            PublisherPtr pub = make_publisher(topic, topic_type);
+            if (!pub) {
                 return -1;
             }
             publishers[(uint8_t)topic_num] = std::make_pair(pub, topic_type);
@@ -141,40 +148,20 @@ namespace roscan {
     }
 
     void RosCanNode::publish(const uint8_t topicID, const std::vector<uint8_t>& buf) {
-        std::cout << "buffer size " << buf.size() << "\n";
-        auto value = std::vector<uint8_t>(buf.cbegin(), buf.cend());
-
-        auto pad_buf = [](auto& buf, const auto sz) {
-            std::cout << "converting buffer: appending " << sz << " 0s to buffer\n";
-            buf.insert(buf.end(), sz, 0);
-        };
-
         const auto& topic_type = publishers[topicID].second;
         if (topic_type == "std_msgs/Float64") {
-            std_msgs::Float64 msg;
-            std::cout << "std_msgs/Float64 message size " << sizeof(msg) << "\n";
-            if (sizeof(msg) > buf.size()) {
-                pad_buf(value, sizeof(msg) - buf.size());
-            }
-            msg = *(std_msgs::Float64 *)value.data();
+            auto msg = convert_buf<std_msgs::Float64>(buf);
             publishers[topicID].first->publish(msg);
         } else if (topic_type == "owr_messages/pwm") {
-            owr_messages::pwm msg;
-            std::cout << "owr_messages/pwm message size " << sizeof(msg) << "\n";
-            if (sizeof(msg) > buf.size()) {
-                pad_buf(value, sizeof(msg) - buf.size());
-            }
-            msg = *(owr_messages::pwm *)value.data();
+            auto msg = convert_buf<owr_messages::pwm>(buf);
             publishers[topicID].first->publish(msg);
         } else if (topic_type == "owr_messages/motor") {
-            owr_messages::motor msg;
-            std::cout << "owr_messages/motor message size " << sizeof(msg) << "\n";
-            if (sizeof(msg) > buf.size()) {
-                pad_buf(value, sizeof(msg) - buf.size());
-            }
-            msg = *(owr_messages::motor *)value.data();
+            auto msg = convert_buf<owr_messages::motor>(buf);
             publishers[topicID].first->publish(msg);
+        } else {
+            return;
         }
+        // ...other message types if needed
         std::cout << "node id " << (int)id_ << " published message on topic id " << (int)topicID << "\n";
     }
 

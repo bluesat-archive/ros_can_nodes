@@ -56,6 +56,7 @@ namespace roscan {
             void heartbeat();
             int registerSubscriber(const std::string& topic, const std::string& topic_type);
             int unregisterSubscriber(const uint8_t topic);
+            PublisherPtr make_publisher(const std::string& topic, const std::string& topic_type);
             int advertiseTopic(const std::string& topic, const std::string& topic_type);
             int unregisterPublisher(const uint8_t topic);
             void publish(const uint8_t topicID, const std::vector<uint8_t>& value);
@@ -69,6 +70,19 @@ namespace roscan {
             int hasParam(std::string key);
             int getParamNames();
             int getParam(std::string key);
+
+            template<typename M>
+            M convert_buf(const std::vector<uint8_t>& buf) {
+                auto value = std::vector<uint8_t>(buf.cbegin(), buf.cend());
+                std::cout << "message type size " << sizeof(M) << "\n";
+                std::cout << "buffer size " << value.size() << "\n";
+                if (sizeof(M) > value.size()) {
+                    auto sz = sizeof(M) - value.size();
+                    std::cout << "converting buffer: appending " << sz << " 0s to buffer\n";
+                    value.insert(value.end(), sz, 0);
+                }
+                return *(M *)value.data();
+            }
 
         private:
             const std::string name_;
