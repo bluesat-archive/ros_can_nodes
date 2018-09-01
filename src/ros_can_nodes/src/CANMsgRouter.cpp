@@ -63,12 +63,15 @@ void CANMsgRouter::subscriberTest() {
     uint32_t nodeId = RosCanNodeManager::instance().registerNode("dummy", 0);
     uint32_t nodeId2 = RosCanNodeManager::instance().registerNode("left_loco", 0);
     uint32_t nodeId3 = RosCanNodeManager::instance().registerNode("right_loco", 0);
-
+    uint32_t nodeId0 = RosCanNodeManager::instance().registerNode("dummy0", 0);
+    uint32_t nodeId4 = RosCanNodeManager::instance().registerNode("arm_top", 0);
 
     ROS_INFO("Regitered***");
 
     roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId2);
     roscan::RosCanNodePtr node2 = RosCanNodeManager::instance().getNode(nodeId);
+
+    roscan::RosCanNodePtr node4 = RosCanNodeManager::instance().getNode(nodeId4);
 
     node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
     node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
@@ -80,6 +83,12 @@ void CANMsgRouter::subscriberTest() {
     node2->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
     node2->registerSubscriber("/front_right_swerve_controller/command", "blah");
     node2->registerSubscriber("/back_right_swerve_controller/command", "blah");
+
+    node4->registerSubscriber("/arm_base_rotate_controller/command", "blah");
+    node4->registerSubscriber("/arm_top_controller/command", "blah");
+    node4->registerSubscriber("/arm_bottom_controller/command", "blah");
+    node4->registerSubscriber("/claw_rotate_controller/command", "blah");
+    node4->registerSubscriber("/claw_grip_controller/command", "blah");
 
 
     ROS_INFO("Subscribed");
