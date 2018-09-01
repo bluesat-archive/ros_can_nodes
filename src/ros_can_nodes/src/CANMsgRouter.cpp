@@ -60,8 +60,9 @@ void CANMsgRouter::run() {
 void CANMsgRouter::subscriberTest() {
     ROS_INFO("Registering\n");
 
-    uint32_t nodeId = RosCanNodeManager::instance().registerNode("right_loco", 0);
+    uint32_t nodeId = RosCanNodeManager::instance().registerNode("dummy", 0);
     uint32_t nodeId2 = RosCanNodeManager::instance().registerNode("left_loco", 0);
+    uint32_t nodeId3 = RosCanNodeManager::instance().registerNode("right_loco", 0);
 
 
     ROS_INFO("Regitered***");
@@ -73,6 +74,7 @@ void CANMsgRouter::subscriberTest() {
     node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
     node->registerSubscriber("/front_left_swerve_controller/command", "blah");
     node->registerSubscriber("/back_left_swerve_controller/command", "blah");
+
 
     node2->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
     node2->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");

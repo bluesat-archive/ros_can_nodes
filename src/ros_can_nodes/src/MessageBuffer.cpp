@@ -36,16 +36,18 @@ MessageBuffer::MessageBuffer() {
                 break;
             }
 
-            printf("Sending header = %#08X, length = %d, data = ", frame.can_id, frame.can_dlc);
+            //printf("Sending header = %#08X, length = %d, data = ", frame.can_id, frame.can_dlc);
             for (int i = 0; i < frame.can_dlc;++i) {
-                printf("%02X ", frame.data[i]);
+                //printf("%02X ", frame.data[i]);
             }
-            printf("\n");
+            //printf("\n");
 
             // CAN port is assumed to be open
             if (CANHelpers::send_can_port(frame) < 0) {
             	std::cerr << "send failed: frame could not be sent\n";
             }
+
+	    //lock.unlock();
         }
     }};
     sender.detach();

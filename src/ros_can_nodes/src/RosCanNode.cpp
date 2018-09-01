@@ -224,7 +224,7 @@ namespace roscan {
     // ==================================================
 
     void RosCanNode::rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, const uint8_t topicID, const std::string& topic_name) {
-        ROS_INFO_STREAM("callback: topic_id = " << (int)topicID << " topic_name = " << topic_name);
+        //ROS_INFO_STREAM("callback: topic_id = " << (int)topicID << " topic_name = " << topic_name);
         RosIntrospection::Parser parser;
 
         const std::string&  datatype   =  msg->getDataType();
@@ -253,11 +253,11 @@ namespace roscan {
         parser.applyNameTransform(topic_name, flat_container, &renamed_values);
 
         //print the content of the message
-        printf("--------- %s ----------\n", topic_name.c_str());
+        //printf("--------- %s ----------\n", topic_name.c_str());
         for (const auto& it: renamed_values) {
             const std::string& key = it.first;
             const RosIntrospection::Variant& value   = it.second;
-            printf(" %s = %f\n", key.c_str(), value.convert<double>()); //convert into CAN message set
+            //printf(" %s = %f\n", key.c_str(), value.convert<double>()); //convert into CAN message set
         }
 
         canid_t header = 0x0;
@@ -266,8 +266,12 @@ namespace roscan {
         header |= (0 << ROSCANConstants::Common::bitshift_priority);
         header |= (0 << ROSCANConstants::Common::bitshift_func);
         header |= (0 << ROSCANConstants::Common::bitshift_seq);
-        header |= ((topicID * 2) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
+        if(id_ == 1){
+	    header |= ((topicID * 2) << ROSCANConstants::ROSTopic::bitshift_topic_id);
+        } else if (id_ == 0 ){
+            header |= ((topicID * 2 + 1) << ROSCANConstants::ROSTopic::bitshift_topic_id);
+	}
+	header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
         header |= (0 << ROSCANConstants::ROSTopic::bitshift_msg_num);
         header |= (2 << ROSCANConstants::ROSTopic::bitshift_len);
         header |= CAN_EFF_FLAG;
