@@ -271,7 +271,7 @@ namespace roscan {
         } else if (id_ == 0 ){
             header |= ((topicID * 2 + 1) << ROSCANConstants::ROSTopic::bitshift_topic_id);
 	} else if (id_ == 4) {
-            header |= ((topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id);
+            header |= ((topicID + 8) << ROSCANConstants::ROSTopic::bitshift_topic_id);
         }
 	header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
         header |= (0 << ROSCANConstants::ROSTopic::bitshift_msg_num);
