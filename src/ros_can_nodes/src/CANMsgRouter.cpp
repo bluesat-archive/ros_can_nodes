@@ -62,12 +62,14 @@ void CANMsgRouter::subscriberTest() {
 
     uint32_t nodeId = RosCanNodeManager::instance().registerNode("right_loco", 0);
     uint32_t nodeId2 = RosCanNodeManager::instance().registerNode("left_loco", 0);
+    uint32_t nodeId3 = RosCanNodeManager::instance().registerNode("lidar_til", 0);
 
 
     ROS_INFO("Regitered***");
 
     roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId2);
     roscan::RosCanNodePtr node2 = RosCanNodeManager::instance().getNode(nodeId);
+    roscan::RosCanNodePtr node3 = RosCanNodeManager::instance().getNode(nodeId3);
 
     node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
     node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
@@ -78,6 +80,8 @@ void CANMsgRouter::subscriberTest() {
     node2->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
     node2->registerSubscriber("/front_right_swerve_controller/command", "blah");
     node2->registerSubscriber("/back_right_swerve_controller/command", "blah");
+
+    node3->registerSubscriber("/laser_tilt_joint_controller/command", "blah");
 
 
     ROS_INFO("Subscribed");
