@@ -73,6 +73,7 @@ namespace roscan {
         std::cout << "node id " << (int)id_ << " subscribing to topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
 
         int topic_num = getFirstFreeTopic();
+        std::cout << "topic_id" << (int)topic_num << "\n";
 
         if (topic_num >= 0) {
             boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
