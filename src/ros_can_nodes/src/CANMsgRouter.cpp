@@ -37,7 +37,7 @@ void CANMsgRouter::init() {
     int err = CANHelpers::open_can_port("can0");
 
     if (err) {
-        throw "Failed to acuire can socket, exiting";
+        throw "Failed to acquire CAN socket, exiting";
     }
 
     //TopicBuffers::instance().initBuffers();
