@@ -66,7 +66,7 @@ void CANMsgRouter::subscriberTest() {
     int nodeId4 = RosCanNodeManager::instance().registerNode("arm", 4, 4);
 
     if (nodeId1 < 0 || nodeId2 < 0 || nodeId4 < 0) {
-        ROS_ERROR("unable to register all nodes");
+        throw std::runtime_error("unable to register all subscriber nodes, exiting");
     }
 
     ROS_INFO("Registered***");
@@ -82,8 +82,8 @@ void CANMsgRouter::subscriberTest() {
 
     r_loco_node->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
     r_loco_node->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
-    r_loco_node->registerSubscriber("/front_righnode4t_swerve_controller/command", "blah");
-    r_loco_node->registerSubscriber("/back_rightnode4_swerve_controller/command", "blah");
+    r_loco_node->registerSubscriber("/front_right_swerve_controller/command", "blah");
+    r_loco_node->registerSubscriber("/back_right_swerve_controller/command", "blah");
 
     arm_node->registerSubscriber("/arm_base_rotate_controller/command", "blah");
     arm_node->registerSubscriber("/arm_top_controller/command", "blah");
