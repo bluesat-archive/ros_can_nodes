@@ -13,6 +13,7 @@
 #include <chrono>
 #include <string>
 #include <sstream>
+#include <stdexcept>
 #include "CANMsgRouter.hpp"
 #include "ROSCANConstants.hpp"
 #include "TopicBuffers.hpp"
@@ -37,7 +38,7 @@ void CANMsgRouter::init() {
     int err = CANHelpers::open_can_port("can0");
 
     if (err) {
-        throw "Failed to acquire CAN socket, exiting";
+        throw std::runtime_error("Failed to acquire CAN socket, exiting");
     }
 
     //TopicBuffers::instance().initBuffers();
