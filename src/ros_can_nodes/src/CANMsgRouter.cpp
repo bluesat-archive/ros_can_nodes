@@ -61,36 +61,35 @@ void CANMsgRouter::run() {
 void CANMsgRouter::subscriberTest() {
     ROS_INFO("Registering\n");
 
-    uint32_t nodeId = RosCanNodeManager::instance().registerNode("dummy", 0);
-    uint32_t nodeId2 = RosCanNodeManager::instance().registerNode("left_loco", 0);
-    uint32_t nodeId3 = RosCanNodeManager::instance().registerNode("right_loco", 0);
-    uint32_t nodeId0 = RosCanNodeManager::instance().registerNode("dummy0", 0);
-    uint32_t nodeId4 = RosCanNodeManager::instance().registerNode("arm_top", 0);
+    int nodeId1 = RosCanNodeManager::instance().registerNode("left_loco", 1, 1);
+    int nodeId2 = RosCanNodeManager::instance().registerNode("right_loco", 2, 2);
+    int nodeId4 = RosCanNodeManager::instance().registerNode("arm", 4, 4);
 
-    ROS_INFO("Regitered***");
+    if (nodeId1 < 0 || nodeId2 < 0 || nodeId4 < 0) {
+        ROS_ERROR("unable to register all nodes");
+    }
 
-    roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId2);
-    roscan::RosCanNodePtr node2 = RosCanNodeManager::instance().getNode(nodeId);
+    ROS_INFO("Registered***");
 
-    roscan::RosCanNodePtr node4 = RosCanNodeManager::instance().getNode(nodeId4);
+    roscan::RosCanNodePtr l_loco_node = RosCanNodeManager::instance().getNode(nodeId1);
+    roscan::RosCanNodePtr r_loco_node = RosCanNodeManager::instance().getNode(nodeId2);
+    roscan::RosCanNodePtr arm_node = RosCanNodeManager::instance().getNode(nodeId4);
 
-    node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
-    node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
-    node->registerSubscriber("/front_left_swerve_controller/command", "blah");
-    node->registerSubscriber("/back_left_swerve_controller/command", "blah");
+    l_loco_node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
+    l_loco_node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
+    l_loco_node->registerSubscriber("/front_left_swerve_controller/command", "blah");
+    l_loco_node->registerSubscriber("/back_left_swerve_controller/command", "blah");
 
+    r_loco_node->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
+    r_loco_node->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
+    r_loco_node->registerSubscriber("/front_righnode4t_swerve_controller/command", "blah");
+    r_loco_node->registerSubscriber("/back_rightnode4_swerve_controller/command", "blah");
 
-    node2->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
-    node2->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
-    node2->registerSubscriber("/front_right_swerve_controller/command", "blah");
-    node2->registerSubscriber("/back_right_swerve_controller/command", "blah");
-
-    node4->registerSubscriber("/arm_base_rotate_controller/command", "blah");
-    node4->registerSubscriber("/arm_top_controller/command", "blah");
-    node4->registerSubscriber("/arm_bottom_controller/command", "blah");
-    node4->registerSubscriber("/claw_rotate_controller/command", "blah");
-    node4->registerSubscriber("/claw_grip_controller/command", "blah");
-
+    arm_node->registerSubscriber("/arm_base_rotate_controller/command", "blah");
+    arm_node->registerSubscriber("/arm_top_controller/command", "blah");
+    arm_node->registerSubscriber("/arm_bottom_controller/command", "blah");
+    arm_node->registerSubscriber("/claw_rotate_controller/command", "blah");
+    arm_node->registerSubscriber("/claw_grip_controller/command", "blah");
 
     ROS_INFO("Subscribed");
 
