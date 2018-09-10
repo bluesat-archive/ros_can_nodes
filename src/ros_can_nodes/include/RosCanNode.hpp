@@ -52,7 +52,7 @@ namespace roscan {
 
             void deregisterNode();
             void heartbeat();
-            int registerSubscriber(const std::string& topic, const std::string& topic_type);
+            int registerSubscriber(const std::string& topic, const std::string& topic_type, const int request_tid = -1);
             int unregisterSubscriber(const uint8_t topic);
             int advertiseTopic(const std::string& topic, const std::string& topic_type);
             int unregisterPublisher(const uint8_t topic);

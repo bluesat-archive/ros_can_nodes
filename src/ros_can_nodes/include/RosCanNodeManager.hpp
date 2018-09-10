@@ -11,7 +11,7 @@ class RosCanNodeManager {
         static RosCanNodeManager& instance();
 
         roscan::RosCanNodePtr getNode(const uint8_t id);
-        int registerNode(const std::string& name, const uint8_t hashName);
+        int registerNode(const std::string& name, const uint8_t hashName, const int request_nid = -1);
         void deregisterNode(const uint8_t id);
 
     private:

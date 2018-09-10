@@ -69,10 +69,17 @@ namespace roscan {
         std::cout  << now->tm_hour << ":" << now->tm_min << std::endl;
     }
 
-    int RosCanNode::registerSubscriber(const std::string& topic, const std::string& topic_type) {
+    int RosCanNode::registerSubscriber(const std::string& topic, const std::string& topic_type, const int request_tid) {
         std::cout << "node id " << (int)id_ << " subscribing to topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
 
-        int topic_num = getFirstFreeTopic();
+        int topic_num;
+        if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
+            topicIds[request_tid] = 1;
+            topic_num = request_tid;
+        } else {
+            topic_num = getFirstFreeTopic();
+        }
+        std::cout << "topic_id" << (int)topic_num << "\n";
 
         if (topic_num >= 0) {
             boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
@@ -88,7 +95,7 @@ namespace roscan {
             return topic_num;
         } else {
             // TODO handle error, no free topic ids
-            return 0;
+            return -1;
         }
     }
 
@@ -473,9 +480,9 @@ namespace roscan {
         // return the position of the first unset bit
         int id = ffs(~topicIds.to_ulong()) - 1;
 
-        if(id >= 0){
-	    topicIds[id] = 1;
-	}
+        if (id >= 0) {
+            topicIds[id] = 1;
+        }
 
         return id;
     }
