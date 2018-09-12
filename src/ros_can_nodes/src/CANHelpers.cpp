@@ -9,10 +9,11 @@
  */
 
 
-#include <stdio.h>
+#include <cstring>
+#include <ctime>
+#include <iostream>
 #include <unistd.h>
 #include <errno.h>
-#include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
@@ -21,6 +22,7 @@
 #include "CANHelpers.hpp"
 
 int soc;
+tm last_print_time = {0};
 
 int CANHelpers::open_can_port(const char *const port) {
     ifreq ifr;
@@ -51,14 +53,20 @@ int CANHelpers::open_can_port(const char *const port) {
 }
 
 int CANHelpers::send_can_port(const can_frame& frame) {
-    const int retval = write(soc, &frame, sizeof(can_frame));
-    if (retval != sizeof(can_frame)) {
-        printf("Failed to send !! %s \n", strerror(errno));
-        return (-1);
-    } else {
-        printf("Sent !!\n");
-        return (0);
+    const auto err = write(soc, &frame, sizeof(can_frame)) != sizeof(can_frame) ? -1 : 0;
+
+    const auto time_now = time(NULL);
+    const auto time_since_last_print = difftime(time_now, mktime(&last_print_time));
+
+    if (time_since_last_print >= 1.0) {
+        if (err) {
+            std::cout << "Failed to send !! " << strerror(errno) << "\n";
+        } else {
+            std::cout << "Sent !!\n";
+        }
+        last_print_time = *localtime(&time_now);
     }
+    return err;
 }
 
 int CANHelpers::read_can_port(can_frame& frame) {

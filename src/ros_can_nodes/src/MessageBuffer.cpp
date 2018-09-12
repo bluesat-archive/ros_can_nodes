@@ -30,6 +30,7 @@ MessageBuffer::MessageBuffer() {
             
             lock.unlock();
             
+            /*
             // debug exit condition
             if (frame.__res0 == 8) {
                 std::cout << "exit condition\n";
@@ -41,13 +42,10 @@ MessageBuffer::MessageBuffer() {
                 //printf("%02X ", frame.data[i]);
             }
             //printf("\n");
+            */
 
             // CAN port is assumed to be open
-            if (CANHelpers::send_can_port(frame) < 0) {
-            	std::cerr << "send failed: frame could not be sent\n";
-            }
-
-	    //lock.unlock();
+            CANHelpers::send_can_port(frame);
         }
     }};
     sender.detach();
