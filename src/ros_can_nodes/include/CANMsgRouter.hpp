@@ -22,6 +22,8 @@ class CANMsgRouter {
 
         static void run();
 
+        static void publisherTest();
+
         static void subscriberTest();
 
         static void processCANMsg(const can_frame& msg);

@@ -9,25 +9,31 @@
  */
 
 #include "TopicBuffers.hpp"
+#include <vector>
+#include <cstdint>
+#include <iostream>
 
 TopicBuffers& TopicBuffers::instance() {
     static TopicBuffers instance;
     return instance;
 }
 
-void TopicBuffers::initBuffers() {
-
+void TopicBuffers::reset(const short key, uint8_t can_frames) {
+    auto& topic = topic_buffers[key];
+    std::cout << "topic buffers: resetting for key " << key << "\n";
+    topic.first.clear();
+    topic.second.first = can_frames;
+    topic.second.second = 0;
 }
 
-void TopicBuffers::appendData(const short key, const uint8_t data) {
-    //TODO: append data
-    topic_buffers[key][0] = data;
+bool TopicBuffers::append(const short key, const uint8_t data[CAN_MAX_DLEN], const int dlc) {
+    auto& topic = topic_buffers[key];
+    std::cout << "topic buffers: appending " << dlc << " bytes to key " << key << "\n";
+    topic.first.insert(topic.first.end(), data, data + dlc);
+    ++topic.second.second;
+    return topic.second.first == topic.second.second;
 }
 
-void TopicBuffers::processData(const short key, const uint8_t *const data, const int d_len, const bool last_msg) {
-    appendData(key, *data);
-
-    if (last_msg) {
-        // TODO: Convert to flattype and publish to ros network
-    }
+const std::vector<uint8_t>& TopicBuffers::get(const short key) {
+    return topic_buffers[key].first;
 }

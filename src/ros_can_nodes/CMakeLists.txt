@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   ros_type_introspection
   std_msgs
   topic_tools
+  owr_messages
 )
 
 ## System dependencies are found with CMake's conventions
@@ -84,7 +85,7 @@ find_package(Boost REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
     INCLUDE_DIRS include
-    CATKIN_DEPENDS std_msgs ros_type_introspection topic_tools
+    CATKIN_DEPENDS std_msgs ros_type_introspection topic_tools owr_messages
     DEPENDS Boost
 )
 

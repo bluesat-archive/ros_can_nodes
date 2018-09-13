@@ -59,13 +59,13 @@ namespace ROSCANConstants {
         /* Bitshifting for rostopic msg fields */
         constexpr uint32_t bitshift_msg_num = 8;
         constexpr uint32_t bitshift_topic_id = 10;
-        constexpr uint32_t bitshift_len = 16;
+        constexpr uint32_t bitshift_len = 17;
         constexpr uint32_t bitshift_nid = 25;
 
         /* Bitmasking for ROS Topic Messages */
         constexpr uint32_t bitmask_msg_num = (0x3 << bitshift_msg_num);
-        constexpr uint32_t bitmask_topic_id = (0x3F << bitshift_topic_id);
-        constexpr uint32_t bitmask_len = (0x1FF << bitshift_len);
+        constexpr uint32_t bitmask_topic_id = (0x7F << bitshift_topic_id);
+        constexpr uint32_t bitmask_len = (0xFF << bitshift_len);
         constexpr uint32_t bitmask_nid = (0xF << bitshift_nid);
 
         /* Value extractors */
@@ -102,7 +102,7 @@ namespace ROSCANConstants {
 
         /* Bitshifting for Control mode 0 */
         constexpr uint32_t bitshift_mode0_step = 12;
-        constexpr uint32_t bitshift_mode0_hash = 3;
+        constexpr uint32_t bitshift_mode0_hash = 13;
 
         /* Bitmasking for  Control mode 0 */
         constexpr uint32_t bitmask_mode0_step = (0x1 << bitshift_mode0_step);

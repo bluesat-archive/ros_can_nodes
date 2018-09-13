@@ -28,7 +28,8 @@ int main(int argc, char **argv) {
 
     CANMsgRouter::init();
 
-    CANMsgRouter::subscriberTest();
+    //CANMsgRouter::subscriberTest();
+    CANMsgRouter::publisherTest();
 
     //CANMsgRouter::run();
 }
@@ -40,8 +41,6 @@ void CANMsgRouter::init() {
     if (err) {
         throw std::runtime_error("Failed to acquire CAN socket, exiting");
     }
-
-    //TopicBuffers::instance().initBuffers();
 }
 
 void CANMsgRouter::run() {
@@ -56,6 +55,27 @@ void CANMsgRouter::run() {
             CANMsgRouter::processCANMsg(can_msg);
         }
     }
+}
+
+void CANMsgRouter::publisherTest() {
+    ROS_INFO("Registering\n");
+
+    int nodeId = RosCanNodeManager::instance().registerNode("can_publish_test", 5, 5);
+    if (nodeId < 0) {
+        ROS_INFO("unable to register node");
+        return;
+    }
+
+    ROS_INFO("Registered***");
+
+    roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
+
+    //node->advertiseTopic("/aaa", "std_msgs/Float64");
+    node->advertiseTopic("/aaa", "owr_messages/motor");
+
+    ROS_INFO("publishing...");
+
+    CANMsgRouter::run();
 }
 
 void CANMsgRouter::subscriberTest() {
@@ -105,6 +125,7 @@ void CANMsgRouter::subscriberTest() {
 
 void CANMsgRouter::processCANMsg(const can_frame& msg) {
     // Check the CAN Msg Header to perform routing
+    printf("raw header %#X\n", msg.can_id);
     uint32_t header = msg.can_id & CAN_ERR_MASK;
     printf("header %#X\n", header);
 
@@ -269,23 +290,35 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
 void CANMsgRouter::routePublishMsg(const can_frame& msg) {
     uint32_t header = msg.can_id & CAN_ERR_MASK;
 
-    // Check if we have reached the last expected msg
-    bool last_msg = (msg.can_dlc < 8) ? false : true;
-
     // Grab attributes needed for accessing the buffer
-    uint8_t topic = ROSCANConstants::ROSTopic::topic_id(header);
-    uint8_t nid = ROSCANConstants::ROSTopic::nid(header);
+    uint8_t nodeID = ROSCANConstants::ROSTopic::nid(header);
+    uint8_t topicID = ROSCANConstants::ROSTopic::topic_id(header);
+    uint8_t len = ROSCANConstants::ROSTopic::len(header);
     uint8_t seq = ROSCANConstants::Common::seq(header);
 
     // Special case for messages that are made up of 7 or more can packets
     if (seq == 7) {
-        seq = ROSCANConstants::ROSTopic::len(header);
+        seq = len;
     }
 
-    // Key will be concatenation of topicid, and nid
-    short key = (topic << 5) | nid;
+    printf("publish frame: node id %d, topic id %d, message len %d, seq %d\n", nodeID, topicID, len, seq);
 
-    TopicBuffers::instance().processData(key, msg.data, seq, last_msg);
+    // Key will be concatenation of topicid, and nid
+    short key = (topicID << 4) | nodeID;
+
+    if (seq == 0) {
+        TopicBuffers::instance().reset(key, len);
+    }
+
+    if (TopicBuffers::instance().append(key, msg.data, msg.can_dlc)) {
+        const auto& buf = TopicBuffers::instance().get(key);
+        printf("topic %d buf complete:", topicID);
+        for (const auto b : buf) {
+            printf(" %02x", b);
+        }
+        printf("\n");
+        RosCanNodeManager::instance().getNode(nodeID)->publish(topicID, buf);
+    }
 }
 
 void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std::string& topic_type) {
@@ -309,10 +342,11 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
     }
 
     // extract topic and topic type by finding the position of the middle null char
-    const auto null_char_it = std::find(buf.begin(), buf.end(), 0);
-    if (null_char_it != buf.end()) {
-        topic = std::string{buf.begin(), null_char_it};
-        topic_type = std::string{null_char_it+1, buf.end()};
+    const auto null_char_it1 = std::find(buf.cbegin(), buf.cend(), 0);
+    const auto null_char_it2 = std::find(null_char_it1 + 1, buf.cend(), 0);
+    if (null_char_it1 != buf.cend() && null_char_it2 != buf.cend()) {
+        topic = std::string{buf.cbegin(), null_char_it1};
+        topic_type = std::string{null_char_it1 + 1, null_char_it2};
         std::cout << "received topic \"" << topic << "\" with type \"" << topic_type << "\"\n";
     } else {
         std::cout << "invalid topic/type data\n";

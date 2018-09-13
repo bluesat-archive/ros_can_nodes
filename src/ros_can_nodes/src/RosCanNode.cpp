@@ -12,9 +12,13 @@
 #include <xmlrpcpp/XmlRpcSocket.h>
 #include <unistd.h>
 #include <cstring>
+#include <utility>
 #include "ROSCANConstants.hpp"
 #include <linux/can.h>
 #include "MessageBuffer.hpp"
+#include <std_msgs/Float64.h>
+#include "owr_messages/pwm.h"
+#include "owr_messages/motor.h"
 
 namespace roscan {
 
@@ -105,22 +109,39 @@ namespace roscan {
         return 0;
     }
 
+    PublisherPtr RosCanNode::make_publisher(const std::string& topic, const std::string& topic_type) {
+        constexpr uint32_t queue_size = 10;
+        if (topic_type == "std_msgs/Float64") {
+            return advertise<std_msgs::Float64>(topic, queue_size);
+        } else if (topic_type == "owr_messages/pwm") {
+            return advertise<owr_messages::pwm>(topic, queue_size);
+        } else if (topic_type == "owr_messages/motor") {
+            return advertise<owr_messages::motor>(topic, queue_size);
+        }
+        // ...other message types if needed
+        std::cout << "unimplemented advertise topic: " << topic_type << "\n";
+        return PublisherPtr{};
+    }
+
     int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type) {
         std::cout << "node id " << (int)id_ << " advertising topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
 
         int topic_num = getFirstFreeTopic();
         if (topic_num >= 0) {
-
-            //advertise<RosIntrospection::FlatMessage>(name, (uint32_t)10, false);
+            PublisherPtr pub = make_publisher(topic, topic_type);
+            if (!pub) {
+                return -1;
+            }
+            publishers[(uint8_t)topic_num] = std::make_pair(pub, topic_type);
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
                 //-1: FAILURE: Method failed to complete correctly. In general, this means that the master/slave attempted the action and failed, and there may have been side-effects as a result.
                 //0: SUCCESS: Method completed successfully
-            return 0;
+            return topic_num;
         } else {
             // TODO handle error, no free topic ids
-            return 0;
+            return -1;
         }
 
         //TODO: return the CODE to see if success or fail from the ROS master unregisterSubscriber
@@ -131,6 +152,24 @@ namespace roscan {
         // TODO: at a later date, at this moment, just call unregister node
         std::cout << "node id " << (int)id_ << " unadvertising topic id " << (int)topic << "\n";
         return 0;
+    }
+
+    void RosCanNode::publish(const uint8_t topicID, const std::vector<uint8_t>& buf) {
+        const auto& topic_type = publishers[topicID].second;
+        if (topic_type == "std_msgs/Float64") {
+            auto msg = convert_buf<std_msgs::Float64>(buf);
+            publishers[topicID].first->publish(msg);
+        } else if (topic_type == "owr_messages/pwm") {
+            auto msg = convert_buf<owr_messages::pwm>(buf);
+            publishers[topicID].first->publish(msg);
+        } else if (topic_type == "owr_messages/motor") {
+            auto msg = convert_buf<owr_messages::motor>(buf);
+            publishers[topicID].first->publish(msg);
+        } else {
+            return;
+        }
+        // ...other message types if needed
+        std::cout << "node id " << (int)id_ << " published message on topic id " << (int)topicID << "\n";
     }
 
     int RosCanNode::setParam(std::string key) {
