@@ -64,8 +64,9 @@ void CANMsgRouter::subscriberTest() {
     int nodeId1 = RosCanNodeManager::instance().registerNode("left_loco", 1, 1);
     int nodeId2 = RosCanNodeManager::instance().registerNode("right_loco", 2, 2);
     int nodeId4 = RosCanNodeManager::instance().registerNode("arm", 4, 4);
+    int nodeId5 = RosCanNodeManager::instance().registerNode("arm", 5, 5);
 
-    if (nodeId1 < 0 || nodeId2 < 0 || nodeId4 < 0) {
+    if (nodeId1 < 0 || nodeId2 < 0 || nodeId4 < 0 || nodeId5 < 0) {
         throw std::runtime_error("unable to register all subscriber nodes, exiting");
     }
 
@@ -74,7 +75,8 @@ void CANMsgRouter::subscriberTest() {
     roscan::RosCanNodePtr l_loco_node = RosCanNodeManager::instance().getNode(nodeId1);
     roscan::RosCanNodePtr r_loco_node = RosCanNodeManager::instance().getNode(nodeId2);
     roscan::RosCanNodePtr arm_node = RosCanNodeManager::instance().getNode(nodeId4);
-
+    roscan::RosCanNodePtr sci_node = RosCanNodeManager::instance().getNode(nodeId5);
+    
     l_loco_node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
     l_loco_node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
     l_loco_node->registerSubscriber("/front_left_swerve_controller/command", "blah");
@@ -90,6 +92,8 @@ void CANMsgRouter::subscriberTest() {
     arm_node->registerSubscriber("/arm_bottom_controller/command", "blah");
     arm_node->registerSubscriber("/claw_rotate_controller/command", "blah");
     arm_node->registerSubscriber("/claw_grip_controller/command", "blah");
+
+    sci_node->registerSubscriber("/science/servo", "blah");
 
     ROS_INFO("Subscribed");
 
