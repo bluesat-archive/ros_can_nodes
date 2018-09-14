@@ -28,8 +28,8 @@ int main(int argc, char **argv) {
 
     CANMsgRouter::init();
 
-    //CANMsgRouter::subscriberTest();
-    CANMsgRouter::publisherTest();
+    CANMsgRouter::subscriberTest();
+    // CANMsgRouter::publisherTest();
 
     //CANMsgRouter::run();
 }
@@ -114,13 +114,10 @@ void CANMsgRouter::subscriberTest() {
     arm_node->registerSubscriber("/claw_grip_controller/command", "blah");
 
     science_node->registerSubscriber("/science/request", "blah");
-    // science_node->registerSubscriber("/science/request", "blah");
+    science_node->advertiseTopic("/science/data", "blah");
 
     ROS_INFO("Subscribed");
-
-    while (1) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
+    CANMsgRouter::run();
 }
 
 void CANMsgRouter::processCANMsg(const can_frame& msg) {

@@ -270,7 +270,7 @@ namespace roscan {
     // ==================================================
 
     void RosCanNode::rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, const uint8_t topicID, const std::string& topic_name) {
-        //ROS_INFO_STREAM("callback: topic_id = " << (int)topicID << " topic_name = " << topic_name);
+        ROS_INFO_STREAM("callback: topic_id = " << (int)topicID << " topic_name = " << topic_name);
         RosIntrospection::Parser parser;
 
         const std::string&  datatype   =  msg->getDataType();
