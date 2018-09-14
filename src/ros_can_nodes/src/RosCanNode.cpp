@@ -19,6 +19,7 @@
 #include <std_msgs/Float64.h>
 #include "owr_messages/pwm.h"
 #include "owr_messages/motor.h"
+#include "owr_messages/science.h"
 
 namespace roscan {
 
@@ -117,6 +118,8 @@ namespace roscan {
             return advertise<owr_messages::pwm>(topic, queue_size);
         } else if (topic_type == "owr_messages/motor") {
             return advertise<owr_messages::motor>(topic, queue_size);
+        } else if (topic_type == "owr_messages/science") {
+            return advertise<owr_messages::science>(topic, queue_size);
         }
         // ...other message types if needed
         std::cout << "unimplemented advertise topic: " << topic_type << "\n";
@@ -171,6 +174,9 @@ namespace roscan {
             publishers[topicID].first->publish(msg);
         } else if (topic_type == "owr_messages/motor") {
             auto msg = convert_buf<owr_messages::motor>(buf);
+            publishers[topicID].first->publish(msg);
+        } else if (topic_type == "owr_messages/science") {
+            auto msg = convert_buf<owr_messages::science>(buf);
             publishers[topicID].first->publish(msg);
         } else {
             return;
