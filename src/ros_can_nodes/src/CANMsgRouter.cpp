@@ -81,40 +81,40 @@ void CANMsgRouter::publisherTest() {
 void CANMsgRouter::subscriberTest() {
     ROS_INFO("Registering\n");
 
-    int nodeId1 = RosCanNodeManager::instance().registerNode("left_loco", 1, 1);
-    int nodeId2 = RosCanNodeManager::instance().registerNode("right_loco", 2, 2);
-    int nodeId4 = RosCanNodeManager::instance().registerNode("arm", 4, 4);
-    int nodeId5 = RosCanNodeManager::instance().registerNode("science", 5, 5);
+    // int nodeId1 = RosCanNodeManager::instance().registerNode("left_loco", 1, 1);
+    // int nodeId2 = RosCanNodeManager::instance().registerNode("right_loco", 2, 2);
+    // int nodeId4 = RosCanNodeManager::instance().registerNode("arm", 4, 4);
+    int nodeId5 = RosCanNodeManager::instance().registerNode("science", 7, 7);
 
-    if (nodeId1 < 0 || nodeId2 < 0 || nodeId4 < 0) {
-        throw std::runtime_error("unable to register all subscriber nodes, exiting");
-    }
+    // if (nodeId1 < 0 || nodeId2 < 0 || nodeId4 < 0) {
+    //     throw std::runtime_error("unable to register all subscriber nodes, exiting");
+    // }
 
-    ROS_INFO("Registered***");
+    // ROS_INFO("Registered***");
 
-    roscan::RosCanNodePtr l_loco_node = RosCanNodeManager::instance().getNode(nodeId1);
-    roscan::RosCanNodePtr r_loco_node = RosCanNodeManager::instance().getNode(nodeId2);
-    roscan::RosCanNodePtr arm_node = RosCanNodeManager::instance().getNode(nodeId4);
+    // roscan::RosCanNodePtr l_loco_node = RosCanNodeManager::instance().getNode(nodeId1);
+    // roscan::RosCanNodePtr r_loco_node = RosCanNodeManager::instance().getNode(nodeId2);
+    // roscan::RosCanNodePtr arm_node = RosCanNodeManager::instance().getNode(nodeId4);
     roscan::RosCanNodePtr science_node = RosCanNodeManager::instance().getNode(nodeId5);
 
-    l_loco_node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
-    l_loco_node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
-    l_loco_node->registerSubscriber("/front_left_swerve_controller/command", "blah");
-    l_loco_node->registerSubscriber("/back_left_swerve_controller/command", "blah");
+    // l_loco_node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
+    // l_loco_node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
+    // l_loco_node->registerSubscriber("/front_left_swerve_controller/command", "blah");
+    // l_loco_node->registerSubscriber("/back_left_swerve_controller/command", "blah");
 
-    r_loco_node->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
-    r_loco_node->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
-    r_loco_node->registerSubscriber("/front_right_swerve_controller/command", "blah");
-    r_loco_node->registerSubscriber("/back_right_swerve_controller/command", "blah");
+    // r_loco_node->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
+    // r_loco_node->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
+    // r_loco_node->registerSubscriber("/front_right_swerve_controller/command", "blah");
+    // r_loco_node->registerSubscriber("/back_right_swerve_controller/command", "blah");
 
-    arm_node->registerSubscriber("/arm_base_rotate_controller/command", "blah");
-    arm_node->registerSubscriber("/arm_top_controller/command", "blah");
-    arm_node->registerSubscriber("/arm_bottom_controller/command", "blah");
-    arm_node->registerSubscriber("/claw_rotate_controller/command", "blah");
-    arm_node->registerSubscriber("/claw_grip_controller/command", "blah");
+    // arm_node->registerSubscriber("/arm_base_rotate_controller/command", "blah");
+    // arm_node->registerSubscriber("/arm_top_controller/command", "blah");
+    // arm_node->registerSubscriber("/arm_bottom_controller/command", "blah");
+    // arm_node->registerSubscriber("/claw_rotate_controller/command", "blah");
+    // arm_node->registerSubscriber("/claw_grip_controller/command", "blah");
 
-    science_node->registerSubscriber("/science/request", "blah");
-    science_node->advertiseTopic("/science/data", "owr_messages/science", 13);
+    science_node->registerSubscriber("/science/request", "blah", 13);
+    science_node->advertiseTopic("/science/data", "owr_messages/science");
 
     ROS_INFO("Subscribed");
     CANMsgRouter::run();

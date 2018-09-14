@@ -53,10 +53,10 @@ int CANHelpers::open_can_port(const char *const port) {
 int CANHelpers::send_can_port(const can_frame& frame) {
     const int retval = write(soc, &frame, sizeof(can_frame));
     if (retval != sizeof(can_frame)) {
-        // printf("Failed to send !! %s \n", strerror(errno));
+        printf("Failed to send !! %s \n", strerror(errno));
         return (-1);
     } else {
-        // printf("Sent !!\n");
+        printf("Sent !!\n");
         return (0);
     }
 }
