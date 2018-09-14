@@ -123,10 +123,17 @@ namespace roscan {
         return PublisherPtr{};
     }
 
-    int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type) {
+    int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type, const int request_tid) {
         std::cout << "node id " << (int)id_ << " advertising topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
 
-        int topic_num = getFirstFreeTopic();
+        int topic_num;
+        if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
+            topicIds[request_tid] = 1;
+            topic_num = request_tid;
+        } else {
+            topic_num = getFirstFreeTopic();
+        }
+
         if (topic_num >= 0) {
             PublisherPtr pub = make_publisher(topic, topic_type);
             if (!pub) {

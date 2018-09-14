@@ -114,7 +114,7 @@ void CANMsgRouter::subscriberTest() {
     arm_node->registerSubscriber("/claw_grip_controller/command", "blah");
 
     science_node->registerSubscriber("/science/request", "blah");
-    science_node->advertiseTopic("/science/data", "blah");
+    science_node->advertiseTopic("/science/data", "blah", 13);
 
     ROS_INFO("Subscribed");
     CANMsgRouter::run();
