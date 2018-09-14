@@ -334,7 +334,7 @@ namespace roscan {
         } else {
             header |= (topicID << ROSCANConstants::ROSTopic::bitshift_topic_id);
         }
-	header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
+	    header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
         header |= (0 << ROSCANConstants::ROSTopic::bitshift_msg_num);
         header |= (2 << ROSCANConstants::ROSTopic::bitshift_len);
         header |= CAN_EFF_FLAG;
@@ -342,10 +342,18 @@ namespace roscan {
         can_frame frame;
 
         frame.can_id = header;
-        frame.can_dlc = 8;
+        if (topic_name.find("/science") != std::string::npos) {
+            frame.can_dlc = 2;
+        } else {
+            frame.can_dlc = 8;
+        }
 
         for (const auto& it: renamed_values) {
-            *(double *)frame.data = it.second.convert<double>();
+            if (topic_name.find("/science") != std::string::npos) {
+                *(short *)frame.data = it.second.convert<short>();
+            } else {
+                *(double *)frame.data = it.second.convert<double>();
+            }
         }
 
         MessageBuffer::instance().push(frame);
