@@ -1,0 +1,76 @@
+The goal of this is to have a server-like program which can handle multiple connections to ros master and other ros nodes.
+It will also talk to the CAN bus (but I'm not doing that bit)
+Basically it need to maintain state about a bunch of ROS nodes, and effectively 'pretend' to be multiple ros nodes (which are actually modules on the CAN bus)
+In other words, the rest of the ROS network on the NUC and rover groundstation just see a bunch of regular ros publishers/subscribers etc which happen to pertain to embedded modules on the CAN bus.
+
+
+This code is a pile of crap I've been playing with to try to create a cpp library for using multiple ros nodes in the same binary
+
+It is mostly code ported from the roscpp library which you can find here:
+https://github.com/ros/ros_comm/tree/lunar-devel/clients/roscpp/
+
+The roscpp library assumes that there is a single node, so lots of classes are designed as singletons, there are globals related
+to node state that just sit in a namespace etc etc.
+i.e. It's garbage.
+
+Also there's no documentation for how roscpp works, and limited comments.
+
+
+Before working on this, you need to know the basics of how to use ROS, and know some things about how ROS nodes and ROS master talk with XMLRPC, TCP and UDP.
+You should know the basics of how socket-based IPC works in Linux.
+You need some basic knowledge of locks/mutexes and threads.
+
+Reading these is a good idea:
+http://wiki.ros.org/ROS/Concepts
+http://wiki.ros.org/ROS/Technical%20Overview
+
+
+**************************************
+namespaces/required libraries
+
+ros
+- code native to the installed ros distribution/a part of the original roscpp library
+- you need a bunch of imports from ros kinetic and things from this namespace so make sure it's installed
+
+roscan
+- stuff that i wrote/have ported from the ros namespace
+
+
+**************************************
+classes
+
+There's a little program in main.cpp which instantiates this biz and tries to do some stuff.
+
+
+RosCanNode
+- this represents a Ros node that is actually on the CAN bus
+- currently each node has an XMLRPCManager, PollManager, ConnectionManager and TopicManager
+    - this might not be the best way to do this
+    - these classes are all ported from roscpp
+- there's some random junk in there which doesn't work currently too, like subscribe() etc
+
+XMLRPCManager
+- has a thread which periodically polls XMLRPC connections and runs callbacks etc
+- contains bunch of functions for talking to ros master
+- getAllTopics() queries master for all ros topics
+- getAllNodes() queries master for all active nodes in the network
+- bind() adds a new function (to this node) that other XMLRPC clients can call
+- A class called XMLRPCClient represents an external client, currently is only used in callMaster()
+- If you want to call a method on another client you basically need to getXMLRPCClient(), then call execute() on the returned object
+
+PollManager
+- periodically runs some functions in a thread
+- you register functions with addPollThreadListener()
+- they must have the signature void (void) (typdef'd to VoidFunc)
+
+ConnectionManager
+- registers some stuff with the PollManager for managing TCP and UDP connections
+- adds and drops TCP and UDP connections
+- idk how to actually use it
+
+TopicManager
+- manages abstractions of subscribers and publishers
+- binds a bunch of functions to the XMLRPCmanager for talking to this node
+- has subscribe() and advertise() functions which don't currently work
+- idk how it works really
+

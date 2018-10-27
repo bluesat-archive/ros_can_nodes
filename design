@@ -1,0 +1,17 @@
+class can_node
+xmlrpcmanager -> each has a thread which listens for and sends requests
+publishers {
+    topic name
+    message type
+    buffer
+    connections to (non-CAN) nodes
+}
+subscribers {
+    topic name
+    message type
+    buffer
+    connectsion to (non-CAN) nodes
+}
+
+
+
