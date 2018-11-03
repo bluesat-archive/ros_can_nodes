@@ -4,8 +4,8 @@
  * Editors:
  * ROS Node Name:
  * ROS Package: ros_can_nodes
- * Purpose:
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
+ * Purpose: Main entry point for the proxy
+ * This code is released under the BSB  License. Copyright BLUEsat UNSW, 2017
  */
 
 #include <linux/can.h>
@@ -29,9 +29,9 @@ int main(int argc, char **argv) {
     CANMsgRouter::init();
 
     CANMsgRouter::subscriberTest();
-    // CANMsgRouter::publisherTest();
+    CANMsgRouter::publisherTest();
 
-    //CANMsgRouter::run();
+    CANMsgRouter::run();
 }
 
 void CANMsgRouter::init() {
@@ -75,7 +75,6 @@ void CANMsgRouter::publisherTest() {
 
     ROS_INFO("publishing...");
 
-    CANMsgRouter::run();
 }
 
 void CANMsgRouter::subscriberTest() {
@@ -117,7 +116,6 @@ void CANMsgRouter::subscriberTest() {
     science_node->advertiseTopic("/science/data", "owr_messages/science");
 
     ROS_INFO("Subscribed");
-    CANMsgRouter::run();
 }
 
 void CANMsgRouter::processCANMsg(const can_frame& msg) {

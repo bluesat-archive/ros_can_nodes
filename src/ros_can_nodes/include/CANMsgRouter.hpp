@@ -18,12 +18,21 @@ class CANMsgRouter {
 
     public:
 
+        /**
+         * Initialises
+         */
         static void init();
 
         static void run();
 
+        /**
+         * Sets up some dummy publisher messages
+         */
         static void publisherTest();
 
+        /**
+         * Sets up some dummy subscribers
+         */
         static void subscriberTest();
 
         static void processCANMsg(const can_frame& msg);
