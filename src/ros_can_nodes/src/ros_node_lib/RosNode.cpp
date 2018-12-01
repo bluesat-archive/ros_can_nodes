@@ -7,6 +7,7 @@
 #include "ros_node_lib/subscriber.h"
 #include "ros_node_lib/internal_timer_manager.h"
 #include <iostream>
+#include <ros/ros.h>
 #include <ros/console.h>
 #include <ros/transport/transport_tcp.h>
 #include <xmlrpcpp/XmlRpcSocket.h>
@@ -39,7 +40,7 @@ namespace roscan {
         XmlRpc::XmlRpcSocket::s_use_ipv6_ = use_ipv6;
     }
 
-    RosNode::RosNode(const std::string& name) : name_{name}, g_started{false}, g_shutting_down{false}, callback_queue_{0}, collection_{0} {
+    RosNode::RosNode(const std::string& name) : name_{name}, g_started{false}, g_shutting_down{false}, callback_queue_{0}, collection_{0}, isZombie{false} {
         std::cout << "Creating node " << name_ << "\n";
         g_global_queue.reset(new CallbackQueue{});
         ROSCONSOLE_AUTOINIT;
@@ -133,6 +134,12 @@ namespace roscan {
         }
         std::cout << "Shutting down node " << name_ << "\n";
 
+        // Wait for spinning thread to end.
+        isZombie = true;
+        if (spinThread.joinable()) {
+            spinThread.join();
+        }
+
         g_shutting_down = true;
         //ros::console::shutdown();
 
@@ -204,6 +211,16 @@ namespace roscan {
 
     void RosNode::spinOnce() {
         g_global_queue->callAvailable(ros::WallDuration{});
+    }
+
+    void RosNode::startSpinThread() {
+        spinThread = std::thread{[this](){
+            ros::Rate r{100}; //100Hz
+            while (!isZombie) {
+                spinOnce();
+                r.sleep();
+            }
+        }};
     }
 
 } // namespace roscan

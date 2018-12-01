@@ -35,9 +35,10 @@ namespace roscan {
 
             const std::string& getName() const { return name_; }
 
-        private:
-            const std::string name_;
+        protected:
+            std::string name_;
 
+        private:
             bool g_started;
             volatile bool g_shutting_down;
 
@@ -56,8 +57,13 @@ namespace roscan {
             NodeBackingCollection *collection_;
             void internalCallbackQueueThreadFunc();
 
+            // spinner thread
+            bool isZombie;
+            std::thread spinThread;
+
         public:
             void spinOnce();
+            void startSpinThread();
 
             const CallbackQueuePtr& getInternalCallbackQueue();
             CallbackQueue *getGlobalCallbackQueue() const { return g_global_queue.get(); }

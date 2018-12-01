@@ -114,12 +114,12 @@ include_directories(
 
 ## Declare a C++ executable
 add_executable(ros_can_nodes
-    #src/RosCanNode.cpp
-    #src/TopicBuffers.cpp
-    #src/CANHelpers.cpp
-    #src/CANMsgRouter.cpp
-    #src/MessageBuffer.cpp
-    #src/RosCanNodeManager.cpp
+    src/RosCanNode.cpp
+    src/TopicBuffers.cpp
+    src/CANHelpers.cpp
+    src/CANMsgRouter.cpp
+    src/MessageBuffer.cpp
+    src/RosCanNodeManager.cpp
     src/ros_node_lib/xmlrpc_manager.cpp
     src/ros_node_lib/network.cpp
     src/ros_node_lib/poll_manager.cpp
@@ -139,7 +139,7 @@ add_executable(ros_can_nodes
     src/ros_node_lib/rosout_appender.cpp
     src/ros_node_lib/internal_timer_manager.cpp
     src/ros_node_lib/RosNode.cpp
-    src/ros_node_lib/RosNodeTest.cpp
+    #src/ros_node_lib/RosNodeTest.cpp
     )
 
 ## Add cmake target dependencies of the executable
