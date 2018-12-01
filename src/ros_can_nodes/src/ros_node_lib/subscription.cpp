@@ -32,18 +32,18 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "subscription.h"
-#include "RosCanNode.hpp"
-#include "connection_manager.h"
-#include "network.h"
-#include "poll_manager.h"
-#include "publication.h"
-#include "publisher_link.h"
-#include "transport_publisher_link.h"
-#include "intraprocess_publisher_link.h"
-#include "intraprocess_subscriber_link.h"
-#include "callback_queue_interface.h"
-#include "subscription_queue.h"
+#include "ros_node_lib/subscription.h"
+#include "ros_node_lib/RosNode.hpp"
+#include "ros_node_lib/connection_manager.h"
+#include "ros_node_lib/network.h"
+#include "ros_node_lib/poll_manager.h"
+#include "ros_node_lib/publication.h"
+#include "ros_node_lib/publisher_link.h"
+#include "ros_node_lib/transport_publisher_link.h"
+#include "ros_node_lib/intraprocess_publisher_link.h"
+#include "ros_node_lib/intraprocess_subscriber_link.h"
+#include "ros_node_lib/callback_queue_interface.h"
+#include "ros_node_lib/subscription_queue.h"
 #include <ros/connection.h>
 #include <ros/message_deserializer.h>
 #include <ros/subscription_callback_helper.h>

@@ -28,8 +28,8 @@
 #ifndef ROSCAN_PUBLICATION_H
 #define ROSCAN_PUBLICATION_H
 
-#include "common.h"
-#include "subscriber_callbacks.h"
+#include "ros_node_lib/common.h"
+#include "ros_node_lib/subscriber_callbacks.h"
 #include <ros/serialized_message.h>
 #include <ros/header.h>
 #include <xmlrpcpp/XmlRpc.h>

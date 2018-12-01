@@ -28,8 +28,8 @@
 #ifndef ROSCAN_SUBSCRIPTION_QUEUE_H
 #define ROSCAN_SUBSCRIPTION_QUEUE_H
 
-#include "rosdefs.h"
-#include "callback_queue_interface.h"
+#include "ros_node_lib/rosdefs.h"
+#include "ros_node_lib/callback_queue_interface.h"
 #include <boost/enable_shared_from_this.hpp>
 #include <deque>
 #include <mutex>

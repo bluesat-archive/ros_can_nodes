@@ -25,8 +25,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "subscriber_link.h"
-#include "publication.h"
+#include "ros_node_lib/subscriber_link.h"
+#include "ros_node_lib/publication.h"
 #include <ros/console.h>
 
 namespace roscan {

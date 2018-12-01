@@ -28,7 +28,7 @@
 #ifndef ROSCAN_SUBSCRIBER_LINK_H
 #define ROSCAN_SUBSCRIBER_LINK_H
 
-#include "common.h"
+#include "ros_node_lib/common.h"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -47,7 +47,7 @@ class SubscriberLink : public boost::enable_shared_from_this<SubscriberLink> {
                 Stats() : bytes_sent_{0}, message_data_sent_{0}, messages_sent_{0} {}
         };
 
-        SubscriberLink(const RosCanNodePtr& node) : node_{node}, connection_id_{0} {}
+        SubscriberLink(const RosNodePtr& node) : node_{node}, connection_id_{0} {}
         virtual ~SubscriberLink() {}
 
         const std::string& getTopic() const { return topic_; }
@@ -73,7 +73,7 @@ class SubscriberLink : public boost::enable_shared_from_this<SubscriberLink> {
     protected:
         bool verifyDatatype(const std::string& datatype) const;
 
-        RosCanNodePtr node_;
+        RosNodePtr node_;
 
         PublicationWPtr parent_;
         unsigned int connection_id_;

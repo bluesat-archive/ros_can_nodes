@@ -28,7 +28,7 @@
 #ifndef ROSCAN_SUBSCRIBER_HANDLE_H
 #define ROSCAN_SUBSCRIBER_HANDLE_H
 
-#include "common.h"
+#include "ros_node_lib/common.h"
 #include <ros/subscription_callback_helper.h>
 #include <cstdint>
 #include <string>
@@ -43,7 +43,7 @@ namespace roscan {
 class Subscriber {
     public:
         Subscriber() {}
-        Subscriber(const std::string& topic, const RosCanNodePtr& node, const ros::SubscriptionCallbackHelperPtr& helper)
+        Subscriber(const std::string& topic, const RosNodePtr& node, const ros::SubscriptionCallbackHelperPtr& helper)
             : topic_{topic}, node_{node}, helper_{helper}, unsubscribed_{false} {}
         ~Subscriber() { unsubscribed_ = true; }
 
@@ -68,7 +68,7 @@ class Subscriber {
 
     private:
         std::string topic_;
-        RosCanNodePtr node_;
+        RosNodePtr node_;
         ros::SubscriptionCallbackHelperPtr helper_;
         bool unsubscribed_;
 };

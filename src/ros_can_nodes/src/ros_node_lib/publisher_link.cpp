@@ -32,10 +32,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RosCanNode.hpp"
-#include "publisher_link.h"
-#include "connection_manager.h"
-#include "subscription.h"
+#include "ros_node_lib/RosNode.hpp"
+#include "ros_node_lib/publisher_link.h"
+#include "ros_node_lib/connection_manager.h"
+#include "ros_node_lib/subscription.h"
 #include <ros/connection.h>
 #include <ros/header.h>
 #include <ros/transport/transport.h>

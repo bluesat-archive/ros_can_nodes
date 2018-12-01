@@ -28,7 +28,7 @@
 #ifndef ROSCAN_SINGLE_SUBSCRIBER_PUBLISHER_H
 #define ROSCAN_SINGLE_SUBSCRIBER_PUBLISHER_H
 
-#include "subscriber_link.h"
+#include "ros_node_lib/subscriber_link.h"
 #include <ros/serialization.h>
 #include <boost/utility.hpp>
 #include <string>

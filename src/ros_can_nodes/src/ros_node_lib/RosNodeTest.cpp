@@ -1,5 +1,10 @@
-#include "RosCanNode.hpp"
-#include "network.h"
+// run using 3 tabs:
+// rosrun ros_can_node ros_can_node sink
+// rosrun ros_can_node ros_can_node mid
+// rosrun ros_can_node ros_can_node source
+
+#include "ros_node_lib/RosNode.hpp"
+#include "ros_node_lib/network.h"
 #include <csignal>
 #include <cstdint>
 #include <std_msgs/String.h>
@@ -7,6 +12,7 @@
 #include <vector>
 #include <thread>
 #include <chrono>
+#include <ros/ros.h>
 
 using namespace roscan;
 
@@ -33,8 +39,8 @@ void source() {
             msg.data.insert(msg.data.end(), data.cbegin(), data.cend());
         };
 
-        RosCanNodePtr node;
-        node.reset(new RosCanNode{"test_source_node"});
+        RosNodePtr node;
+        node.reset(new RosNode{"test_source_node"});
         node->start();
         auto pub = node->advertise<std_msgs::Int64MultiArray>("/test_source", 10);
 
@@ -67,8 +73,8 @@ void sink() {
             }
             std::cout << "\n";
         };
-        RosCanNodePtr node;
-        node.reset(new RosCanNode{"test_sink_node"});
+        RosNodePtr node;
+        node.reset(new RosNode{"test_sink_node"});
         node->start();
 
         node->subscribe("/test_sink", 10, callback);
@@ -85,8 +91,8 @@ void sink() {
 
 void mid() {
     const auto mid_func = [](const auto& name, const auto& sub_topic, const auto& pub_topic){
-        RosCanNodePtr node;
-        node.reset(new RosCanNode{name});
+        RosNodePtr node;
+        node.reset(new RosNode{name});
         node->start();
 
         auto pub = node->advertise<std_msgs::Int64MultiArray>(pub_topic, 10);

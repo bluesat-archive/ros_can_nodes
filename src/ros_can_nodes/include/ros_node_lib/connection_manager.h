@@ -28,8 +28,8 @@
 #ifndef ROSCAN_CONNECTION_MANAGER_H
 #define ROSCAN_CONNECTION_MANAGER_H
 
-#include "common.h"
-#include "rosdefs.h"
+#include "ros_node_lib/common.h"
+#include "ros_node_lib/rosdefs.h"
 #include <ros/connection.h>
 #include <ros/header.h>
 #include <ros/transport/transport_tcp.h>
@@ -42,7 +42,7 @@ namespace roscan {
 
 class ConnectionManager {
     public:
-        ConnectionManager(const RosCanNodePtr& node) : node_{node}, connection_id_counter_{0} {}
+        ConnectionManager(const RosNodePtr& node) : node_{node}, connection_id_counter_{0} {}
         ~ConnectionManager() { shutdown(); }
 
         // Get a new connection ID
@@ -75,7 +75,7 @@ class ConnectionManager {
         bool onConnectionHeaderReceived(const ros::ConnectionPtr& conn, const ros::Header& header);
         void tcprosAcceptConnection(const ros::TransportTCPPtr& transport);
 
-        RosCanNodePtr node_;
+        RosNodePtr node_;
 
         std::set<ros::ConnectionPtr> connections_;
         std::vector<ros::ConnectionPtr> dropped_connections_;

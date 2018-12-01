@@ -28,8 +28,8 @@
 #ifndef ROSCAN_TRANSPORT_PUBLISHER_LINK_H
 #define ROSCAN_TRANSPORT_PUBLISHER_LINK_H
 
-#include "common.h"
-#include "publisher_link.h"
+#include "ros_node_lib/common.h"
+#include "ros_node_lib/publisher_link.h"
 #include <ros/connection.h>
 #include <ros/transport/transport.h>
 
@@ -39,7 +39,7 @@ namespace roscan {
 // and hands them off to its parent Subscription
 class TransportPublisherLink : public PublisherLink {
     public:
-        TransportPublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
+        TransportPublisherLink(const RosNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
             : PublisherLink{node, parent, xmlrpc_uri, transport_hints}, retry_timer_handle_{-1}, needs_retry_{false}, dropping_{false} {}
         ~TransportPublisherLink() override;
 

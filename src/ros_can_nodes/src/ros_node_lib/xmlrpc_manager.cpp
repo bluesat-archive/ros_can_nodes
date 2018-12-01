@@ -25,9 +25,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "xmlrpc_manager.h"
-#include "network.h"
-#include "rosdefs.h"
+#include "ros_node_lib/xmlrpc_manager.h"
+#include "ros_node_lib/network.h"
+#include "ros_node_lib/rosdefs.h"
 #include <XmlRpc.h>
 #include <ros/console.h>
 #include <mutex>

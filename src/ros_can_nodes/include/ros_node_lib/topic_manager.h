@@ -28,9 +28,9 @@
 #ifndef ROSCAN_TOPIC_MANAGER_H
 #define ROSCAN_TOPIC_MANAGER_H
 
-#include "subscribe_options.h"
-#include "advertise_options.h"
-#include "subscriber_callbacks.h"
+#include "ros_node_lib/subscribe_options.h"
+#include "ros_node_lib/advertise_options.h"
+#include "ros_node_lib/subscriber_callbacks.h"
 #include <XmlRpcValue.h>
 #include <ros/serialization.h>
 #include <mutex>
@@ -41,7 +41,7 @@ namespace roscan {
 
 class TopicManager {
     public:
-        TopicManager(const RosCanNodePtr& node) : node_{node}, shutting_down_{false} {}
+        TopicManager(const RosNodePtr& node) : node_{node}, shutting_down_{false} {}
         ~TopicManager() { shutdown(); }
 
         void start();
@@ -152,7 +152,7 @@ class TopicManager {
 
         bool isShuttingDown() const { return shutting_down_; }
 
-        RosCanNodePtr node_;
+        RosNodePtr node_;
 
         std::mutex subs_mutex_;
         std::list<SubscriptionPtr> subscriptions_;

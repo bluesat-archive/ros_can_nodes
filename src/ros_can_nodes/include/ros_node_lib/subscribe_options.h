@@ -28,8 +28,8 @@
 #ifndef ROSCAN_SUBSCRIBE_OPTIONS_H
 #define ROSCAN_SUBSCRIBE_OPTIONS_H
 
-#include "rosdefs.h"
-#include "callback_queue_interface.h"
+#include "ros_node_lib/rosdefs.h"
+#include "ros_node_lib/callback_queue_interface.h"
 #include <string>
 #include <ros/message_traits.h>
 #include <ros/transport_hints.h>

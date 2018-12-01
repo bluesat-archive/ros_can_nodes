@@ -25,8 +25,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "internal_timer_manager.h"
-#include "timer_manager.h"
+#include "ros_node_lib/internal_timer_manager.h"
+#include "ros_node_lib/timer_manager.h"
 
 namespace roscan {
 
