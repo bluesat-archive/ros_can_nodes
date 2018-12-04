@@ -1,11 +1,11 @@
-/*
+/**
  * Date Started:
  * Original Author: Nuno Das Neves
  * Editors: Yiwei Han
  * ROS Node Name:
  * ROS Package: ros_can_nodes
  * Purpose:
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2018
+ * This code is released under the BSB License. Copyright BLUEsat UNSW, 2018
  */
 
 #ifndef ROSNODE_H
@@ -58,8 +58,8 @@ namespace roscan {
             void internalCallbackQueueThreadFunc();
 
             // spinner thread
-            bool isZombie;
-            std::thread spinThread;
+            bool is_zombie;
+            std::thread spin_thread;
 
         public:
             void spinOnce();

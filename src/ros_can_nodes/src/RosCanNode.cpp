@@ -1,4 +1,5 @@
 #include "RosCanNode.hpp"
+#include <ros/ros.h>
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
@@ -14,10 +15,9 @@
 
 namespace roscan {
 
-    RosCanNode::RosCanNode(const std::string& name, const uint8_t id) : RosNode{name}, id_{id} {
-        name_ = "can_node/" + name;
-        std::cout << "CAN node name: " << name_ << "\n";
-        std::cout << "Node id: " << id_ << "\n";
+    RosCanNode::RosCanNode(const std::string& name, const uint8_t id) : RosNode{"can_node/" + name}, id_{id} {
+        ROS_INFO_STREAM("CAN node name: " << name_);
+        ROS_INFO_STREAM("Node id: " << id_);
     }
 
     // ==================================================

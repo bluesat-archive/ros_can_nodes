@@ -40,18 +40,18 @@ namespace roscan {
         XmlRpc::XmlRpcSocket::s_use_ipv6_ = use_ipv6;
     }
 
-    RosNode::RosNode(const std::string& name) : name_{name}, g_started{false}, g_shutting_down{false}, callback_queue_{0}, collection_{0}, isZombie{false} {
-        std::cout << "Creating node " << name_ << "\n";
+    RosNode::RosNode(const std::string& name) : name_{name}, g_started{false}, g_shutting_down{false}, callback_queue_{0}, collection_{0}, is_zombie{false} {
+        ROS_INFO_STREAM("Creating node " << name_);
         g_global_queue.reset(new CallbackQueue{});
         ROSCONSOLE_AUTOINIT;
         check_ipv6_environment();
         collection_ = new NodeBackingCollection{};
-        std::cout << "Created node " << name_ << "\n";
+        ROS_INFO_STREAM("Created node " << name_);
     }
 
     RosNode::~RosNode() {
         shutdown();
-        std::cout << "Deleted node " << name_ << "\n";
+        ROS_INFO_STREAM("Deleted node " << name_);
     }
 
     const CallbackQueuePtr& RosNode::getInternalCallbackQueue() {
@@ -108,7 +108,7 @@ namespace roscan {
     }
 
     void RosNode::start() {
-        std::cout << "Starting node " << name_ << "\n";
+        ROS_INFO_STREAM("Starting node " << name_);
         initInternalTimerManager();
 
         poll_manager();
@@ -125,19 +125,19 @@ namespace roscan {
         g_internal_queue_thread = std::thread{&RosNode::internalCallbackQueueThreadFunc, this};
         getGlobalCallbackQueue()->enable();
         g_started = true;
-        std::cout << "Started node " << name_ << "\n";
+        ROS_INFO_STREAM("Started node " << name_);
     }
 
     void RosNode::shutdown() {
         if (g_shutting_down) {
             return;
         }
-        std::cout << "Shutting down node " << name_ << "\n";
+        ROS_INFO_STREAM("Shutting down node " << name_);
 
         // Wait for spinning thread to end.
-        isZombie = true;
-        if (spinThread.joinable()) {
-            spinThread.join();
+        is_zombie = true;
+        if (spin_thread.joinable()) {
+            spin_thread.join();
         }
 
         g_shutting_down = true;
@@ -162,7 +162,7 @@ namespace roscan {
         }
         //ros::Time::shutdown();
         g_started = false;
-        std::cout << "Shut down node " << name_ << "\n";
+        ROS_INFO_STREAM("Shut down node " << name_);
     }
 
     PublisherPtr RosNode::advertise(AdvertiseOptions& ops) {
@@ -214,9 +214,9 @@ namespace roscan {
     }
 
     void RosNode::startSpinThread() {
-        spinThread = std::thread{[this](){
+        spin_thread = std::thread{[this](){
             ros::Rate r{100}; //100Hz
-            while (!isZombie) {
+            while (!is_zombie) {
                 spinOnce();
                 r.sleep();
             }

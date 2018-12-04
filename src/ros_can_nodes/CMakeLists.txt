@@ -139,7 +139,6 @@ add_executable(ros_can_nodes
     src/ros_node_lib/rosout_appender.cpp
     src/ros_node_lib/internal_timer_manager.cpp
     src/ros_node_lib/RosNode.cpp
-    #src/ros_node_lib/RosNodeTest.cpp
     )
 
 ## Add cmake target dependencies of the executable

@@ -30,7 +30,6 @@ namespace roscan {
     class RosCanNode : public RosNode {
         public:
             RosCanNode(const std::string& name, const uint8_t id = 0);
-            ~RosCanNode() {};
 
             uint8_t getID() const { return id_; }
 
