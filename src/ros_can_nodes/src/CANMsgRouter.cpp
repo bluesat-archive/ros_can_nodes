@@ -28,10 +28,10 @@ int main(int argc, char **argv) {
 
     CANMsgRouter::init();
 
-    CANMsgRouter::subscriberTest();
+    //CANMsgRouter::subscriberTest();
     // CANMsgRouter::publisherTest();
 
-    //CANMsgRouter::run();
+    CANMsgRouter::run();
 }
 
 void CANMsgRouter::init() {
@@ -200,6 +200,15 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             } else {
                 std::cout << "new node id " << nodeid << "\n";
             }
+            // send message back, everything is the same apart from the step
+            can_frame response = msg;
+	    ROSCANConstants::Control::step_insert(response.can_id, step+1);
+	    printf("sending header %x\n", response.can_id); 
+	    response.can_dlc = 4;
+	    response.data[1] = nodeid;
+	    
+	    CANHelpers::send_can_port(response);
+            
             break;
         }
         case ROSCANConstants::Control::DEREGISTER_NODE:
