@@ -202,7 +202,7 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             }
             // send message back, everything is the same apart from the step
             can_frame response = msg;
-	    ROSCANConstants::Control::step_insert(response.can_id, step+1);
+	    ROSCANConstants::Control::mode0_step_insert(response.can_id, step+1);
 	    printf("sending header %x\n", response.can_id); 
 	    response.can_dlc = 4;
 	    response.data[1] = nodeid;
