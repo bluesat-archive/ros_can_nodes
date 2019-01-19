@@ -16,35 +16,19 @@ namespace roscan {
 
     class NodeBackingCollection {
         public:
-            //typedef std::vector<Publisher::ImplWPtr> V_PubImpl;
-            //typedef std::vector<ServiceServer::ImplWPtr> V_SrvImpl;
-            //typedef std::vector<Subscriber::ImplWPtr> V_SubImpl;
-            //typedef std::vector<ServiceClient::ImplWPtr> V_SrvCImpl;
-
+            // TODO stuff for ROS services
             typedef std::vector<PublisherPtr> V_Pubs;
-            //typedef std::vector<ServiceServer::ImplWPtr> V_SrvImpl;
             typedef std::vector<SubscriberPtr> V_Subs;
-            //typedef std::vector<ServiceClient::ImplWPtr> V_SrvCImpl;
             V_Pubs pubs_;
-            //V_SrvImpl srvs_;
             V_Subs subs_;
-            //V_SrvCImpl srv_cs_;
 
             std::mutex mutex_;
     };
-
-    void RosNode::check_ipv6_environment() {
-        const auto env_ipv6 = getenv("ROS_IPV6");
-        const auto use_ipv6 = env_ipv6 && strcmp(env_ipv6, "on") == 0;
-        ros::TransportTCP::s_use_ipv6_ = use_ipv6;
-        XmlRpc::XmlRpcSocket::s_use_ipv6_ = use_ipv6;
-    }
 
     RosNode::RosNode(const std::string& name) : name_{name}, g_started{false}, g_shutting_down{false}, callback_queue_{0}, collection_{0}, is_zombie{false} {
         ROS_INFO_STREAM("Creating node " << name_);
         g_global_queue.reset(new CallbackQueue{});
         ROSCONSOLE_AUTOINIT;
-        check_ipv6_environment();
         collection_ = new NodeBackingCollection{};
         ROS_INFO_STREAM("Created node " << name_);
     }
@@ -141,7 +125,6 @@ namespace roscan {
         }
 
         g_shutting_down = true;
-        //ros::console::shutdown();
 
         g_global_queue->disable();
         g_global_queue->clear();
@@ -160,7 +143,7 @@ namespace roscan {
             connection_manager()->shutdown();
             xmlrpc_manager()->shutdown();
         }
-        //ros::Time::shutdown();
+
         g_started = false;
         ROS_INFO_STREAM("Shut down node " << name_);
     }
