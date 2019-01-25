@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "network.h"
+#include "ros_node_lib/network.h"
 #include <ifaddrs.h>
 #include <ros/io.h>
 

@@ -25,10 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RosCanNode.hpp"
-#include "intraprocess_subscriber_link.h"
-#include "intraprocess_publisher_link.h"
-#include "publication.h"
+#include "ros_node_lib/RosNode.hpp"
+#include "ros_node_lib/intraprocess_subscriber_link.h"
+#include "ros_node_lib/intraprocess_publisher_link.h"
+#include "ros_node_lib/publication.h"
 #include <ros/connection.h>
 #include <ros/header.h>
 #include <ros/transport/transport.h>
@@ -36,7 +36,7 @@
 
 namespace roscan {
 
-IntraProcessSubscriberLink::IntraProcessSubscriberLink(const RosCanNodePtr& node, const PublicationPtr& parent) : SubscriberLink{node}, dropped_{false} {
+IntraProcessSubscriberLink::IntraProcessSubscriberLink(const RosNodePtr& node, const PublicationPtr& parent) : SubscriberLink{node}, dropped_{false} {
     parent_ = parent;
     topic_ = parent->getName();
 }

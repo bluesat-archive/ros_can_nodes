@@ -28,9 +28,9 @@
 #ifndef ROSCAN_ADVERTISE_OPTIONS_H
 #define ROSCAN_ADVERTISE_OPTIONS_H
 
-#include "common.h"
-#include "rosdefs.h"
-#include "callback_queue_interface.h"
+#include "ros_node_lib/common.h"
+#include "ros_node_lib/rosdefs.h"
+#include "ros_node_lib/callback_queue_interface.h"
 #include <ros/message_traits.h>
 #include <string>
 

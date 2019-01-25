@@ -35,7 +35,7 @@
 #ifndef ROSCAN_CALLBACK_QUEUE_H
 #define ROSCAN_CALLBACK_QUEUE_H
 
-#include "callback_queue_interface.h"
+#include "ros_node_lib/callback_queue_interface.h"
 #include <ros/time.h>
 #include <map>
 #include <list>

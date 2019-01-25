@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(ros_can_nodes)
 
-set_directory_properties(PROPERTIES COMPILE_OPTIONS "-std=c++14;") ##-Wall;-Wextra")
+## Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++14 -O2)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -115,7 +116,6 @@ include_directories(
 ## Declare a C++ executable
 add_executable(ros_can_nodes
     src/RosCanNode.cpp
-    #src/RosCanNodeTest.cpp
     src/TopicBuffers.cpp
     src/CANHelpers.cpp
     src/CANMsgRouter.cpp
@@ -139,6 +139,7 @@ add_executable(ros_can_nodes
     src/ros_node_lib/callback_queue.cpp
     src/ros_node_lib/rosout_appender.cpp
     src/ros_node_lib/internal_timer_manager.cpp
+    src/ros_node_lib/RosNode.cpp
     )
 
 ## Add cmake target dependencies of the executable

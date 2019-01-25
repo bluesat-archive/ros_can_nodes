@@ -32,15 +32,15 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "rosout_appender.h"
-#include "advertise_options.h"
-#include "subscriber_callbacks.h"
+#include "ros_node_lib/rosout_appender.h"
+#include "ros_node_lib/advertise_options.h"
+#include "ros_node_lib/subscriber_callbacks.h"
 #include <rosgraph_msgs/Log.h>
 #include <boost/make_shared.hpp>
 
 namespace roscan {
 
-ROSOutAppender::ROSOutAppender(const RosCanNodePtr& node)
+ROSOutAppender::ROSOutAppender(const RosNodePtr& node)
     : node_{node}, shutting_down_{false}, publish_thread_{&ROSOutAppender::logThread, this} {
     AdvertiseOptions ops;
     ops.init<rosgraph_msgs::Log>("/rosout", 0);

@@ -28,9 +28,9 @@
 #ifndef ROSCAN_TRANSPORT_SUBSCRIBER_LINK_H
 #define ROSCAN_TRANSPORT_SUBSCRIBER_LINK_H
 
-#include "common.h"
-#include "rosdefs.h"
-#include "subscriber_link.h"
+#include "ros_node_lib/common.h"
+#include "ros_node_lib/rosdefs.h"
+#include "ros_node_lib/subscriber_link.h"
 #include <ros/transport/transport.h>
 #include <boost/signals2/connection.hpp>
 #include <queue>
@@ -40,7 +40,7 @@ namespace roscan {
 // SubscriberLink handles broadcasting messages to a single subscriber on a single topic
 class TransportSubscriberLink : public SubscriberLink {
     public:
-        TransportSubscriberLink(const RosCanNodePtr& node)
+        TransportSubscriberLink(const RosNodePtr& node)
             : SubscriberLink{node}, writing_message_{false}, header_written_{false}, queue_full_{false} {}
         ~TransportSubscriberLink() override { drop(); }
 

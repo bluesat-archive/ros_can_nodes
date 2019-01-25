@@ -35,7 +35,7 @@
 #ifndef ROSCAN_ROSOUT_APPENDER_H
 #define ROSCAN_ROSOUT_APPENDER_H
 
-#include "RosCanNode.hpp"
+#include "ros_node_lib/RosNode.hpp"
 #include <ros/message_forward.h>
 #include <string>
 #include <vector>
@@ -51,7 +51,7 @@ namespace roscan {
 
 class ROSOutAppender : public ros::console::LogAppender {
     public:
-        ROSOutAppender(const RosCanNodePtr& node);
+        ROSOutAppender(const RosNodePtr& node);
         ~ROSOutAppender();
 
         const std::string& getLastError() const { return last_error_; }
@@ -61,7 +61,7 @@ class ROSOutAppender : public ros::console::LogAppender {
     protected:
         void logThread();
 
-        RosCanNodePtr node_;
+        RosNodePtr node_;
 
         std::string last_error_;
 

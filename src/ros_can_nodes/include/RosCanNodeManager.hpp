@@ -6,6 +6,8 @@
 #include "RosCanNode.hpp"
 #include <mutex>
 
+#define MAX_NODES 16
+
 class RosCanNodeManager {
     public:
         static RosCanNodeManager& instance();

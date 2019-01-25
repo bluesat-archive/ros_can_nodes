@@ -32,15 +32,15 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RosCanNode.hpp"
-#include "publisher_link.h"
-#include "transport_publisher_link.h"
-#include "connection_manager.h"
-#include "poll_manager.h"
-#include "subscription.h"
-#include "callback_queue.h"
-#include "internal_timer_manager.h"
-#include "timer_manager.h"
+#include "ros_node_lib/RosNode.hpp"
+#include "ros_node_lib/publisher_link.h"
+#include "ros_node_lib/transport_publisher_link.h"
+#include "ros_node_lib/connection_manager.h"
+#include "ros_node_lib/poll_manager.h"
+#include "ros_node_lib/subscription.h"
+#include "ros_node_lib/callback_queue.h"
+#include "ros_node_lib/internal_timer_manager.h"
+#include "ros_node_lib/timer_manager.h"
 #include <ros/connection.h>
 #include <ros/header.h>
 #include <ros/transport/transport.h>

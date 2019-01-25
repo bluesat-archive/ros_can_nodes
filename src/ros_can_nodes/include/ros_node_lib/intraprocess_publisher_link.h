@@ -28,8 +28,8 @@
 #ifndef ROSCAN_INTRAPROCESS_PUBLISHER_LINK_H
 #define ROSCAN_INTRAPROCESS_PUBLISHER_LINK_H
 
-#include "common.h"
-#include "publisher_link.h"
+#include "ros_node_lib/common.h"
+#include "ros_node_lib/publisher_link.h"
 #include <mutex>
 
 namespace roscan {
@@ -38,7 +38,7 @@ namespace roscan {
 // and hands them off to its parent Subscription
 class IntraProcessPublisherLink : public PublisherLink {
     public:
-        IntraProcessPublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
+        IntraProcessPublisherLink(const RosNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
             : PublisherLink{node, parent, xmlrpc_uri, transport_hints}, dropped_{false} {}
         ~IntraProcessPublisherLink() override {}
 

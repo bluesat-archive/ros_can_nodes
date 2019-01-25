@@ -1,9 +1,9 @@
 #ifndef ROSCAN_SUBSCRIBER_CALLBACKS_H
 #define ROSCAN_SUBSCRIBER_CALLBACKS_H
 
-#include "single_subscriber_publisher.h"
-#include "callback_queue_interface.h"
-#include "rosdefs.h"
+#include "ros_node_lib/single_subscriber_publisher.h"
+#include "ros_node_lib/callback_queue_interface.h"
+#include "ros_node_lib/rosdefs.h"
 #include <boost/shared_ptr.hpp>
 
 namespace roscan {

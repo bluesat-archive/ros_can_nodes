@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "callback_queue.h"
+#include "ros_node_lib/callback_queue.h"
 #include <boost/scope_exit.hpp>
 #include <chrono>
 #include <boost/make_shared.hpp>

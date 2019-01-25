@@ -25,10 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "publication.h"
-#include "subscriber_link.h"
-#include "single_subscriber_publisher.h"
-#include "callback_queue_interface.h"
+#include "ros_node_lib/publication.h"
+#include "ros_node_lib/subscriber_link.h"
+#include "ros_node_lib/single_subscriber_publisher.h"
+#include "ros_node_lib/callback_queue_interface.h"
 #include <ros/connection.h>
 #include <ros/serialization.h>
 #include <std_msgs/Header.h>

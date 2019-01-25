@@ -44,7 +44,7 @@ namespace roscan {
 class Publisher {
     public:
         Publisher() : unadvertised_{false} {}
-        Publisher(const std::string& topic, const RosCanNodePtr& node, const std::string& md5sum, const std::string& datatype, const SubscriberCallbacksPtr& callbacks)
+        Publisher(const std::string& topic, const RosNodePtr& node, const std::string& md5sum, const std::string& datatype, const SubscriberCallbacksPtr& callbacks)
             : topic_{topic}, node_{node}, md5sum_{md5sum}, datatype_{datatype}, callbacks_{callbacks}, unadvertised_{false} {}
         ~Publisher() { unadvertise(); }
 
@@ -104,7 +104,7 @@ class Publisher {
         void unadvertise();
 
         std::string topic_;
-        RosCanNodePtr node_;
+        RosNodePtr node_;
         std::string md5sum_;
         std::string datatype_;
         SubscriberCallbacksPtr callbacks_;
