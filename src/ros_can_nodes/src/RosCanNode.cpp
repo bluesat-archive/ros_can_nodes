@@ -35,7 +35,7 @@ namespace roscan {
     }
 
     int RosCanNode::registerSubscriber(const std::string& topic, const std::string& topic_type, const int request_tid) {
-        std::cout << "node id " << (int)id_ << " subscribing to topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
+        ROS_INFO("node id %d subscribing to topic \"%s\" of type \"%s\"", id_, topic.c_str(), topic_type.c_str());
 
         int topic_num;
         if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
@@ -44,7 +44,7 @@ namespace roscan {
         } else {
             topic_num = getFirstFreeTopic();
         }
-        std::cout << "topic_id" << (int)topic_num << "\n";
+        ROS_INFO("got topic_id %d", topic_num);
 
         if (topic_num >= 0) {
             boost::function<void(const ShapeShifter::ConstPtr&)> callback;

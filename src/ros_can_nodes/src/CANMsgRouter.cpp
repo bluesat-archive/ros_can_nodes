@@ -17,14 +17,11 @@
 #include "ROSCANConstants.hpp"
 #include "TopicBuffers.hpp"
 #include "CANHelpers.hpp"
-#include "ros_node_lib/network.h"
 #include "RosCanNode.hpp"
 #include "RosCanNodeManager.hpp"
 
 
 int main(int argc, char **argv) {
-    //roscan::network::init();
-
     CANMsgRouter::init();
 
     CANMsgRouter::subscriberTest();
@@ -114,6 +111,10 @@ void CANMsgRouter::subscriberTest() {
 
     science_node->registerSubscriber("/science/request", "blah", 13);
     science_node->advertiseTopic("/science/data", "owr_messages/science");
+
+    // int nid = RosCanNodeManager::instance().registerNode("subtest", 0, 0);
+    // const auto node = RosCanNodeManager::instance().getNode(nid);
+    // node->registerSubscriber("/subtopic", "");
 
     ROS_INFO("Subscribed");
     CANMsgRouter::run();
