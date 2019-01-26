@@ -33,8 +33,10 @@ namespace roscan {
 
 namespace network {
 
-std::string g_host;
-uint16_t g_tcpros_server_port = 0;
+std::string determineHost();
+
+static std::string g_host = determineHost();
+static uint16_t g_tcpros_server_port = 0;
 
 const std::string& getHost() {
     return g_host;

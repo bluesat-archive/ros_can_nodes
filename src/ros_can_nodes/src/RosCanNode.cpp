@@ -5,19 +5,22 @@
 #include <cstring>
 #include <utility>
 #include <ros_type_introspection/ros_introspection.hpp>
+#include "shape_shifter.hpp"
 #include "ROSCANConstants.hpp"
 #include <linux/can.h>
 #include "MessageBuffer.hpp"
+#include "IntrospectionHelpers.hpp"
 #include <std_msgs/Float64.h>
 #include "owr_messages/pwm.h"
 #include "owr_messages/motor.h"
 #include "owr_messages/science.h"
 
 namespace roscan {
+    using RosIntrospection::ShapeShifter;
 
     RosCanNode::RosCanNode(const std::string& name, const uint8_t id) : RosNode{"can_node/" + name}, id_{id} {
-        ROS_INFO_STREAM("CAN node name: " << name_);
-        ROS_INFO_STREAM("Node id: " << id_);
+        ROS_INFO("CAN node name: %s", name_.c_str());
+        ROS_INFO("Node id: %d", id_);
     }
 
     // ==================================================
@@ -44,8 +47,8 @@ namespace roscan {
         std::cout << "topic_id" << (int)topic_num << "\n";
 
         if (topic_num >= 0) {
-            boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
-            callback = [this, topic_num, topic](const topic_tools::ShapeShifter::ConstPtr& msg) {
+            boost::function<void(const ShapeShifter::ConstPtr&)> callback;
+            callback = [this, topic_num, topic](const ShapeShifter::ConstPtr& msg) {
                 rosCanCallback(msg, topic_num, topic);
             };
             subscribe(topic, 100, callback);
@@ -239,52 +242,23 @@ namespace roscan {
     //               ROS Facing Methods
     // ==================================================
 
-    void RosCanNode::rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, const uint8_t topicID, const std::string& topic_name) {
+    void RosCanNode::rosCanCallback(const ShapeShifter::ConstPtr& msg, const uint8_t topicID, const std::string& topic_name) {
         ROS_INFO_STREAM("callback: topic_id = " << (int)topicID << " topic_name = " << topic_name);
-        RosIntrospection::Parser parser;
 
-        const std::string&  datatype   =  msg->getDataType();
-        const std::string&  definition =  msg->getMessageDefinition();
+        IntrospectionHelpers::registerMessage(msg, topic_name);
+        const auto buf = IntrospectionHelpers::modify_buffer(msg->getDataType(), msg->raw_data(), msg->size());
+        const auto msg_count = buf.size() / 8u + (buf.size() % 8u != 0u);
+        ROS_INFO_STREAM("buf size " << buf.size() << " msg_count " << msg_count);
 
-        parser.registerMessageDefinition( topic_name,
-                                          RosIntrospection::ROSType(datatype),
-                                          definition);
-
-        //reuse these objects to improve efficiency ("static" makes them persistent)
-        static std::vector<uint8_t> buffer;
-        static std::map<std::string,RosIntrospection::FlatMessage>   flat_containers;
-        static std::map<std::string,RosIntrospection::RenamedValues> renamed_vectors;
-
-        RosIntrospection::FlatMessage&   flat_container = flat_containers[topic_name];
-        RosIntrospection::RenamedValues& renamed_values = renamed_vectors[topic_name];
-
-        //copy raw memory into the buffer
-        buffer.resize(msg->size());
-        ros::serialization::OStream stream(buffer.data(), buffer.size());
-        msg->write(stream);
-
-        //deserialize and rename the vectors
-        parser.deserializeIntoFlatContainer(topic_name, absl::Span<uint8_t>(buffer), &flat_container, 100);
-
-        parser.applyNameTransform(topic_name, flat_container, &renamed_values);
-
-        //print the content of the message
-        //printf("--------- %s ----------\n", topic_name.c_str());
-        for (const auto& it: renamed_values) {
-            const std::string& key = it.first;
-            const RosIntrospection::Variant& value   = it.second;
-            //printf(" %s = %f\n", key.c_str(), value.convert<double>()); //convert into CAN message set
-        }
-
-        canid_t header = 0x0;
+        canid_t header = 0;
+        header |= CAN_EFF_FLAG;
 
         header |= (1 << ROSCANConstants::Common::bitshift_mode);
         header |= (0 << ROSCANConstants::Common::bitshift_priority);
         header |= (0 << ROSCANConstants::Common::bitshift_func);
-        header |= (0 << ROSCANConstants::Common::bitshift_seq);
-        if(id_ == 1){
+        if (id_ == 1) {
 	        header |= ((topicID * 2) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        } else if (id_ == 0 ){
+        } else if (id_ == 0 ) {
             header |= ((topicID * 2 + 1) << ROSCANConstants::ROSTopic::bitshift_topic_id);
 	    } else if (id_ == 4) {
             header |= ((topicID + 8) << ROSCANConstants::ROSTopic::bitshift_topic_id);
@@ -292,36 +266,33 @@ namespace roscan {
             header |= (topicID << ROSCANConstants::ROSTopic::bitshift_topic_id);
         }
 	    header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
-        header |= (0 << ROSCANConstants::ROSTopic::bitshift_msg_num);
-        header |= (2 << ROSCANConstants::ROSTopic::bitshift_len);
-        header |= CAN_EFF_FLAG;
 
-        can_frame frame;
+        for (auto i = 0u;i < msg_count;++i) {
+            can_frame frame;
+            frame.can_id = header;
 
-        frame.can_id = header;
-        if (topic_name.find("/science") != std::string::npos) {
-            frame.can_dlc = 2;
-        } else {
-            frame.can_dlc = 8;
-        }
-
-        for (const auto& it: renamed_values) {
-            if (topic_name.find("/science") != std::string::npos) {
-                *(short *)frame.data = it.second.convert<short>();
+            frame.can_id |= (i & 0b11) << ROSCANConstants::ROSTopic::bitshift_msg_num;
+            if (i >= 0b111) {
+                frame.can_id |= (0b111 << ROSCANConstants::Common::bitshift_seq);
+                frame.can_id |= i << ROSCANConstants::ROSTopic::bitshift_len;
             } else {
-                *(double *)frame.data = it.second.convert<double>();
+                frame.can_id |= (i << ROSCANConstants::Common::bitshift_seq);
+                frame.can_id |= msg_count << ROSCANConstants::ROSTopic::bitshift_len;
             }
+            const auto start_offset = i * CAN_MAX_DLC;
+            frame.can_dlc = std::min(buf.size() - start_offset, static_cast<uint64_t>(CAN_MAX_DLC));
+            const auto begin = buf.cbegin() + start_offset;
+            const auto end = begin + frame.can_dlc;
+            std::copy(begin, end, frame.data);
+            MessageBuffer::instance().push(frame);
         }
 
-        MessageBuffer::instance().push(frame);
-
-        // Second msg is empty data to indicate EOM
-        header |= (1 << ROSCANConstants::ROSTopic::bitshift_msg_num);
-        frame.can_id = header;
-        frame.can_dlc = 8;
-        *(double *)frame.data = 0;
-        MessageBuffer::instance().push(frame);
-
+        // // Second msg is empty data to indicate EOM
+        // header |= (1 << ROSCANConstants::ROSTopic::bitshift_msg_num);
+        // frame.can_id = header;
+        // frame.can_dlc = 8;
+        // *(uint64_t *)frame.data = 0;
+        // MessageBuffer::instance().push(frame);
     }
 
     int RosCanNode::getFirstFreeTopic() {

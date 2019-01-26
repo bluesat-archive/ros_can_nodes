@@ -18,7 +18,7 @@
 #include <mutex>
 #include <utility>
 #include <boost/shared_ptr.hpp>
-#include <topic_tools/shape_shifter.h>
+#include "shape_shifter.hpp"
 
 #define MAX_TOPICS 128
 
@@ -72,7 +72,7 @@ namespace roscan {
         private:
             const uint8_t id_;
             
-            void rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, const uint8_t topic_num, const std::string& topic_name);
+            void rosCanCallback(const RosIntrospection::ShapeShifter::ConstPtr& msg, const uint8_t topic_num, const std::string& topic_name);
 
             std::mutex topicLock;
             std::bitset<MAX_TOPICS> topicIds;

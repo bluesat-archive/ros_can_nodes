@@ -8,20 +8,39 @@
  * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
  */
 
-#ifndef CANHELPERS_H
-#define CANHELPERS_H
+#ifndef CANHELPERS_HPP
+#define CANHELPERS_HPP
 
-#include <cstdint>
+#include <linux/can.h>
+#include <string>
 
-class CANHelpers{
-    public:
-        static int open_can_port(const char *const port);
+namespace CANHelpers {
 
-        static int send_can_port(const can_frame& frame);
+    /**
+     * Opens a CAN port on the given port string
+     * Returns -1 if there was an error, 0 otherwise
+     */
+    int open_port(const std::string& port);
 
-        static int read_can_port(can_frame& frame);
+    /**
+     * Sends out a CAN frame
+     * A valid CAN port must be open
+     * Returns -1 if there was an error, 0 otherwise
+     */
+    int send_frame(const can_frame& frame);
 
-        static void close_can_port();
-};
+    /**
+     * Reads in a CAN frame
+     * A valid CAN port must be open
+     * Returns -1 if there was an error, 0 otherwise
+     */
+    int read_frame(can_frame& frame);
 
-#endif // CANHELPERS_H
+    /**
+     * Closes the CAN port
+     */
+    void close_port();
+
+} // namespace CANHelpers
+
+#endif // CANHELPERS_HPP

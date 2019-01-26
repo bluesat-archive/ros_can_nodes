@@ -23,7 +23,7 @@
 
 
 int main(int argc, char **argv) {
-    roscan::network::init();
+    //roscan::network::init();
 
     CANMsgRouter::init();
 
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
 void CANMsgRouter::init() {
     // TODO: either fail on bad open_port OR have reconnect policy
-    int err = CANHelpers::open_can_port("can0");
+    int err = CANHelpers::open_port("can0");
 
     if (err) {
         throw std::runtime_error("Failed to acquire CAN socket, exiting");
@@ -48,7 +48,7 @@ void CANMsgRouter::run() {
     while (1) {
         // Check for Messages
         // TODO add reconnection ability
-        if (CANHelpers::read_can_port(can_msg) >= 0) {
+        if (CANHelpers::read_frame(can_msg) >= 0) {
             std::cout << "read can msg\n";
             // Pass to processCANMsg
             CANMsgRouter::processCANMsg(can_msg);
@@ -330,7 +330,7 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
     can_frame msg;
     for (int i = 1;i < len;++i) {
         while (1) {
-            if (CANHelpers::read_can_port(msg) >= 0) {
+            if (CANHelpers::read_frame(msg) >= 0) {
                 buf.insert(buf.end(), msg.data, msg.data + msg.can_dlc);
                 break;
             }
