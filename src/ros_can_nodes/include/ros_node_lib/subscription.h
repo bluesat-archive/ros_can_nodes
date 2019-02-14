@@ -28,10 +28,10 @@
 #ifndef ROSCAN_SUBSCRIPTION_H
 #define ROSCAN_SUBSCRIPTION_H
 
-#include "common.h"
-#include "rosdefs.h"
-#include "xmlrpc_manager.h"
-#include "callback_queue_interface.h"
+#include "ros_node_lib/common.h"
+#include "ros_node_lib/rosdefs.h"
+#include "ros_node_lib/xmlrpc_manager.h"
+#include "ros_node_lib/callback_queue_interface.h"
 #include <XmlRpc.h>
 #include <ros/header.h>
 #include <ros/transport_hints.h>
@@ -61,7 +61,7 @@ namespace roscan {
 // Manages a subscription on a single topic.
 class Subscription : public boost::enable_shared_from_this<Subscription> {
     public:
-        Subscription(const RosCanNodePtr& node, const std::string& name, const std::string& md5sum, const std::string& datatype, const ros::TransportHints& transport_hints)
+        Subscription(const RosNodePtr& node, const std::string& name, const std::string& md5sum, const std::string& datatype, const ros::TransportHints& transport_hints)
             : name_{name}, md5sum_{md5sum}, datatype_{datatype}, nonconst_callbacks_{0}, dropped_{false}, shutting_down_{false}, transport_hints_{transport_hints}, node_{node} {}
         virtual ~Subscription();
 
@@ -194,7 +194,7 @@ class Subscription : public boost::enable_shared_from_this<Subscription> {
 
         //ros::StatisticsLogger statistics_;
 
-        RosCanNodePtr node_;
+        RosNodePtr node_;
 
         struct LatchInfo {
             ros::SerializedMessage message;

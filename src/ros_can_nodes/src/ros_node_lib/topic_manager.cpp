@@ -25,16 +25,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "topic_manager.h"
-#include "RosCanNode.hpp"
-#include "connection_manager.h"
-#include "network.h"
-#include "poll_manager.h"
-#include "xmlrpc_manager.h"
-#include "subscription.h"
-#include "publication.h"
-#include "subscribe_options.h"
-#include "advertise_options.h"
+#include "ros_node_lib/topic_manager.h"
+#include "ros_node_lib/RosNode.hpp"
+#include "ros_node_lib/connection_manager.h"
+#include "ros_node_lib/network.h"
+#include "ros_node_lib/poll_manager.h"
+#include "ros_node_lib/xmlrpc_manager.h"
+#include "ros_node_lib/subscription.h"
+#include "ros_node_lib/publication.h"
+#include "ros_node_lib/subscribe_options.h"
+#include "ros_node_lib/advertise_options.h"
 #include <XmlRpc.h>
 #include <ros/header.h>
 #include <ros/transport/transport_tcp.h>

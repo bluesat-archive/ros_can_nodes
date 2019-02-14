@@ -12,13 +12,12 @@
 #include <thread>
 #include <chrono>
 #include <string>
-#include <sstream>
 #include <stdexcept>
 #include "CANMsgRouter.hpp"
 #include "ROSCANConstants.hpp"
 #include "TopicBuffers.hpp"
 #include "CANHelpers.hpp"
-#include "network.h"
+#include "ros_node_lib/network.h"
 #include "RosCanNode.hpp"
 #include "RosCanNodeManager.hpp"
 

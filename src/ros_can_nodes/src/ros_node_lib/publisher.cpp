@@ -25,10 +25,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RosCanNode.hpp"
-#include "publisher.h"
-#include "publication.h"
-#include "topic_manager.h"
+#include "ros_node_lib/RosNode.hpp"
+#include "ros_node_lib/publisher.h"
+#include "ros_node_lib/publication.h"
+#include "ros_node_lib/topic_manager.h"
 
 namespace roscan {
 

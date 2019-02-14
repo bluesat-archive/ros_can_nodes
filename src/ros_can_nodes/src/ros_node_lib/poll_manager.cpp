@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "poll_manager.h"
+#include "ros_node_lib/poll_manager.h"
 #include <mutex>
 #include <thread>
 

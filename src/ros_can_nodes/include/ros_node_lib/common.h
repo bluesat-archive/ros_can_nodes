@@ -8,8 +8,8 @@
 
 namespace roscan {
 
-class RosCanNode;
-typedef boost::shared_ptr<RosCanNode> RosCanNodePtr;
+class RosNode;
+typedef boost::shared_ptr<RosNode> RosNodePtr;
 
 class Publisher;
 typedef boost::shared_ptr<Publisher> PublisherPtr;

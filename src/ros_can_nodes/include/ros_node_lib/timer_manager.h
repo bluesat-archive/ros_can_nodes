@@ -28,7 +28,7 @@
 #ifndef ROSCAN_TIMER_MANAGER_H
 #define ROSCAN_TIMER_MANAGER_H
 
-#include "callback_queue_interface.h"
+#include "ros_node_lib/callback_queue_interface.h"
 #include <ros/time.h>
 #include <list>
 #include <functional>

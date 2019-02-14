@@ -47,7 +47,7 @@ class PublisherLink : public boost::enable_shared_from_this<PublisherLink> {
                 Stats() : bytes_received_{0}, messages_received_{0}, drops_{0} {}
         };
 
-        PublisherLink(const RosCanNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
+        PublisherLink(const RosNodePtr& node, const SubscriptionPtr& parent, const std::string& xmlrpc_uri, const ros::TransportHints& transport_hints)
             : node_{node}, parent_{parent}, connection_id_{0}, publisher_xmlrpc_uri_{xmlrpc_uri}, transport_hints_{transport_hints}, latched_{false} {}
         
         virtual ~PublisherLink() {}
@@ -69,7 +69,7 @@ class PublisherLink : public boost::enable_shared_from_this<PublisherLink> {
         const std::string& getMD5Sum() const { return md5sum_; }
 
     protected:
-        RosCanNodePtr node_;
+        RosNodePtr node_;
 
         SubscriptionWPtr parent_;
         unsigned int connection_id_;

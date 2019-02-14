@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "subscription_queue.h"
+#include "ros_node_lib/subscription_queue.h"
 #include <ros/message_deserializer.h>
 #include <ros/subscription_callback_helper.h>
 

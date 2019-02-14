@@ -25,11 +25,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "RosCanNode.hpp"
-#include "publication.h"
-#include "transport_subscriber_link.h"
-#include "topic_manager.h"
-#include "connection_manager.h"
+#include "ros_node_lib/RosNode.hpp"
+#include "ros_node_lib/publication.h"
+#include "ros_node_lib/transport_subscriber_link.h"
+#include "ros_node_lib/topic_manager.h"
+#include "ros_node_lib/connection_manager.h"
 #include <ros/connection.h>
 #include <ros/header.h>
 #include <ros/transport/transport.h>

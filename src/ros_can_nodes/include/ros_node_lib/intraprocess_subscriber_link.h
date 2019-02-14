@@ -38,7 +38,7 @@ namespace roscan {
 // SubscriberLink handles broadcasting messages to a single subscriber on a single topic
 class IntraProcessSubscriberLink : public SubscriberLink {
     public:
-        IntraProcessSubscriberLink(const RosCanNodePtr& node, const PublicationPtr& parent);
+        IntraProcessSubscriberLink(const RosNodePtr& node, const PublicationPtr& parent);
         ~IntraProcessSubscriberLink() override {}
 
         void setSubscriber(const IntraProcessPublisherLinkPtr& subscriber);
@@ -52,7 +52,7 @@ class IntraProcessSubscriberLink : public SubscriberLink {
         void getPublishTypes(bool& ser, bool& nocopy, const std::type_info& ti) override;
 
     private:
-        RosCanNodePtr node_;
+        RosNodePtr node_;
         IntraProcessPublisherLinkPtr subscriber_;
         bool dropped_;
         std::recursive_mutex drop_mutex_;
