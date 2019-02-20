@@ -166,7 +166,7 @@ void CANMsgRouter::processCANMsg(const can_frame& msg) {
             default:
             {
                 // -- Reserved --
-                std::cout << "function reserved\n";
+                std::cout << "function reserved " << (unsigned int) ROSCANConstants::Common::func(header) << "\n";
                 break;
             }
         }
@@ -343,6 +343,7 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
     buf.insert(buf.end(), first.data, first.data + first.can_dlc);
 
     // read until we have 'len' frames worth of data
+    // TODO: this doesn't work with multiple nodes
     can_frame msg;
     for (int i = 1;i < len;++i) {
         while (1) {
@@ -361,6 +362,7 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
         topic_type = std::string{null_char_it1 + 1, null_char_it2};
         std::cout << "received topic \"" << topic << "\" with type \"" << topic_type << "\"\n";
     } else {
-        std::cout << "invalid topic/type data\n";
+        std::cout << "invalid topic/type data: " << std::string(buf.cbegin(), buf.cend()) << "\n";
+        //TODO: throw an exception or something so we don't register an empty topic
     }
 }
