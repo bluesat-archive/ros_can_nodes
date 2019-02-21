@@ -201,12 +201,12 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             }
             // send message back, everything is the same apart from the step
             can_frame response = msg;
-	    ROSCANConstants::Control::mode0_step_insert(response.can_id, step+1);
-	    printf("sending header %x\n", response.can_id); 
-	    response.can_dlc = 4;
-	    response.data[1] = nodeid;
-	    
-	    CANHelpers::send_can_port(response);
+            ROSCANConstants::Control::mode0_step_insert(response.can_id, step+1);
+            printf("sending header %x\n", response.can_id);
+            response.can_dlc = 4;
+            response.data[0] = nodeid;
+
+            CANHelpers::send_can_port(response);
             
             break;
         }
@@ -231,6 +231,13 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
                 std::cout << "subscribe register failed\n";
             } else {
                 std::cout << "subscription of topic \"" << topic << "\" assigned to topic id " << topicID << " of node id " << (int)nodeID << "\n";
+                can_frame response = msg;
+                ROSCANConstants::Control::step_insert(response.can_id, 1);
+                printf("sending header %x\n", response.can_id);
+                response.can_dlc = 4;
+                response.data[0] = topicID;
+
+                CANHelpers::send_can_port(response);
             }
             break;
         }
@@ -349,20 +356,22 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
         while (1) {
             if (CANHelpers::read_can_port(msg) >= 0) {
                 buf.insert(buf.end(), msg.data, msg.data + msg.can_dlc);
+                std::cout << "read 1 packet at " << i <<  "size " << (unsigned int) msg.can_dlc << "\n";
                 break;
             }
         }
     }
 
     // extract topic and topic type by finding the position of the middle null char
-    const auto null_char_it1 = std::find(buf.cbegin(), buf.cend(), 0);
-    const auto null_char_it2 = std::find(null_char_it1 + 1, buf.cend(), 0);
-    if (null_char_it1 != buf.cend() && null_char_it2 != buf.cend()) {
+    std::cout << (long int) buf.cbegin().base() << " " << (long int) buf.cend().base() << "\n";
+    const auto null_char_it1 = std::find(buf.cbegin(), buf.cend(), '\0');
+    const auto null_char_it2 = std::find(null_char_it1 + 1, buf.cend(), '\0');
+    if (null_char_it1 != buf.cend() && null_char_it2 <= buf.cend()) {
         topic = std::string{buf.cbegin(), null_char_it1};
         topic_type = std::string{null_char_it1 + 1, null_char_it2};
         std::cout << "received topic \"" << topic << "\" with type \"" << topic_type << "\"\n";
     } else {
-        std::cout << "invalid topic/type data: " << std::string(buf.cbegin(), buf.cend()) << "\n";
+        std::cout << "invalid topic/type data: " << std::string(buf.cbegin(), buf.cend()) << " null at " << (long int) null_char_it1.base() << "\n";
         //TODO: throw an exception or something so we don't register an empty topic
     }
 }
