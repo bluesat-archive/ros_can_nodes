@@ -278,19 +278,13 @@ namespace roscan {
 
         canid_t header = 0x0;
 
+        printf("can topic id 0x%x\n", topicID);
         header |= (1 << ROSCANConstants::Common::bitshift_mode);
         header |= (0 << ROSCANConstants::Common::bitshift_priority);
         header |= (0 << ROSCANConstants::Common::bitshift_func);
         header |= (0 << ROSCANConstants::Common::bitshift_seq);
-        if(id_ == 1){
-	        header |= ((topicID * 2) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        } else if (id_ == 0 ){
-            header |= ((topicID * 2 + 1) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-	    } else if (id_ == 4) {
-            header |= ((topicID + 8) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        } else {
-            header |= (topicID << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        }
+        header |= (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id);
+        printf("topic id at position 0x%x\n", (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id));
 	    header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
         header |= (0 << ROSCANConstants::ROSTopic::bitshift_msg_num);
         header |= (2 << ROSCANConstants::ROSTopic::bitshift_len);
@@ -299,18 +293,10 @@ namespace roscan {
         can_frame frame;
 
         frame.can_id = header;
-        if (topic_name.find("/science") != std::string::npos) {
-            frame.can_dlc = 2;
-        } else {
-            frame.can_dlc = 8;
-        }
+        frame.can_dlc = 8;
 
         for (const auto& it: renamed_values) {
-            if (topic_name.find("/science") != std::string::npos) {
-                *(short *)frame.data = it.second.convert<short>();
-            } else {
-                *(double *)frame.data = it.second.convert<double>();
-            }
+            *(double *)frame.data = it.second.convert<double>();
         }
 
         MessageBuffer::instance().push(frame);
