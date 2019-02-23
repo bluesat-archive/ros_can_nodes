@@ -5,7 +5,7 @@
 #include <cstring>
 #include <utility>
 #include <ros_type_introspection/ros_introspection.hpp>
-#include "shape_shifter.hpp"
+#include <ros_type_introspection/utils/shape_shifter.hpp>
 #include "ROSCANConstants.hpp"
 #include <linux/can.h>
 #include "MessageBuffer.hpp"

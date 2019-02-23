@@ -1,6 +1,6 @@
 #include "IntrospectionHelpers.hpp"
 #include <ros_type_introspection/ros_introspection.hpp>
-#include "shape_shifter.hpp"
+#include <ros_type_introspection/utils/shape_shifter.hpp>
 #include <deque>
 #include <vector>
 #include <string>

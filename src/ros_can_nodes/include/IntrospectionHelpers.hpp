@@ -14,7 +14,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include "shape_shifter.hpp"
+#include <ros_type_introspection/utils/shape_shifter.hpp>
 
 namespace IntrospectionHelpers {
     /**

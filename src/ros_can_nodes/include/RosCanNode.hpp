@@ -18,7 +18,7 @@
 #include <mutex>
 #include <utility>
 #include <boost/shared_ptr.hpp>
-#include "shape_shifter.hpp"
+#include <ros_type_introspection/utils/shape_shifter.hpp>
 
 #define MAX_TOPICS 128
 
