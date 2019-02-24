@@ -282,11 +282,11 @@ namespace roscan {
         header |= (1 << ROSCANConstants::Common::bitshift_mode);
         header |= (0 << ROSCANConstants::Common::bitshift_priority);
         header |= (0 << ROSCANConstants::Common::bitshift_func);
-        header |= (0 << ROSCANConstants::Common::bitshift_seq);
         header |= (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id);
+        header |= (0 << ROSCANConstants::Common::bitshift_seq);
         printf("topic id at position 0x%x\n", (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id));
 	    header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
-        header |= (0 << ROSCANConstants::ROSTopic::bitshift_msg_num);
+        header |= (((msg_num = ((msg_num + 1)  % 3)) & ROSCANConstants::ROSTopic::bitmask_msg_num) << ROSCANConstants::ROSTopic::bitshift_msg_num);
         header |= (2 << ROSCANConstants::ROSTopic::bitshift_len);
         header |= CAN_EFF_FLAG;
 
@@ -301,8 +301,10 @@ namespace roscan {
 
         MessageBuffer::instance().push(frame);
 
+        sleep(1);
+
         // Second msg is empty data to indicate EOM
-        header |= (1 << ROSCANConstants::ROSTopic::bitshift_msg_num);
+        header |= (1 << ROSCANConstants::Common::bitshift_seq);
         frame.can_id = header;
         frame.can_dlc = 8;
         *(double *)frame.data = 0;
