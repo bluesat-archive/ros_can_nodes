@@ -77,6 +77,8 @@ namespace roscan {
             std::mutex topicLock;
             std::bitset<MAX_TOPICS> topicIds;
 
+            uint8_t msg_num = 0;
+
             int getFirstFreeTopic();
             std::unordered_map<uint8_t, std::pair<PublisherPtr, std::string>> publishers;
     };

@@ -57,6 +57,7 @@ int CANHelpers::send_can_port(const can_frame& frame) {
         return (-1);
     } else {
         printf("Sent !!\n");
+        printf("Header %x\n", frame.can_id);
         return (0);
     }
 }
