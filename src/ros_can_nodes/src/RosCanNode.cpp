@@ -253,19 +253,17 @@ namespace roscan {
         canid_t header = 0;
         header |= CAN_EFF_FLAG;
 
+        ROS_INFO("can topic id 0x%x", topicID);
         header |= (1 << ROSCANConstants::Common::bitshift_mode);
         header |= (0 << ROSCANConstants::Common::bitshift_priority);
         header |= (0 << ROSCANConstants::Common::bitshift_func);
-        if (id_ == 1) {
-	        header |= ((topicID * 2) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        } else if (id_ == 0 ) {
-            header |= ((topicID * 2 + 1) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-	    } else if (id_ == 4) {
-            header |= ((topicID + 8) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        } else {
-            header |= (topicID << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        }
+        header |= (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id);
+        header |= (0 << ROSCANConstants::Common::bitshift_seq);
+        ROS_INFO("topic id at position 0x%x", (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id));
 	    header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
+        header |= (((msg_num = ((msg_num + 1)  % 3)) & ROSCANConstants::ROSTopic::bitmask_msg_num) << ROSCANConstants::ROSTopic::bitshift_msg_num);
+        header |= (1 << ROSCANConstants::ROSTopic::bitshift_len);
+        header |= CAN_EFF_FLAG;
 
         for (auto i = 0u;i < msg_count;++i) {
             can_frame frame;
@@ -286,13 +284,6 @@ namespace roscan {
             std::copy(begin, end, frame.data);
             MessageBuffer::instance().push(frame);
         }
-
-        // // Second msg is empty data to indicate EOM
-        // header |= (1 << ROSCANConstants::ROSTopic::bitshift_msg_num);
-        // frame.can_id = header;
-        // frame.can_dlc = 8;
-        // *(uint64_t *)frame.data = 0;
-        // MessageBuffer::instance().push(frame);
     }
 
     int RosCanNode::getFirstFreeTopic() {
@@ -305,6 +296,5 @@ namespace roscan {
 
         return id;
     }
-
 
 } // namespace roscan

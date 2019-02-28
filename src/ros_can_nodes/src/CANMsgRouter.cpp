@@ -24,10 +24,10 @@
 int main(int argc, char **argv) {
     CANMsgRouter::init();
 
-    CANMsgRouter::subscriberTest();
+    //CANMsgRouter::subscriberTest();
     // CANMsgRouter::publisherTest();
 
-    //CANMsgRouter::run();
+    CANMsgRouter::run();
 }
 
 void CANMsgRouter::init() {
@@ -77,37 +77,44 @@ void CANMsgRouter::publisherTest() {
 void CANMsgRouter::subscriberTest() {
     ROS_INFO("Registering\n");
 
-    // int nodeId1 = RosCanNodeManager::instance().registerNode("left_loco", 1, 1);
-    // int nodeId2 = RosCanNodeManager::instance().registerNode("right_loco", 2, 2);
-    // int nodeId4 = RosCanNodeManager::instance().registerNode("arm", 4, 4);
+    int nodeId1 = RosCanNodeManager::instance().registerNode("left_loco", 2, 2);
+    int nodeId2 = RosCanNodeManager::instance().registerNode("right_loco", 3, 3);
+    int nodeId4 = RosCanNodeManager::instance().registerNode("arm", 4, 4);
     int nodeId5 = RosCanNodeManager::instance().registerNode("science", 7, 7);
 
-    // if (nodeId1 < 0 || nodeId2 < 0 || nodeId4 < 0) {
-    //     throw std::runtime_error("unable to register all subscriber nodes, exiting");
-    // }
+    if (nodeId1 < 0 || nodeId2 < 0 || nodeId4 < 0) {
+        throw std::runtime_error("unable to register all subscriber nodes, exiting");
+    }
 
-    // ROS_INFO("Registered***");
+    ROS_INFO("Registered***");
 
-    // roscan::RosCanNodePtr l_loco_node = RosCanNodeManager::instance().getNode(nodeId1);
-    // roscan::RosCanNodePtr r_loco_node = RosCanNodeManager::instance().getNode(nodeId2);
-    // roscan::RosCanNodePtr arm_node = RosCanNodeManager::instance().getNode(nodeId4);
+    roscan::RosCanNodePtr l_loco_node = RosCanNodeManager::instance().getNode(nodeId1);
+    roscan::RosCanNodePtr r_loco_node = RosCanNodeManager::instance().getNode(nodeId2);
+    roscan::RosCanNodePtr arm_node = RosCanNodeManager::instance().getNode(nodeId4);
     roscan::RosCanNodePtr science_node = RosCanNodeManager::instance().getNode(nodeId5);
 
-    // l_loco_node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
-    // l_loco_node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
-    // l_loco_node->registerSubscriber("/front_left_swerve_controller/command", "blah");
-    // l_loco_node->registerSubscriber("/back_left_swerve_controller/command", "blah");
+    // 0
+    l_loco_node->registerSubscriber("/front_left_wheel_axel_controller/command", "blah");
+    // 1
+    r_loco_node->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
+    // 2
+    l_loco_node->registerSubscriber("/back_left_wheel_axel_controller/command", "blah");
+    // 3
+    r_loco_node->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
+    // 4
+    l_loco_node->registerSubscriber("/front_left_swerve_controller/command", "blah");
+    // 5
+    r_loco_node->registerSubscriber("/front_right_swerve_controller/command", "blah");
+    // 6
+    l_loco_node->registerSubscriber("/back_left_swerve_controller/command", "blah");
+    // 7
+    r_loco_node->registerSubscriber("/back_right_swerve_controller/command", "blah");
 
-    // r_loco_node->registerSubscriber("/front_right_wheel_axel_controller/command", "blah");
-    // r_loco_node->registerSubscriber("/back_right_wheel_axel_controller/command", "blah");
-    // r_loco_node->registerSubscriber("/front_right_swerve_controller/command", "blah");
-    // r_loco_node->registerSubscriber("/back_right_swerve_controller/command", "blah");
-
-    // arm_node->registerSubscriber("/arm_base_rotate_controller/command", "blah");
-    // arm_node->registerSubscriber("/arm_top_controller/command", "blah");
-    // arm_node->registerSubscriber("/arm_bottom_controller/command", "blah");
-    // arm_node->registerSubscriber("/claw_rotate_controller/command", "blah");
-    // arm_node->registerSubscriber("/claw_grip_controller/command", "blah");
+    arm_node->registerSubscriber("/arm_base_rotate_controller/command", "blah");
+    arm_node->registerSubscriber("/arm_top_controller/command", "blah");
+    arm_node->registerSubscriber("/arm_bottom_controller/command", "blah");
+    arm_node->registerSubscriber("/claw_rotate_controller/command", "blah");
+    arm_node->registerSubscriber("/claw_grip_controller/command", "blah");
 
     science_node->registerSubscriber("/science/request", "blah", 13);
     science_node->advertiseTopic("/science/data", "owr_messages/science");
@@ -160,7 +167,7 @@ void CANMsgRouter::processCANMsg(const can_frame& msg) {
             default:
             {
                 // -- Reserved --
-                std::cout << "function reserved\n";
+                std::cout << "function reserved " << (unsigned int) ROSCANConstants::Common::func(header) << "\n";
                 break;
             }
         }
@@ -193,6 +200,15 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             } else {
                 std::cout << "new node id " << nodeid << "\n";
             }
+            // send message back, everything is the same apart from the step
+            can_frame response = msg;
+            ROSCANConstants::Control::mode0_step_insert(response.can_id, step+1);
+            printf("sending header %x\n", response.can_id);
+            response.can_dlc = 4;
+            response.data[0] = nodeid;
+
+            CANHelpers::send_frame(response);
+            
             break;
         }
         case ROSCANConstants::Control::DEREGISTER_NODE:
@@ -216,6 +232,13 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
                 std::cout << "subscribe register failed\n";
             } else {
                 std::cout << "subscription of topic \"" << topic << "\" assigned to topic id " << topicID << " of node id " << (int)nodeID << "\n";
+                can_frame response = msg;
+                ROSCANConstants::Control::step_insert(response.can_id, 1);
+                printf("sending header %x\n", response.can_id);
+                response.can_dlc = 4;
+                response.data[0] = topicID;
+
+                CANHelpers::send_frame(response);
             }
             break;
         }
@@ -328,24 +351,28 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
     buf.insert(buf.end(), first.data, first.data + first.can_dlc);
 
     // read until we have 'len' frames worth of data
+    // TODO: this doesn't work with multiple nodes
     can_frame msg;
     for (int i = 1;i < len;++i) {
         while (1) {
             if (CANHelpers::read_frame(msg) >= 0) {
                 buf.insert(buf.end(), msg.data, msg.data + msg.can_dlc);
+                std::cout << "read 1 packet at " << i <<  "size " << (unsigned int) msg.can_dlc << "\n";
                 break;
             }
         }
     }
 
     // extract topic and topic type by finding the position of the middle null char
-    const auto null_char_it1 = std::find(buf.cbegin(), buf.cend(), 0);
-    const auto null_char_it2 = std::find(null_char_it1 + 1, buf.cend(), 0);
-    if (null_char_it1 != buf.cend() && null_char_it2 != buf.cend()) {
+    std::cout << (long int) buf.cbegin().base() << " " << (long int) buf.cend().base() << "\n";
+    const auto null_char_it1 = std::find(buf.cbegin(), buf.cend(), '\0');
+    const auto null_char_it2 = std::find(null_char_it1 + 1, buf.cend(), '\0');
+    if (null_char_it1 != buf.cend() && null_char_it2 <= buf.cend()) {
         topic = std::string{buf.cbegin(), null_char_it1};
         topic_type = std::string{null_char_it1 + 1, null_char_it2};
         std::cout << "received topic \"" << topic << "\" with type \"" << topic_type << "\"\n";
     } else {
-        std::cout << "invalid topic/type data\n";
+        std::cout << "invalid topic/type data: " << std::string(buf.cbegin(), buf.cend()) << " null at " << (long int) null_char_it1.base() << "\n";
+        //TODO: throw an exception or something so we don't register an empty topic
     }
 }

@@ -58,6 +58,7 @@ int CANHelpers::send_frame(const can_frame& frame) {
         return -1;
     }
     ROS_INFO("Sent !!");
+    ROS_INFO("Header %x", frame.can_id);
     return 0;
 }
 
