@@ -27,30 +27,93 @@ namespace IntrospectionHelpers {
     static std::mutex registration_mutex;
 
     /**
-     * Recursively modifies the buffer using msg_fields as a message type template
+     * Recursively transforms the buffer using msg_fields as a message type template
      */
-    void modify_buffer_recursive(const ROSField& field, std::deque<uint8_t>& raw, std::vector<uint8_t>& modified) {
-        // transfer bytes from raw to modified
-        static constexpr auto transfer_bytes = [](auto& raw, auto& modified, const auto size) {
-            // copy size bytes from start of raw to end of modified
-            modified.insert(modified.cend(), raw.cbegin(), raw.cbegin() + size);
-
-            // delete size bytes from start of raw
-            raw.erase(raw.cbegin(), raw.cbegin() + size);
+    std::vector<uint8_t> to_can_buf_recursive(const ROSField& field, std::vector<uint8_t>& buf) {
+        // transfer bytes from src to dst
+        static constexpr auto transfer_bytes = [](auto& src, auto& dst, const auto len) {
+            dst.insert(dst.cend(), src.cbegin(), src.cbegin() + len);
+            src.erase(src.cbegin(), src.cbegin() + len);
         };
 
-        // modifies the size specifier of array-like fields
-        // also returns the size value
-        static constexpr auto modify_size = [](auto& raw, auto& modified) {
-            // get the size value
-            const auto size = raw.front();
+        // extracts the length specifier of array-like fields, deleting it from buf
+        static constexpr auto extract_array_len = [](auto& buf) {
+            const auto len = *reinterpret_cast<uint32_t *>(buf.data());
+            buf.erase(buf.cbegin(), buf.cbegin() + sizeof(uint32_t));
+            return len;
+        };
 
-            // transfer size byte over
+        // inserts the buffer's length in bytes as a 16bit integer to its start
+        static constexpr auto insert_buf_length = [](auto& buf) {
+            const auto len = static_cast<uint16_t>(buf.size());
+            const auto ptr = reinterpret_cast<const uint8_t *const>(&len);
+            buf.insert(buf.cbegin(), ptr, ptr + sizeof(uint16_t));
+        };
+
+        std::vector<uint8_t> tmp_buf;
+        tmp_buf.reserve(buf.size() + sizeof(uint32_t));
+        
+        const auto& type = field.type();
+
+        if (field.isArray()) {
+            auto len = field.arraySize();
+            if (len == -1) { // varied length array
+                // varied length array types stored as 'array length' then contents
+                len = extract_array_len(buf);
+            }
+
+            // iterate through size, recursively transform buffer
+            const auto non_array_field = ROSField{type.baseName() + " x"};
+            for (auto i = 0;i < len;++i) {
+                const auto tmp_buf_i = to_can_buf_recursive(non_array_field, buf);
+                tmp_buf.insert(tmp_buf.cend(), tmp_buf_i.cbegin(), tmp_buf_i.cend());
+            }
+            insert_buf_length(tmp_buf);
+        } else if (type.typeID() == BuiltinType::STRING) {
+            // string is stored as 'length' then string contents (no null terminator)
+            const auto len = extract_array_len(buf);
+            transfer_bytes(buf, tmp_buf, len);
+
+            // add null terminator
+            tmp_buf.push_back(0);
+            insert_buf_length(tmp_buf);
+        } else if (type.typeID() == BuiltinType::OTHER) {
+            // non-primitive internal message type
+            // iterate through type's fields and modify contents recursively
+            for (const auto& field : msg_fields[type.baseName()]) {
+                const auto tmp_buf_i = to_can_buf_recursive(field, buf);
+                tmp_buf.insert(tmp_buf.cend(), tmp_buf_i.cbegin(), tmp_buf_i.cend());
+            }
+        } else {
+            // non-string primitives - directly transfer bytes
+            transfer_bytes(buf, tmp_buf, type.typeSize());
+        }
+        return tmp_buf;
+    }
+
+    /**
+     * Recursively shrinks the buffer using msg_fields as a message type template
+     * shrinks all length specifiers from 4 bytes to 1
+     */
+    void shrink_buf_recursive(const ROSField& field, std::deque<uint8_t>& raw, std::vector<uint8_t>& modified) {
+        // transfer bytes from src to dst
+        static constexpr auto transfer_bytes = [](auto& src, auto& dst, const auto size) {
+            dst.insert(dst.cend(), src.cbegin(), src.cbegin() + size);
+            src.erase(src.cbegin(), src.cbegin() + size);
+        };
+
+        // shrinks the length specifier of array-like fields
+        // also returns the length value
+        static constexpr auto shrink_array_len = [](auto& raw, auto& modified) {
+            // get the length value
+            const auto len = raw.front();
+
+            // transfer length byte over
             transfer_bytes(raw, modified, 1);
 
             // delete 3 bytes from start of raw
             raw.erase(raw.cbegin(), raw.cbegin() + 3);
-            return size;
+            return len;
         };
 
         const auto& type = field.type();
@@ -58,20 +121,18 @@ namespace IntrospectionHelpers {
         if (field.isArray()) {
             auto len = field.arraySize();
             if (len == -1) { // varied length array
-                // varied length array types stored as 'size' then contents
-                // modify size
-                len = modify_size(raw, modified);
+                // varied length array types stored as 'array length' then contents
+                len = shrink_array_len(raw, modified);
             }
 
-            // iterate through size, modify contents recursively
+            // iterate through len, shrink contents recursively
             const auto non_array_field = ROSField{type.baseName() + " x"};
             for (auto i = 0;i < len;++i) {
-                modify_buffer_recursive(non_array_field, raw, modified);
+                shrink_buf_recursive(non_array_field, raw, modified);
             }
         } else if (type.typeID() == BuiltinType::STRING) {
-            // string is stored as 'size' then string contents (no null terminator)
-            // modify size
-            const auto len = modify_size(raw, modified);
+            // string is stored as 'length' then string contents (no null terminator)
+            const auto len = shrink_array_len(raw, modified);
 
             // transfer string contents
             transfer_bytes(raw, modified, len);
@@ -79,7 +140,7 @@ namespace IntrospectionHelpers {
             // non-primitive internal message type
             // iterate through type's fields and modify contents recursively
             for (const auto& f : msg_fields[type.baseName()]) {
-                modify_buffer_recursive(f, raw, modified);
+                shrink_buf_recursive(f, raw, modified);
             }
         } else {
             // non-string primitives - directly transfer bytes
@@ -125,12 +186,30 @@ namespace IntrospectionHelpers {
         }
     }
 
+    void print_buf(const std::vector<uint8_t>& buf) {
+        ROS_INFO("BUF");
+        for (const auto c : buf) {
+            char str[10] = {0};
+            if (isprint(c)) {
+                sprintf(str, "%02x (%c)", c, c);
+            } else {
+                sprintf(str, "%02x", c);
+            }
+            ROS_INFO("%s", str);
+        }
+        ROS_INFO("ENDRET");
+    }
+
     std::vector<uint8_t> modify_buffer(const std::string& datatype, const uint8_t *const data, const uint32_t size) {
-        std::deque<uint8_t> raw{data, data + size};
-        std::vector<uint8_t> modified;
-        modified.reserve(size);
-        modify_buffer_recursive(ROSField{datatype + " x"}, raw, modified);
-        return modified;
+        // std::deque<uint8_t> raw{data, data + size};
+        // std::vector<uint8_t> modified;
+        // modified.reserve(size);
+        // shrink_buf_recursive(ROSField{datatype + " x"}, raw, modified);
+        // return modified;
+        std::vector<uint8_t> raw{data, data + size};
+        const auto ret = to_can_buf_recursive(ROSField{datatype + " x"}, raw);
+        print_buf(ret);
+        return ret;
     }
 
 } // namespace IntrospectionHelpers
