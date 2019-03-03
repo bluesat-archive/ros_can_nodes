@@ -43,7 +43,7 @@ int RosCanNodeManager::registerNode(const std::string& name, const uint8_t hashN
 
 void RosCanNodeManager::deregisterNode(const uint8_t id) {
     if (id >= MAX_NODES) {
-        std::cout << "attempted to deregister invalid node id " << id << "\n";
+        ROS_INFO("attempted to deregister invalid node id %d", id);
         return;
     }
     {
@@ -52,7 +52,7 @@ void RosCanNodeManager::deregisterNode(const uint8_t id) {
             nodeList[id]->shutdown();
             nodeList[id].reset();
         } else {
-            std::cout << "attempted to deregister nonexistant node id " << id << "\n";
+            ROS_INFO("attempted to deregister nonexistant node id %d", id);
             return;
         }
     }

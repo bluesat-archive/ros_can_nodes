@@ -94,6 +94,7 @@ namespace IntrospectionHelpers {
     /**
      * Recursively shrinks the buffer using msg_fields as a message type template
      * shrinks all length specifiers from 4 bytes to 1
+     * NOTE: not used but keeping here for future reference
      */
     void shrink_buf_recursive(const ROSField& field, std::deque<uint8_t>& raw, std::vector<uint8_t>& modified) {
         // transfer bytes from src to dst
@@ -197,7 +198,7 @@ namespace IntrospectionHelpers {
             }
             ROS_INFO("%s", str);
         }
-        ROS_INFO("ENDRET");
+        ROS_INFO("ENDBUF");
     }
 
     std::vector<uint8_t> modify_buffer(const std::string& datatype, const uint8_t *const data, const uint32_t size) {

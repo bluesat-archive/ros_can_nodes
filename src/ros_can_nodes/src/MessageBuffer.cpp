@@ -5,6 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <thread>
+#include <ros/console.h>
 
 MessageBuffer& MessageBuffer::instance() {
     static MessageBuffer instance;
@@ -33,7 +34,7 @@ MessageBuffer::MessageBuffer() {
             
             // debug exit condition
             if (frame.__res0 == 8) {
-                std::cout << "exit condition\n";
+                ROS_INFO("exit condition");
                 break;
             }
 
@@ -45,7 +46,7 @@ MessageBuffer::MessageBuffer() {
 
             // CAN port is assumed to be open
             if (CANHelpers::send_frame(frame) < 0) {
-            	std::cerr << "send failed: frame could not be sent\n";
+            	ROS_ERROR("send failed: frame could not be sent");
             }
         }
     }};
