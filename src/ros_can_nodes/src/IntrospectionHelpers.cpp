@@ -149,7 +149,7 @@ namespace IntrospectionHelpers {
         }
     }
 
-    void registerMessage(const ShapeShifter::ConstPtr& msg, const std::string& topic_name) {
+    void register_message(const ShapeShifter::ConstPtr& msg, const std::string& topic_name) {
         // get message type and definition
         const std::string& datatype = msg->getDataType();
         const std::string& definition = msg->getMessageDefinition();
@@ -176,7 +176,7 @@ namespace IntrospectionHelpers {
         }
     }
 
-    void printRegistered() {
+    void print_registered() {
         for (const auto& msg : msg_fields) {
             ROS_INFO_STREAM("MESSAGETYPE: " << msg.first);
             for (const auto& f : msg.second) {
@@ -202,11 +202,6 @@ namespace IntrospectionHelpers {
     }
 
     std::vector<uint8_t> modify_buffer(const std::string& datatype, const uint8_t *const data, const uint32_t size) {
-        // std::deque<uint8_t> raw{data, data + size};
-        // std::vector<uint8_t> modified;
-        // modified.reserve(size);
-        // shrink_buf_recursive(ROSField{datatype + " x"}, raw, modified);
-        // return modified;
         std::vector<uint8_t> raw{data, data + size};
         const auto ret = to_can_buf_recursive(ROSField{datatype + " x"}, raw);
         print_buf(ret);

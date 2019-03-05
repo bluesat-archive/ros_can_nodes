@@ -246,10 +246,10 @@ namespace roscan {
     void RosCanNode::rosCanCallback(const ShapeShifter::ConstPtr& msg, const uint8_t topicID, const std::string& topic_name) {
         ROS_INFO("callback: topic_id = %d topic_name = %s", topicID, topic_name.c_str());
 
-        IntrospectionHelpers::registerMessage(msg, topic_name);
+        IntrospectionHelpers::register_message(msg, topic_name);
         const auto buf = IntrospectionHelpers::modify_buffer(msg->getDataType(), msg->raw_data(), msg->size());
         const auto msg_count = buf.size() / 8u + (buf.size() % 8u != 0u);
-        ROS_INFO("buf size %d msg_count %d", buf.size(), msg_count);
+        ROS_INFO("buf size %lu msg_count %lu", buf.size(), msg_count);
 
         canid_t header = 0;
         header |= CAN_EFF_FLAG;
@@ -259,18 +259,15 @@ namespace roscan {
         header |= (0 << ROSCANConstants::Common::bitshift_priority);
         header |= (0 << ROSCANConstants::Common::bitshift_func);
         header |= (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        header |= (0 << ROSCANConstants::Common::bitshift_seq);
         ROS_INFO("topic id at position 0x%x", (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id));
 	    header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
         header |= (((msg_num = ((msg_num + 1)  % 3)) & ROSCANConstants::ROSTopic::bitmask_msg_num) << ROSCANConstants::ROSTopic::bitshift_msg_num);
-        header |= (1 << ROSCANConstants::ROSTopic::bitshift_len);
         header |= CAN_EFF_FLAG;
 
         for (auto i = 0u;i < msg_count;++i) {
             can_frame frame;
             frame.can_id = header;
 
-            frame.can_id |= (i & 0b11) << ROSCANConstants::ROSTopic::bitshift_msg_num;
             if (i >= 0b111) {
                 frame.can_id |= (0b111 << ROSCANConstants::Common::bitshift_seq);
                 frame.can_id |= i << ROSCANConstants::ROSTopic::bitshift_len;

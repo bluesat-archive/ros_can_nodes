@@ -18,21 +18,21 @@ namespace CANHelpers {
 
     /**
      * Opens a CAN port on the given port string
-     * Returns -1 if there was an error, 0 otherwise
+     * @returns -1 if there was an error, 0 otherwise
      */
     int open_port(const std::string& port);
 
     /**
      * Sends out a CAN frame
      * A valid CAN port must be open
-     * Returns -1 if there was an error, 0 otherwise
+     * @returns -1 if there was an error, 0 otherwise
      */
     int send_frame(const can_frame& frame);
 
     /**
      * Reads in a CAN frame
      * A valid CAN port must be open
-     * Returns -1 if there was an error, 0 otherwise
+     * @returns -1 if there was an error, 0 otherwise
      */
     int read_frame(can_frame& frame);
 
