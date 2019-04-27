@@ -260,6 +260,13 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
                 std::cout << "advertise register failed\n";
             } else {
                 std::cout << "advertisement of topic \"" << topic << "\" assigned to topic id " << topicID << " of node id " << (int)nodeID << "\n";
+                can_frame response = msg;
+                ROSCANConstants::Control::step_insert(response.can_id, 1);
+                printf("sending header %x\n", response.can_id);
+                response.can_dlc = 4;
+                response.data[0] = topicID;
+
+                CANHelpers::send_can_port(response);
             }
             break;
         }
