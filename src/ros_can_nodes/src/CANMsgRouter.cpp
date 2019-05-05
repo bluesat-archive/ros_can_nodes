@@ -255,6 +255,13 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
                 ROS_INFO("advertise register failed");
             } else {
                 ROS_INFO("advertisement of topic \"%s\" assigned to topic id %d of node id %d", topic.c_str(), topicID, nodeID);
+                can_frame response = msg;
+                ROSCANConstants::Control::step_insert(response.can_id, 1);
+                ROS_INFO("sending header %x", response.can_id);
+                response.can_dlc = 4;
+                response.data[0] = topicID;
+
+                CANHelpers::send_frame(response);
             }
             break;
         }
