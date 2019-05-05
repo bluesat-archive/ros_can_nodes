@@ -362,7 +362,11 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
         while (1) {
             if (CANHelpers::read_frame(msg) >= 0) {
                 buf.insert(buf.end(), msg.data, msg.data + msg.can_dlc);
-                ROS_INFO("read 1 packet at %d size %d", i, msg.can_dlc);
+                ROS_INFO("read packet at i = %d size %d", i, msg.can_dlc);
+                ROS_INFO("buffer contents:");
+                for (const auto c : buf) {
+                    ROS_INFO("%c (%d)", c, c);
+                }
                 break;
             }
         }
