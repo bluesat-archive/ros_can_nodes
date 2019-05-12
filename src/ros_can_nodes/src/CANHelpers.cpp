@@ -9,60 +9,60 @@
  */
 
 
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
-#include <errno.h>
-#include <string.h>
+#include <cerrno>
+#include <cstring>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#include <ros/ros.h>
 #include "CANHelpers.hpp"
 
-int soc;
+static int soc = -1;
 
-int CANHelpers::open_can_port(const char *const port) {
+int CANHelpers::open_port(const std::string& port) {
     ifreq ifr;
     sockaddr_can addr;
 
-    /* open socket */
+    // open socket
     soc = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (soc < 0) {
-        return (-1);
+        return -1;
     }
 
     addr.can_family = AF_CAN;
-    strcpy(ifr.ifr_name, port);
+    strcpy(ifr.ifr_name, port.c_str());
 
     if (ioctl(soc, SIOCGIFINDEX, &ifr) < 0) {
-        return (-1);
+        return -1;
     }
 
     addr.can_ifindex = ifr.ifr_ifindex;
 
     fcntl(soc, F_SETFL, O_NONBLOCK);
 
-    if (bind(soc, (sockaddr *)&addr, sizeof(addr)) < 0) {
-        return (-1);
+    if (bind(soc, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) < 0) {
+        return -1;
     }
 
     return 0;
 }
 
-int CANHelpers::send_can_port(const can_frame& frame) {
+int CANHelpers::send_frame(const can_frame& frame) {
     const int retval = write(soc, &frame, sizeof(can_frame));
     if (retval != sizeof(can_frame)) {
-        printf("Failed to send !! %s \n", strerror(errno));
-        return (-1);
-    } else {
-        printf("Sent !!\n");
-        printf("Header %x\n", frame.can_id);
-        return (0);
+        ROS_INFO("Failed to send !! %s", strerror(errno));
+        return -1;
     }
+    ROS_INFO("Sent !!");
+    ROS_INFO("Header %x", frame.can_id);
+    return 0;
 }
 
-int CANHelpers::read_can_port(can_frame& frame) {
+int CANHelpers::read_frame(can_frame& frame) {
     int recvbytes = -1;
 
     // 1 second timeout on read, will adjust based on testing
@@ -82,6 +82,6 @@ int CANHelpers::read_can_port(can_frame& frame) {
     return recvbytes;
 }
 
-void CANHelpers::close_can_port() {
+void CANHelpers::close_port() {
     close(soc);
 }

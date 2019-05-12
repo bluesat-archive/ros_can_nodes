@@ -5,19 +5,22 @@
 #include <cstring>
 #include <utility>
 #include <ros_type_introspection/ros_introspection.hpp>
+#include <ros_type_introspection/utils/shape_shifter.hpp>
 #include "ROSCANConstants.hpp"
 #include <linux/can.h>
 #include "MessageBuffer.hpp"
+#include "IntrospectionHelpers.hpp"
 #include <std_msgs/Float64.h>
 #include "owr_messages/pwm.h"
 #include "owr_messages/motor.h"
 #include "owr_messages/science.h"
 
 namespace roscan {
+    using RosIntrospection::ShapeShifter;
 
     RosCanNode::RosCanNode(const std::string& name, const uint8_t id) : RosNode{"can_node/" + name}, id_{id} {
-        ROS_INFO_STREAM("CAN node name: " << name_);
-        ROS_INFO_STREAM("Node id: " << id_);
+        ROS_INFO("CAN node name: %s", name_.c_str());
+        ROS_INFO("Node id: %d", id_);
     }
 
     // ==================================================
@@ -28,25 +31,25 @@ namespace roscan {
     void RosCanNode::heartbeat() {
         time_t t = time(0);
         tm *now = localtime(&t);
-        std::cout  << now->tm_hour << ":" << now->tm_min << std::endl;
+        ROS_INFO("%02d:%02d", now->tm_hour, now->tm_min);
     }
 
     int RosCanNode::registerSubscriber(const std::string& topic, const std::string& topic_type, const int request_tid) {
-        std::cout << "node id " << (int)id_ << " subscribing to topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
+        ROS_INFO("node id %d subscribing to topic \"%s\" of type \"%s\"", id_, topic.c_str(), topic_type.c_str());
 
-        int topic_num;
+        int topicID;
         if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
             topicIds[request_tid] = 1;
-            topic_num = request_tid;
+            topicID = request_tid;
         } else {
-            topic_num = getFirstFreeTopic();
+            topicID = getFirstFreeTopic();
         }
-        std::cout << "topic_id" << (int)topic_num << "\n";
+        ROS_INFO("got topic_id %d", topicID);
 
-        if (topic_num >= 0) {
-            boost::function<void(const topic_tools::ShapeShifter::ConstPtr&)> callback;
-            callback = [this, topic_num, topic](const topic_tools::ShapeShifter::ConstPtr& msg) {
-                rosCanCallback(msg, topic_num, topic);
+        if (topicID >= 0) {
+            boost::function<void(const ShapeShifter::ConstPtr&)> callback;
+            callback = [this, topicID, topic](const ShapeShifter::ConstPtr& msg) {
+                rosCanCallback(msg, topicID, topic);
             };
             subscribe(topic, 100, callback);
 
@@ -54,16 +57,16 @@ namespace roscan {
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
                 //-1: FAILURE: Method failed to complete correctly. In general, this means that the master/slave attempted the action and failed, and there may have been side-effects as a result.
                 //0: SUCCESS: Method completed successfully
-            return topic_num;
+            return topicID;
         } else {
             // TODO handle error, no free topic ids
             return -1;
         }
     }
 
-    int RosCanNode::unregisterSubscriber(const uint8_t topic) {
+    int RosCanNode::unregisterSubscriber(const uint8_t topicID) {
         // TODO: at a later date, at this moment, just call unregister node
-        std::cout << "node id " << (int)id_ << " unsubscribing from topic id " << (int)topic << "\n";
+        ROS_INFO("node id %d unsubscribing from topic id %d", id_, topicID);
         return 0;
     }
 
@@ -79,12 +82,12 @@ namespace roscan {
             return advertise<owr_messages::science>(topic, queue_size);
         }
         // ...other message types if needed
-        std::cout << "unimplemented advertise topic: " << topic_type << "\n";
+        ROS_INFO("could not advertise topic_type \"%s\"", topic_type.c_str());
         return PublisherPtr{};
     }
 
     int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type, const int request_tid) {
-        std::cout << "node id " << (int)id_ << " advertising topic \"" << topic << "\" of type \"" << topic_type << "\"\n";
+        ROS_INFO("node id %d advertising topic \"%s\" of type \"%s\"", id_, topic.c_str(), topic_type.c_str());
 
         int topic_num;
         if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
@@ -115,9 +118,9 @@ namespace roscan {
         return 0;
     }
 
-    int RosCanNode::unregisterPublisher(const uint8_t topic) {
+    int RosCanNode::unregisterPublisher(const uint8_t topicID) {
         // TODO: at a later date, at this moment, just call unregister node
-        std::cout << "node id " << (int)id_ << " unadvertising topic id " << (int)topic << "\n";
+        ROS_INFO("node id %d unadvertising topic id %d", id_, topicID);
         return 0;
     }
 
@@ -136,16 +139,17 @@ namespace roscan {
             auto msg = convert_buf<owr_messages::science>(buf);
             publishers[topicID].first->publish(msg);
         } else {
+            ROS_INFO("could not convert buffer to topic_type \"%s\"", topic_type.c_str());
             return;
         }
         // ...other message types if needed
-        std::cout << "node id " << (int)id_ << " published message on topic id " << (int)topicID << "\n";
+        ROS_INFO("node id %d published message on topic id %d", id_, topicID);
     }
 
     int RosCanNode::setParam(std::string key) {
 
         //TODO: call ROS master setParam(caller_id, key, value) with callerId as first parameter
-        std::cout << "Setting parameter" << '\n';
+        ROS_INFO("Setting parameter");
 
         //TODO: return the CODE to see if success or fail from the ROS master unregisterPublisher
         return 0;
@@ -155,7 +159,7 @@ namespace roscan {
     int RosCanNode::deleteParam(std::string key) {
 
         //TODO: call ROS master deleteParam(caller_id, key) with callerId as first parameter
-        std::cout << "Deleting parameter" << '\n';
+        ROS_INFO("Deleting parameter");
 
         //TODO: return the CODE to see if success or fail from the ROS master deleteParam
         return 0;
@@ -165,7 +169,7 @@ namespace roscan {
     int RosCanNode::advertiseService(std::string service) {
 
         //TODO: call ROS master registerService(caller_id, service, service_api, caller_api) with callerId as first parameter
-        std::cout << "Registering service" << '\n';
+        ROS_INFO("Registering service");
 
         //TODO: return the CODE to see if success or fail from the ROS master registerService
         return 0;
@@ -174,7 +178,7 @@ namespace roscan {
     int RosCanNode::unregisterService(std::string service) {
 
         //TODO: call ROS master unregisterService(caller_id, service, service_api) with callerId as first parameter
-        std::cout << "Unregistering service" << '\n';
+        ROS_INFO("Unregistering service");
 
         //TODO: return the CODE to see if success or fail from the ROS master unregisterService
         return 0;
@@ -184,7 +188,7 @@ namespace roscan {
     int RosCanNode::searchParam(std::string key) {
 
         //TODO: call ROS master searchParam(caller_id, key) with callerId as first parameter
-        std::cout << "Searching for parameter key" << '\n';
+        ROS_INFO("Searching for parameter key");
 
         //TODO: return the CODE to see if found or not found from the ROS master searchParam
         return 0;
@@ -193,7 +197,7 @@ namespace roscan {
     int RosCanNode::subscribeParam(std::string key) {
 
         //TODO: call ROS master subscribeParam(caller_id, caller_api, key) with callerId as first parameter
-        std::cout << "Subscribing to parameter key" << '\n';
+        ROS_INFO("Subscribing to parameter key");
 
         //TODO: return the CODE to see if success or fail from the ROS master subscribeParam
         return 0;
@@ -202,7 +206,7 @@ namespace roscan {
     int RosCanNode::unsubscribeParam(std::string key) {
 
         //TODO: call ROS master unsubscribeParam(caller_id, caller_api, key) with callerId as first parameter
-        std::cout << "Unsubscribing to parameter key" << '\n';
+        ROS_INFO("Unsubscribing to parameter key");
 
         //TODO: return the CODE to see if success or fail from the ROS master unsubscribeParam
         return 0;
@@ -211,7 +215,7 @@ namespace roscan {
     int RosCanNode::hasParam(std::string key) {
 
         //TODO: call ROS master unsubscribeParam(caller_id, caller_api, key) with callerId as first parameter
-        std::cout << "Checking if parameter stored on server" << '\n';
+        ROS_INFO("Checking if parameter stored on server");
 
         //TODO: return the CODE to see if success or fail from the ROS master hasParam
         return 0;
@@ -220,7 +224,7 @@ namespace roscan {
     int RosCanNode::getParamNames() {
 
         //TODO: call ROS master getParamNames(caller_id) with callerId as parameter
-        std::cout << "Getting list of all parameter names" << '\n';
+        ROS_INFO("Getting list of all parameter names");
 
         //TODO: return the CODE to see if success or fail from the ROS master getParamNames
         return 0;
@@ -229,7 +233,7 @@ namespace roscan {
     int RosCanNode::getParam(std::string key) {
 
         //TODO: call ROS master getParam(caller_id, key) with callerId as parameter
-        std::cout << "Getting a parameter" << '\n';
+        ROS_INFO("Getting a parameter");
 
         //TODO: return the CODE to see if success or fail from the ROS master getParam
         return 0;
@@ -239,69 +243,45 @@ namespace roscan {
     //               ROS Facing Methods
     // ==================================================
 
-    void RosCanNode::rosCanCallback(const topic_tools::ShapeShifter::ConstPtr& msg, const uint8_t topicID, const std::string& topic_name) {
-        ROS_INFO_STREAM("callback: topic_id = " << (int)topicID << " topic_name = " << topic_name);
-        RosIntrospection::Parser parser;
+    void RosCanNode::rosCanCallback(const ShapeShifter::ConstPtr& msg, const uint8_t topicID, const std::string& topic_name) {
+        ROS_INFO("callback: topic_id = %d topic_name = %s", topicID, topic_name.c_str());
 
-        const std::string&  datatype   =  msg->getDataType();
-        const std::string&  definition =  msg->getMessageDefinition();
+        IntrospectionHelpers::register_message(msg, topic_name);
+        const auto buf = IntrospectionHelpers::modify_buffer(msg->getDataType(), msg->raw_data(), msg->size());
+        const auto msg_count = buf.size() / 8u + (buf.size() % 8u != 0u);
+        ROS_INFO("buf size %lu msg_count %lu", buf.size(), msg_count);
 
-        parser.registerMessageDefinition( topic_name,
-                                          RosIntrospection::ROSType(datatype),
-                                          definition);
+        canid_t header = 0;
+        header |= CAN_EFF_FLAG;
 
-        //reuse these objects to improve efficiency ("static" makes them persistent)
-        static std::vector<uint8_t> buffer;
-        static std::map<std::string,RosIntrospection::FlatMessage>   flat_containers;
-        static std::map<std::string,RosIntrospection::RenamedValues> renamed_vectors;
-
-        RosIntrospection::FlatMessage&   flat_container = flat_containers[topic_name];
-        RosIntrospection::RenamedValues& renamed_values = renamed_vectors[topic_name];
-
-        //copy raw memory into the buffer
-        buffer.resize(msg->size());
-        ros::serialization::OStream stream(buffer.data(), buffer.size());
-        msg->write(stream);
-
-        //deserialize and rename the vectors
-        parser.deserializeIntoFlatContainer(topic_name, absl::Span<uint8_t>(buffer), &flat_container, 100);
-
-        parser.applyNameTransform(topic_name, flat_container, &renamed_values);
-
-        //print the content of the message
-        //printf("--------- %s ----------\n", topic_name.c_str());
-        for (const auto& it: renamed_values) {
-            const std::string& key = it.first;
-            const RosIntrospection::Variant& value   = it.second;
-            //printf(" %s = %f\n", key.c_str(), value.convert<double>()); //convert into CAN message set
-        }
-
-        canid_t header = 0x0;
-
-        printf("can topic id 0x%x\n", topicID);
+        ROS_INFO("can topic id 0x%x", topicID);
         header |= (1 << ROSCANConstants::Common::bitshift_mode);
         header |= (0 << ROSCANConstants::Common::bitshift_priority);
         header |= (0 << ROSCANConstants::Common::bitshift_func);
         header |= (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id);
-        header |= (0 << ROSCANConstants::Common::bitshift_seq);
-        printf("topic id at position 0x%x\n", (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id));
+        ROS_INFO("topic id at position 0x%x", (((uint32_t)topicID) << ROSCANConstants::ROSTopic::bitshift_topic_id));
 	    header |= (id_ << ROSCANConstants::ROSTopic::bitshift_nid);
         header |= (((msg_num = ((msg_num + 1)  % 3)) & ROSCANConstants::ROSTopic::bitmask_msg_num) << ROSCANConstants::ROSTopic::bitshift_msg_num);
-        header |= (1 << ROSCANConstants::ROSTopic::bitshift_len);
         header |= CAN_EFF_FLAG;
 
-        can_frame frame;
+        for (auto i = 0u;i < msg_count;++i) {
+            can_frame frame;
+            frame.can_id = header;
 
-        frame.can_id = header;
-        frame.can_dlc = 8;
-
-        for (const auto& it: renamed_values) {
-            *(double *)frame.data = it.second.convert<double>();
+            if (i >= 0b111) {
+                frame.can_id |= (0b111 << ROSCANConstants::Common::bitshift_seq);
+                frame.can_id |= i << ROSCANConstants::ROSTopic::bitshift_len;
+            } else {
+                frame.can_id |= (i << ROSCANConstants::Common::bitshift_seq);
+                frame.can_id |= msg_count << ROSCANConstants::ROSTopic::bitshift_len;
+            }
+            const auto start_offset = i * CAN_MAX_DLC;
+            frame.can_dlc = std::min(buf.size() - start_offset, static_cast<uint64_t>(CAN_MAX_DLC));
+            const auto begin = buf.cbegin() + start_offset;
+            const auto end = begin + frame.can_dlc;
+            std::copy(begin, end, frame.data);
+            MessageBuffer::instance().push(frame);
         }
-
-        MessageBuffer::instance().push(frame);
-
-
     }
 
     int RosCanNode::getFirstFreeTopic() {
@@ -314,6 +294,5 @@ namespace roscan {
 
         return id;
     }
-
 
 } // namespace roscan

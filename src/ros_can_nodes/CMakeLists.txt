@@ -121,6 +121,7 @@ add_executable(ros_can_nodes
     src/CANMsgRouter.cpp
     src/MessageBuffer.cpp
     src/RosCanNodeManager.cpp
+    src/IntrospectionHelpers.cpp
     src/ros_node_lib/xmlrpc_manager.cpp
     src/ros_node_lib/network.cpp
     src/ros_node_lib/poll_manager.cpp

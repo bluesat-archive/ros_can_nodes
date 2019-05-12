@@ -1,6 +1,7 @@
-#ifndef MESSAGE_BUFFER_H
-#define MESSAGE_BUFFER_H
+#ifndef MESSAGE_BUFFER_HPP
+#define MESSAGE_BUFFER_HPP
 
+#include <vector>
 #include <queue>
 #include <condition_variable>
 #include <mutex>
@@ -10,8 +11,8 @@ class MessageBuffer {
     public:
         static MessageBuffer& instance();
 
-        // thread-synchronised
-        void push(const can_frame& s);
+        // thread-safe frame push
+        void push(const can_frame& frame);
 
         MessageBuffer(const MessageBuffer&) = delete;
         void operator=(const MessageBuffer&) = delete;
@@ -25,4 +26,4 @@ class MessageBuffer {
         std::mutex mutex;
 };
 
-#endif // MESSAGE_BUFFER_H
+#endif // MESSAGE_BUFFER_HPP
