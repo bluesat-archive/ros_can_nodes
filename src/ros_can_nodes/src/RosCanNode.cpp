@@ -247,7 +247,7 @@ namespace roscan {
         ROS_INFO("callback: topic_id = %d topic_name = %s", topicID, topic_name.c_str());
 
         IntrospectionHelpers::register_message(msg, topic_name);
-        const auto buf = IntrospectionHelpers::modify_buffer(msg->getDataType(), msg->raw_data(), msg->size());
+        const auto buf = IntrospectionHelpers::to_can_buf(msg->getDataType(), msg->raw_data(), msg->size());
         const auto msg_count = buf.size() / 8u + (buf.size() % 8u != 0u);
         ROS_INFO("buf size %lu msg_count %lu", buf.size(), msg_count);
 

@@ -32,7 +32,13 @@ namespace IntrospectionHelpers {
      * Modifies a ROS message data buffer for communication on the CAN bus
      * datatype must be a registered message type
      */
-    std::vector<uint8_t> modify_buffer(const std::string& datatype, const uint8_t *const data, const uint32_t size);
+    std::vector<uint8_t> to_can_buf(const std::string& datatype, const uint8_t *const data, const uint32_t size);
+
+    /**
+     * Modifies a CAN message data buffer for communication in ROS
+     * datatype must be a registered message type
+     */
+    std::vector<uint8_t> to_ros_buf(const std::string& datatype, const uint8_t *const data, const uint32_t size);
 }
 
 #endif // INTROSPECTIONHELPERS_HPP
