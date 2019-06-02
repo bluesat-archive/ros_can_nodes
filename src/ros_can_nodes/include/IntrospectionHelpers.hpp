@@ -21,7 +21,7 @@ namespace IntrospectionHelpers {
      * Register message type for ros message type introspection
      * Message registration is thread safe
      */
-    void register_message(const RosIntrospection::ShapeShifter::ConstPtr& msg, const std::string& topic_name);
+    void register_message(const std::string& datatype, const std::string& definition);
 
     /**
      * Print all registered message types and fields structures

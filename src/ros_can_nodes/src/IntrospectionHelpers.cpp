@@ -172,18 +172,14 @@ namespace IntrospectionHelpers {
         return tmp_buf;
     }
 
-    void register_message(const ShapeShifter::ConstPtr& msg, const std::string& topic_name) {
-        // get message type and definition
-        const std::string& datatype = msg->getDataType();
-        const std::string& definition = msg->getMessageDefinition();
-
+    void register_message(const std::string& datatype, const std::string& definition) {
         std::lock_guard<std::mutex> registration_lock{registration_mutex};
 
         // register with RosIntrospection parser to create type list
-        parser.registerMessageDefinition(topic_name, ROSType{datatype}, definition);
+        parser.registerMessageDefinition(datatype, ROSType{datatype}, definition);
 
         // store fields structure for each message type found
-        for (const auto& t : parser.getMessageInfo(topic_name)->type_list) {
+        for (const auto& t : parser.getMessageInfo(datatype)->type_list) {
             auto& fields = msg_fields[t.type().baseName()];
 
             if (fields.size() == 0) { // process fields only if not processed before

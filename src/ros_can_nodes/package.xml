@@ -49,10 +49,7 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>std_msgs</depend>
   <depend>ros_type_introspection</depend>
-  <depend>topic_tools</depend>
-  <depend>owr_messages</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

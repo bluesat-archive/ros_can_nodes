@@ -7,11 +7,13 @@ add_compile_options(-std=c++17 -O2)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+set(MESSAGE_PACKAGES
+  std_msgs
+  owr_messages
+)
 find_package(catkin REQUIRED COMPONENTS
   ros_type_introspection
-  std_msgs
-  topic_tools
-  owr_messages
+  ${MESSAGE_PACKAGES}
 )
 
 ## System dependencies are found with CMake's conventions
@@ -85,10 +87,13 @@ find_package(Boost REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    INCLUDE_DIRS include
-    CATKIN_DEPENDS std_msgs ros_type_introspection topic_tools owr_messages
-    DEPENDS Boost
+#  INCLUDE_DIRS include
+#  CATKIN_DEPENDS ros_type_introspection
+#  DEPENDS Boost
 )
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_message_properties_map.cmake)
+generate_message_properties_map(${MESSAGE_PACKAGES})
 
 ###########
 ## Build ##
@@ -122,6 +127,7 @@ add_executable(ros_can_nodes
     src/MessageBuffer.cpp
     src/RosCanNodeManager.cpp
     src/IntrospectionHelpers.cpp
+    src/message_properties_map.cpp
     src/ros_node_lib/xmlrpc_manager.cpp
     src/ros_node_lib/network.cpp
     src/ros_node_lib/poll_manager.cpp

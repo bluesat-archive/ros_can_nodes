@@ -35,6 +35,6 @@ bool TopicBuffers::append(const short key, const uint8_t data[CAN_MAX_DLEN], con
     return topic.second.first == topic.second.second;
 }
 
-const std::vector<uint8_t>& TopicBuffers::get(const short key) {
+std::vector<uint8_t>& TopicBuffers::get(const short key) {
     return topic_buffers[key].first;
 }

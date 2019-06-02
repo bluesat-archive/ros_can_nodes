@@ -13,13 +13,14 @@
 #include <chrono>
 #include <string>
 #include <stdexcept>
+#include "IntrospectionHelpers.hpp"
 #include "CANMsgRouter.hpp"
 #include "ROSCANConstants.hpp"
 #include "TopicBuffers.hpp"
 #include "CANHelpers.hpp"
 #include "RosCanNode.hpp"
 #include "RosCanNodeManager.hpp"
-
+#include "message_properties_map.hpp"
 
 int main(int argc, char **argv) {
     CANMsgRouter::init();
@@ -31,6 +32,11 @@ int main(int argc, char **argv) {
 }
 
 void CANMsgRouter::init() {
+    // preload registering of all possible messages
+    for (const auto& m: message_properties_map) {
+        IntrospectionHelpers::register_message(m.first, m.second.definition);
+    }
+
     // TODO: either fail on bad open_port OR have reconnect policy
     int err = CANHelpers::open_port("can0");
 
@@ -335,7 +341,7 @@ void CANMsgRouter::routePublishMsg(const can_frame& msg) {
     }
 
     if (TopicBuffers::instance().append(key, msg.data, msg.can_dlc)) {
-        const auto& buf = TopicBuffers::instance().get(key);
+        auto& buf = TopicBuffers::instance().get(key);
         char str[1000] = {0};
         sprintf(str, "topic %d buf complete:", topicID);
         for (const auto b : buf) {
