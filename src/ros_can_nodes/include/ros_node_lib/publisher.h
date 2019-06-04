@@ -91,6 +91,9 @@ class Publisher {
         // Returns the topic that this Publisher will publish on.
         std::string getTopic() const;
 
+        // Returns the datatype that this Publisher will publish
+        std::string getDatatype() const;
+
         // Returns the number of subscribers that are currently connected to this Publisher
         uint32_t getNumSubscribers() const;
 

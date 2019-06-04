@@ -117,7 +117,7 @@ namespace roscan {
 
     void RosCanNode::publish(const uint8_t topicID, std::vector<uint8_t>& data) {
         auto& pub = publishers[topicID];
-        const auto topic_type = pub->getTopic();
+        const auto topic_type = pub->getDatatype();
         ros::serialization::OStream stream{data.data(), static_cast<uint32_t>(data.size())};
         ShapeShifter shape_shifter;
         shape_shifter.morph(

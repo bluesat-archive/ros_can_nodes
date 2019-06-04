@@ -66,6 +66,13 @@ std::string Publisher::getTopic() const {
     return std::string{};
 }
 
+std::string Publisher::getDatatype() const {
+    if (!unadvertised_) {
+        return datatype_;
+    }
+    return std::string{};
+}
+
 uint32_t Publisher::getNumSubscribers() const {
     if (!unadvertised_) {
         return node_->topic_manager()->getNumSubscribers(topic_);
