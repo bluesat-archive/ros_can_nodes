@@ -44,7 +44,7 @@ namespace roscan {
             PublisherPtr make_publisher(const std::string& topic, const std::string& topic_type);
             int advertiseTopic(const std::string& topic, const std::string& topic_type, const int request_tid = -1);
             int unregisterPublisher(const uint8_t topic);
-            void publish(const uint8_t topicID, std::vector<uint8_t>& data);
+            void publish(const uint8_t topicID, const std::vector<uint8_t>& can_buf);
             int setParam(std::string key);
             int deleteParam(std::string key);
             int advertiseService(std::string service);

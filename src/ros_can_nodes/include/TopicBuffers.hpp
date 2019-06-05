@@ -30,7 +30,7 @@ class TopicBuffers {
         // returns whether the buffer for the topic is ready to be collected
         bool append(const short key, const uint8_t data[CAN_MAX_DLEN], const int dlc);
 
-        std::vector<uint8_t>& get(const short key);
+        const std::vector<uint8_t>& get(const short key);
 
         // TODO: Possible Custom Hash function for unordered_map
         // TODO: Possible Custom Equality function for unordered_map

@@ -115,10 +115,11 @@ namespace roscan {
         return 0;
     }
 
-    void RosCanNode::publish(const uint8_t topicID, std::vector<uint8_t>& data) {
+    void RosCanNode::publish(const uint8_t topicID, const std::vector<uint8_t>& can_buf) {
         auto& pub = publishers[topicID];
         const auto topic_type = pub->getDatatype();
-        ros::serialization::OStream stream{data.data(), static_cast<uint32_t>(data.size())};
+        auto ros_buf = IntrospectionHelpers::to_ros_buf(topic_type, can_buf.data(), static_cast<uint32_t>(can_buf.size()));
+        ros::serialization::OStream stream{ros_buf.data(), static_cast<uint32_t>(ros_buf.size())};
         ShapeShifter shape_shifter;
         shape_shifter.morph(
             message_properties_map.at(topic_type).md5sum,
