@@ -34,6 +34,8 @@ namespace roscan {
     int RosCanNode::registerSubscriber(const std::string& topic, const std::string& topic_type, const int request_tid) {
         ROS_INFO("node id %d subscribing to topic \"%s\" of type \"%s\"", id_, topic.c_str(), topic_type.c_str());
 
+        IntrospectionHelpers::register_message(topic_type, message_properties_map.at(topic_type).definition);
+
         int topicID;
         if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
             topicIds[request_tid] = 1;
@@ -81,6 +83,8 @@ namespace roscan {
 
     int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type, const int request_tid) {
         ROS_INFO("node id %d advertising topic \"%s\" of type \"%s\"", id_, topic.c_str(), topic_type.c_str());
+
+        IntrospectionHelpers::register_message(topic_type, message_properties_map.at(topic_type).definition);
 
         int topicID;
         if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
