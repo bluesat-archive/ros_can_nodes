@@ -67,7 +67,6 @@ def generate_hpp():
     hpp.write(hpp_contents)
     output_dir = os.getcwd() + '/include/'
     makedirs(output_dir)
-    # print(hpp.getvalue())
     with open(output_dir + 'message_properties_map.hpp', 'w') as f:
         f.write(hpp.getvalue())
 
@@ -80,7 +79,6 @@ def generate_cpp(messages_library):
     cpp.write(cpp_contents.format(messages_includes, map_entries))
     output_dir = os.getcwd() + '/src/'
     makedirs(output_dir)
-    # print(cpp.getvalue())
     with open(output_dir + '/message_properties_map.cpp', 'w') as f:
         f.write(cpp.getvalue())
 
@@ -95,5 +93,4 @@ def generate_message_properties_map(packages):
 
 
 if __name__ == '__main__':
-    print('working dir', os.getcwd())
     generate_message_properties_map(sys.argv[1:])
