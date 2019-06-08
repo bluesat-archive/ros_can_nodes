@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
 import sys
-import os.path
-import glob
+import os
 import itertools
-
-import roslib.msgs
-import roslib.packages
-from rospkg import RosPack
+import rosmsg
 
 try:
     from cStringIO import StringIO #Python 2.x
@@ -58,10 +54,21 @@ map_entry_template =\
 'std::string{{ros::message_traits::MD5Sum<{0}>::value()}} }} }},'
 
 
+def makedirs(directory):
+    try:
+        os.makedirs(directory)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
 def generate_hpp():
     hpp = StringIO()
     hpp.write(hpp_contents)
-    with open('include/message_properties_map.hpp', 'w') as f:
+    output_dir = os.getcwd() + '/include/'
+    makedirs(output_dir)
+    # print(hpp.getvalue())
+    with open(output_dir + 'message_properties_map.hpp', 'w') as f:
         f.write(hpp.getvalue())
 
 
@@ -71,34 +78,22 @@ def generate_cpp(messages_library):
     
     cpp = StringIO()
     cpp.write(cpp_contents.format(messages_includes, map_entries))
-    with open('src/message_properties_map.cpp', 'w') as f:
+    output_dir = os.getcwd() + '/src/'
+    makedirs(output_dir)
+    # print(cpp.getvalue())
+    with open(output_dir + '/message_properties_map.cpp', 'w') as f:
         f.write(cpp.getvalue())
-
-
-def get_messages(package):
-    package_dir = RosPack().get_path(package)
-
-    # get all message names and strip .msg
-    msg_glob = package_dir + "/msg/*.msg"
-    msgs = glob.glob(msg_glob)
-    msgs_names = [os.path.splitext(os.path.split(m)[1])[0] for m in msgs]
-
-    # get all package .h file names and strip .h
-    headers_glob = "{}/../..{}/include/{}/*.h".format(package_dir, "" if "/opt/ros" in package_dir else "/devel", package)
-    headers = glob.glob(headers_glob)
-    headers_names = [os.path.splitext(os.path.split(h)[1])[0] for h in headers]
-
-    # only care about msgs with their corresponding headers available
-    return set(msgs_names).intersection(headers_names)
 
 
 def generate_message_properties_map(packages):
     # build a list of (package, message) tuples
-    messages_library = list(itertools.chain.from_iterable([[(p, m) for m in get_messages(p)] for p in packages]))
+    msgs = list(itertools.chain.from_iterable([rosmsg.list_msgs(p) for p in packages]))
+    messages_library = [tuple(msg.split('/')) for msg in msgs]
     
     generate_hpp()
     generate_cpp(messages_library)
 
 
 if __name__ == '__main__':
+    print('working dir', os.getcwd())
     generate_message_properties_map(sys.argv[1:])

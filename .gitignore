@@ -42,5 +42,3 @@ src/*/tags
 
 src/ros_can_nodes_old
 .vscode
-
-message_properties_map.*

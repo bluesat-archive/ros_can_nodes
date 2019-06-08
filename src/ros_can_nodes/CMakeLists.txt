@@ -106,6 +106,7 @@ include_directories(
     include
     include/ros_node_lib
     ${catkin_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_BINARY_DIR}/message_properties_map/include
 )
 
 ## Declare a C++ library
@@ -127,7 +128,8 @@ add_executable(ros_can_nodes
     src/MessageBuffer.cpp
     src/RosCanNodeManager.cpp
     src/IntrospectionHelpers.cpp
-    src/message_properties_map.cpp
+    "${CMAKE_CURRENT_BINARY_DIR}/message_properties_map/src/message_properties_map.cpp"
+    #src/message_properties_map.cpp
     src/ros_node_lib/xmlrpc_manager.cpp
     src/ros_node_lib/network.cpp
     src/ros_node_lib/poll_manager.cpp
