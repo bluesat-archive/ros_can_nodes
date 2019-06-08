@@ -129,7 +129,6 @@ add_executable(ros_can_nodes
     src/RosCanNodeManager.cpp
     src/IntrospectionHelpers.cpp
     "${CMAKE_CURRENT_BINARY_DIR}/message_properties_map/src/message_properties_map.cpp"
-    #src/message_properties_map.cpp
     src/ros_node_lib/xmlrpc_manager.cpp
     src/ros_node_lib/network.cpp
     src/ros_node_lib/poll_manager.cpp

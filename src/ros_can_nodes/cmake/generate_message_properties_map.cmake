@@ -14,5 +14,4 @@ add_custom_command(
   DEPENDS ${GENERATOR_SCRIPT}
   WORKING_DIRECTORY ${OUTPUT_DIR}
 )
-#message(FATAL_ERROR ${CMAKE_CURRENT_BINARY_DIR})
 endmacro()
