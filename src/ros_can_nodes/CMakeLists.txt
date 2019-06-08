@@ -152,12 +152,10 @@ add_executable(ros_can_nodes
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-#add_dependencies(ros_can_nodes ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(ros_can_nodes ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(ros_can_nodes
-    ${catkin_LIBRARIES}
-)
+target_link_libraries(ros_can_nodes ${catkin_LIBRARIES})
 
 #############
 ## Install ##
