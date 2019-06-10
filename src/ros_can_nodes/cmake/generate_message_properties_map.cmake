@@ -1,6 +1,7 @@
 macro(generate_message_properties_map)
 set(OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/message_properties_map")
-file(MAKE_DIRECTORY ${OUTPUT_DIR})
+file(MAKE_DIRECTORY "${OUTPUT_DIR}/src")
+file(MAKE_DIRECTORY "${OUTPUT_DIR}/include")
 set(
   CPP_AND_HPP
   "${OUTPUT_DIR}/src/message_properties_map.cpp"

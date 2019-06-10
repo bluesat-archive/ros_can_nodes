@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import sys
-import os
 import itertools
 import rosmsg
 
@@ -54,20 +53,10 @@ map_entry_template =\
 'std::string{{ros::message_traits::MD5Sum<{0}>::value()}} }} }},'
 
 
-def makedirs(directory):
-    try:
-        os.makedirs(directory)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-
 def generate_hpp():
     hpp = StringIO()
     hpp.write(hpp_contents)
-    output_dir = os.getcwd() + '/include/'
-    makedirs(output_dir)
-    with open(output_dir + 'message_properties_map.hpp', 'w') as f:
+    with open('include/message_properties_map.hpp', 'w') as f:
         f.write(hpp.getvalue())
 
 
@@ -77,9 +66,7 @@ def generate_cpp(messages_library):
     
     cpp = StringIO()
     cpp.write(cpp_contents.format(messages_includes, map_entries))
-    output_dir = os.getcwd() + '/src/'
-    makedirs(output_dir)
-    with open(output_dir + '/message_properties_map.cpp', 'w') as f:
+    with open('src/message_properties_map.cpp', 'w') as f:
         f.write(cpp.getvalue())
 
 
