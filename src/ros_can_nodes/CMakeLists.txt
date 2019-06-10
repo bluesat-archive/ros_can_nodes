@@ -86,11 +86,7 @@ find_package(Boost REQUIRED)
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-#  INCLUDE_DIRS include
-#  CATKIN_DEPENDS ros_type_introspection
-#  DEPENDS Boost
-)
+catkin_package()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_message_properties_map.cmake)
 generate_message_properties_map(${MESSAGE_PACKAGES})
@@ -103,16 +99,11 @@ generate_message_properties_map(${MESSAGE_PACKAGES})
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
-    include
-    include/ros_node_lib
-    ${catkin_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_BINARY_DIR}/message_properties_map/include
+  include
+  include/ros_node_lib
+  ${catkin_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_BINARY_DIR}/message_properties_map/include
 )
-
-## Declare a C++ library
-# add_library(ros_can_nodes
-#   src/${PROJECT_NAME}/ros_can_nodes.cpp
-# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -121,34 +112,34 @@ include_directories(
 
 ## Declare a C++ executable
 add_executable(ros_can_nodes
-    src/RosCanNode.cpp
-    src/TopicBuffers.cpp
-    src/CANHelpers.cpp
-    src/CANMsgRouter.cpp
-    src/MessageBuffer.cpp
-    src/RosCanNodeManager.cpp
-    src/IntrospectionHelpers.cpp
-    "${CMAKE_CURRENT_BINARY_DIR}/message_properties_map/src/message_properties_map.cpp"
-    src/ros_node_lib/xmlrpc_manager.cpp
-    src/ros_node_lib/network.cpp
-    src/ros_node_lib/poll_manager.cpp
-    src/ros_node_lib/connection_manager.cpp
-    src/ros_node_lib/topic_manager.cpp
-    src/ros_node_lib/publication.cpp
-    src/ros_node_lib/publisher.cpp
-    src/ros_node_lib/publisher_link.cpp
-    src/ros_node_lib/transport_publisher_link.cpp
-    src/ros_node_lib/intraprocess_publisher_link.cpp
-    src/ros_node_lib/subscription.cpp
-    src/ros_node_lib/subscriber_link.cpp
-    src/ros_node_lib/transport_subscriber_link.cpp
-    src/ros_node_lib/intraprocess_subscriber_link.cpp
-    src/ros_node_lib/subscription_queue.cpp
-    src/ros_node_lib/callback_queue.cpp
-    src/ros_node_lib/rosout_appender.cpp
-    src/ros_node_lib/internal_timer_manager.cpp
-    src/ros_node_lib/RosNode.cpp
-    )
+  src/RosCanNode.cpp
+  src/TopicBuffers.cpp
+  src/CANHelpers.cpp
+  src/CANMsgRouter.cpp
+  src/MessageBuffer.cpp
+  src/RosCanNodeManager.cpp
+  src/IntrospectionHelpers.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/message_properties_map/src/message_properties_map.cpp
+  src/ros_node_lib/xmlrpc_manager.cpp
+  src/ros_node_lib/network.cpp
+  src/ros_node_lib/poll_manager.cpp
+  src/ros_node_lib/connection_manager.cpp
+  src/ros_node_lib/topic_manager.cpp
+  src/ros_node_lib/publication.cpp
+  src/ros_node_lib/publisher.cpp
+  src/ros_node_lib/publisher_link.cpp
+  src/ros_node_lib/transport_publisher_link.cpp
+  src/ros_node_lib/intraprocess_publisher_link.cpp
+  src/ros_node_lib/subscription.cpp
+  src/ros_node_lib/subscriber_link.cpp
+  src/ros_node_lib/transport_subscriber_link.cpp
+  src/ros_node_lib/intraprocess_subscriber_link.cpp
+  src/ros_node_lib/subscription_queue.cpp
+  src/ros_node_lib/callback_queue.cpp
+  src/ros_node_lib/rosout_appender.cpp
+  src/ros_node_lib/internal_timer_manager.cpp
+  src/ros_node_lib/RosNode.cpp
+)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
