@@ -3,11 +3,7 @@
 import sys
 import itertools
 import rosmsg
-
-try:
-    from cStringIO import StringIO #Python 2.x
-except ImportError:
-    from io import StringIO #Python 3.x
+from six import StringIO
 
 
 hpp_contents =\
