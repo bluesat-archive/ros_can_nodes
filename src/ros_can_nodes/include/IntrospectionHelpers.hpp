@@ -21,7 +21,7 @@ namespace IntrospectionHelpers {
      * Register message type for ros message type introspection
      * Message registration is thread safe
      */
-    void register_message(const RosIntrospection::ShapeShifter::ConstPtr& msg, const std::string& topic_name);
+    void register_message(const std::string& datatype, const std::string& definition);
 
     /**
      * Print all registered message types and fields structures
@@ -32,7 +32,13 @@ namespace IntrospectionHelpers {
      * Modifies a ROS message data buffer for communication on the CAN bus
      * datatype must be a registered message type
      */
-    std::vector<uint8_t> modify_buffer(const std::string& datatype, const uint8_t *const data, const uint32_t size);
+    std::vector<uint8_t> to_can_buf(const std::string& datatype, const uint8_t *const data, const uint32_t size);
+
+    /**
+     * Modifies a CAN message data buffer for communication in ROS
+     * datatype must be a registered message type
+     */
+    std::vector<uint8_t> to_ros_buf(const std::string& datatype, const uint8_t *const data, const uint32_t size);
 }
 
 #endif // INTROSPECTIONHELPERS_HPP

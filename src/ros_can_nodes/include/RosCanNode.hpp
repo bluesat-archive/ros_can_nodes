@@ -44,7 +44,7 @@ namespace roscan {
             PublisherPtr make_publisher(const std::string& topic, const std::string& topic_type);
             int advertiseTopic(const std::string& topic, const std::string& topic_type, const int request_tid = -1);
             int unregisterPublisher(const uint8_t topic);
-            void publish(const uint8_t topicID, const std::vector<uint8_t>& value);
+            void publish(const uint8_t topicID, const std::vector<uint8_t>& can_buf);
             int setParam(std::string key);
             int deleteParam(std::string key);
             int advertiseService(std::string service);
@@ -55,19 +55,6 @@ namespace roscan {
             int hasParam(std::string key);
             int getParamNames();
             int getParam(std::string key);
-
-            template<typename M>
-            M convert_buf(const std::vector<uint8_t>& buf) {
-                auto value = std::vector<uint8_t>(buf.cbegin(), buf.cend());
-                std::cout << "message type size " << sizeof(M) << "\n";
-                std::cout << "buffer size " << value.size() << "\n";
-                if (sizeof(M) > value.size()) {
-                    auto sz = sizeof(M) - value.size();
-                    std::cout << "converting buffer: appending " << sz << " 0s to buffer\n";
-                    value.insert(value.end(), sz, 0);
-                }
-                return *(M *)value.data();
-            }
 
         private:
             const uint8_t id_;
@@ -80,7 +67,7 @@ namespace roscan {
             uint8_t msg_num = 0;
 
             int getFirstFreeTopic();
-            std::unordered_map<uint8_t, std::pair<PublisherPtr, std::string>> publishers;
+            std::unordered_map<uint8_t, PublisherPtr> publishers;
     };
 
 } // namespace roscan

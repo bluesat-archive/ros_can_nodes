@@ -20,12 +20,11 @@
 #include "RosCanNode.hpp"
 #include "RosCanNodeManager.hpp"
 
-
 int main(int argc, char **argv) {
     CANMsgRouter::init();
 
     //CANMsgRouter::subscriberTest();
-    // CANMsgRouter::publisherTest();
+    //CANMsgRouter::publisherTest();
 
     CANMsgRouter::run();
 }
@@ -56,7 +55,7 @@ void CANMsgRouter::run() {
 void CANMsgRouter::publisherTest() {
     ROS_INFO("Registering");
 
-    int nodeId = RosCanNodeManager::instance().registerNode("can_publish_test", 5, 5);
+    int nodeId = RosCanNodeManager::instance().registerNode("can_publish_test", 5);
     if (nodeId < 0) {
         ROS_INFO("unable to register node");
         return;
@@ -66,8 +65,7 @@ void CANMsgRouter::publisherTest() {
 
     roscan::RosCanNodePtr node = RosCanNodeManager::instance().getNode(nodeId);
 
-    //node->advertiseTopic("/aaa", "std_msgs/Float64");
-    node->advertiseTopic("/aaa", "owr_messages/motor");
+    node->advertiseTopic("/aaa", "owr_messages/tester");
 
     ROS_INFO("publishing...");
 
@@ -335,14 +333,14 @@ void CANMsgRouter::routePublishMsg(const can_frame& msg) {
     }
 
     if (TopicBuffers::instance().append(key, msg.data, msg.can_dlc)) {
-        const auto& buf = TopicBuffers::instance().get(key);
+        const auto& can_buf = TopicBuffers::instance().get(key);
         char str[1000] = {0};
         sprintf(str, "topic %d buf complete:", topicID);
-        for (const auto b : buf) {
+        for (const auto b : can_buf) {
             sprintf(str, "%s %02x", str, b);
         }
         ROS_INFO("%s", str);
-        RosCanNodeManager::instance().getNode(nodeID)->publish(topicID, buf);
+        RosCanNodeManager::instance().getNode(nodeID)->publish(topicID, can_buf);
     }
 }
 

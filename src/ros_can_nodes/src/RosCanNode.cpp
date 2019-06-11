@@ -10,10 +10,7 @@
 #include <linux/can.h>
 #include "MessageBuffer.hpp"
 #include "IntrospectionHelpers.hpp"
-#include <std_msgs/Float64.h>
-#include "owr_messages/pwm.h"
-#include "owr_messages/motor.h"
-#include "owr_messages/science.h"
+#include "message_properties_map.hpp"
 
 namespace roscan {
     using RosIntrospection::ShapeShifter;
@@ -36,6 +33,8 @@ namespace roscan {
 
     int RosCanNode::registerSubscriber(const std::string& topic, const std::string& topic_type, const int request_tid) {
         ROS_INFO("node id %d subscribing to topic \"%s\" of type \"%s\"", id_, topic.c_str(), topic_type.c_str());
+
+        IntrospectionHelpers::register_message(topic_type, message_properties_map.at(topic_type).definition);
 
         int topicID;
         if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
@@ -72,50 +71,46 @@ namespace roscan {
 
     PublisherPtr RosCanNode::make_publisher(const std::string& topic, const std::string& topic_type) {
         constexpr uint32_t queue_size = 10;
-        if (topic_type == "std_msgs/Float64") {
-            return advertise<std_msgs::Float64>(topic, queue_size);
-        } else if (topic_type == "owr_messages/pwm") {
-            return advertise<owr_messages::pwm>(topic, queue_size);
-        } else if (topic_type == "owr_messages/motor") {
-            return advertise<owr_messages::motor>(topic, queue_size);
-        } else if (topic_type == "owr_messages/science") {
-            return advertise<owr_messages::science>(topic, queue_size);
-        }
-        // ...other message types if needed
-        ROS_INFO("could not advertise topic_type \"%s\"", topic_type.c_str());
-        return PublisherPtr{};
+        AdvertiseOptions opts{
+            topic,
+            queue_size,
+            message_properties_map.at(topic_type).md5sum,
+            topic_type,
+            message_properties_map.at(topic_type).definition
+        };
+        return advertise(opts);
     }
 
     int RosCanNode::advertiseTopic(const std::string& topic, const std::string& topic_type, const int request_tid) {
         ROS_INFO("node id %d advertising topic \"%s\" of type \"%s\"", id_, topic.c_str(), topic_type.c_str());
 
-        int topic_num;
+        IntrospectionHelpers::register_message(topic_type, message_properties_map.at(topic_type).definition);
+
+        int topicID;
         if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
             topicIds[request_tid] = 1;
-            topic_num = request_tid;
+            topicID = request_tid;
         } else {
-            topic_num = getFirstFreeTopic();
+            topicID = getFirstFreeTopic();
         }
+        ROS_INFO("got topic_id %d", topicID);
 
-        if (topic_num >= 0) {
+        if (topicID >= 0) {
             PublisherPtr pub = make_publisher(topic, topic_type);
             if (!pub) {
                 return -1;
             }
-            publishers[(uint8_t)topic_num] = std::make_pair(pub, topic_type);
+            publishers[static_cast<uint8_t>(topicID)] = pub;
 
             //TODO: return the CODE to see if success or fail from the ROS master registerSubscriber
                 //-2: ERROR: Error on the part of the caller, e.g. an invalid parameter. In general, this means that the master/slave did not attempt to execute the action.
                 //-1: FAILURE: Method failed to complete correctly. In general, this means that the master/slave attempted the action and failed, and there may have been side-effects as a result.
                 //0: SUCCESS: Method completed successfully
-            return topic_num;
+            return topicID;
         } else {
             // TODO handle error, no free topic ids
             return -1;
         }
-
-        //TODO: return the CODE to see if success or fail from the ROS master unregisterSubscriber
-        return 0;
     }
 
     int RosCanNode::unregisterPublisher(const uint8_t topicID) {
@@ -124,25 +119,19 @@ namespace roscan {
         return 0;
     }
 
-    void RosCanNode::publish(const uint8_t topicID, const std::vector<uint8_t>& buf) {
-        const auto& topic_type = publishers[topicID].second;
-        if (topic_type == "std_msgs/Float64") {
-            auto msg = convert_buf<std_msgs::Float64>(buf);
-            publishers[topicID].first->publish(msg);
-        } else if (topic_type == "owr_messages/pwm") {
-            auto msg = convert_buf<owr_messages::pwm>(buf);
-            publishers[topicID].first->publish(msg);
-        } else if (topic_type == "owr_messages/motor") {
-            auto msg = convert_buf<owr_messages::motor>(buf);
-            publishers[topicID].first->publish(msg);
-        } else if (topic_type == "owr_messages/science") {
-            auto msg = convert_buf<owr_messages::science>(buf);
-            publishers[topicID].first->publish(msg);
-        } else {
-            ROS_INFO("could not convert buffer to topic_type \"%s\"", topic_type.c_str());
-            return;
-        }
-        // ...other message types if needed
+    void RosCanNode::publish(const uint8_t topicID, const std::vector<uint8_t>& can_buf) {
+        auto& pub = publishers[topicID];
+        const auto topic_type = pub->getDatatype();
+        auto ros_buf = IntrospectionHelpers::to_ros_buf(topic_type, can_buf.data(), static_cast<uint32_t>(can_buf.size()));
+        ros::serialization::OStream stream{ros_buf.data(), static_cast<uint32_t>(ros_buf.size())};
+        ShapeShifter shape_shifter;
+        shape_shifter.morph(
+            message_properties_map.at(topic_type).md5sum,
+            topic_type,
+            message_properties_map.at(topic_type).definition
+        );
+        shape_shifter.read(stream);
+        pub->publish(shape_shifter);
         ROS_INFO("node id %d published message on topic id %d", id_, topicID);
     }
 
@@ -246,8 +235,7 @@ namespace roscan {
     void RosCanNode::rosCanCallback(const ShapeShifter::ConstPtr& msg, const uint8_t topicID, const std::string& topic_name) {
         ROS_INFO("callback: topic_id = %d topic_name = %s", topicID, topic_name.c_str());
 
-        IntrospectionHelpers::register_message(msg, topic_name);
-        const auto buf = IntrospectionHelpers::modify_buffer(msg->getDataType(), msg->raw_data(), msg->size());
+        const auto buf = IntrospectionHelpers::to_can_buf(msg->getDataType(), msg->raw_data(), msg->size());
         const auto msg_count = buf.size() / 8u + (buf.size() % 8u != 0u);
         ROS_INFO("buf size %lu msg_count %lu", buf.size(), msg_count);
 
