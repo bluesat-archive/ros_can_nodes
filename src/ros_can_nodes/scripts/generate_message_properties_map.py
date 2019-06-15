@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
-import sys
+import os.path
+import re
 import itertools
-import rosmsg
 from six import StringIO
+from rospkg import RosPack
+import rosmsg
+import genmsg
+from genmsg import gentools
+import gencpp
 
 
 hpp_contents =\
@@ -31,22 +36,14 @@ cpp_contents =\
 /* Auto-generated for ros_can_nodes */
 /* DO NOT EDIT */
 
-#include <ros/message_traits.h>
 #include <unordered_map>
 #include <string>
 #include "message_properties_map.hpp"
 
-{0}
-
 const std::unordered_map<std::string, const message_properties> message_properties_map = {{
-{1}
+{}
 }};
 """
-
-map_entry_template =\
-'{{ std::string{{ros::message_traits::DataType<{0}>::value()}},' +\
-'{{ std::string{{ros::message_traits::Definition<{0}>::value()}},' +\
-'std::string{{ros::message_traits::MD5Sum<{0}>::value()}} }} }},'
 
 
 def generate_hpp():
@@ -56,24 +53,47 @@ def generate_hpp():
         f.write(hpp.getvalue())
 
 
-def generate_cpp(messages_library):
-    messages_includes = "\n".join(['#include <{}/{}.h>'.format(p, m) for p, m in messages_library])
-    map_entries = "\n".join([map_entry_template.format('{}::{}'.format(p, m)) for p, m in messages_library])
-    
+def generate_cpp(msg_properties):
+    map_entry_template = '{{ "{}",{{ "{}", "{}" }} }}'
+    map_entries = ',\n'.join([map_entry_template.format(t, d, m) for t, d, m in msg_properties])
     cpp = StringIO()
-    cpp.write(cpp_contents.format(messages_includes, map_entries))
+    cpp.write(cpp_contents.format(map_entries))
     with open('src/message_properties_map.cpp', 'w') as f:
         f.write(cpp.getvalue())
 
 
-def generate_message_properties_map(packages):
-    # build a list of (package, message) tuples
-    msgs = list(itertools.chain.from_iterable([rosmsg.list_msgs(p) for p in packages]))
-    messages_library = [tuple(msg.split('/')) for msg in msgs]
+def generate_message_properties_map():
+    rp = RosPack()
+    msg_context = genmsg.MsgContext.create_default()
+
+    # find all possible messages
+    packages = rp.list()
+    msgs = itertools.chain.from_iterable([rosmsg.list_msgs(p, rp) for p in packages])
+
+    # build search paths
+    search_path = {}
+    for p in packages:
+        package_paths = rosmsg._get_package_paths(p, rp)
+        search_path[p] = [os.path.join(d, 'msg') for d in package_paths]
+
+    # save some space by stripping comments and blank lines
+    comments = re.compile(r'^\s*(.*)#.*$', re.MULTILINE)
+    blank_lines = re.compile(r'\n(\s*\n)*')
+    msg_properties = []
+    for m in msgs:
+        spec = genmsg.load_msg_by_type(msg_context, m, search_path)
+        genmsg.load_depends(msg_context, spec, search_path)
+        text = gentools.compute_full_text(msg_context, spec)
+        text = comments.sub(r'\1', text)
+        text = blank_lines.sub('\n', text)
+        text = '\n'.join([l.strip() for l in text.splitlines() if l != ''])
+        text = gencpp.escape_message_definition(text)
+        md5sum = gentools.compute_md5(msg_context, spec)
+        msg_properties.append((m, text, md5sum))
     
     generate_hpp()
-    generate_cpp(messages_library)
+    generate_cpp(msg_properties)
 
 
 if __name__ == '__main__':
-    generate_message_properties_map(sys.argv[1:])
+    generate_message_properties_map()
