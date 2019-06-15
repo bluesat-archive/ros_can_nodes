@@ -34,7 +34,12 @@ class CANMsgRouter {
 
         static void extractTopic(const can_frame& first, std::string& topic, std::string& topic_type);
 
+        /**
+         * Resets all possible nodes on the channel
+         */
+        static void resetAllNodes();
     private:
+
 
 };
 

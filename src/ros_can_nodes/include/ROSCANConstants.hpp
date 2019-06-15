@@ -102,7 +102,7 @@ namespace ROSCANConstants {
         constexpr uint32_t ADVERTISE_SERVICE = 6;
         constexpr uint32_t UNREGISTER_SERVICE = 7;
         constexpr uint32_t PARAMETERS = 8;
-        constexpr uint32_t HEARTBEAT = 9;
+        constexpr uint32_t CHANNEL_CONTROL = 9;
         constexpr uint32_t EXTENDED = 10;
 
         /* Bitshifting for Control mode 0 */
@@ -137,6 +137,13 @@ namespace ROSCANConstants {
         /* Bitmasking for Control modes 3/5 */
         constexpr uint32_t bitmask_topic_id = (0x3F << bitshift_topic_id);
 
+        /* Bitshifting for Control mode 9 */
+        constexpr uint32_t bitshift_mode9_sub_mode = 12;
+        constexpr uint32_t bitshift_mode9_step = 16;
+
+        /* Bitmasking for  Control mode 0 */
+        constexpr uint32_t bitmask_mode9_sub_mode = (0xF << bitshift_mode9_sub_mode);
+        constexpr uint32_t bitmask_mode9_step = (0x1 << bitshift_mode9_step);
         /* Value extractors */
         constexpr auto mode = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_mode, bitmask_mode); };
         constexpr auto mode0_step = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_mode0_step, bitmask_mode0_step); };

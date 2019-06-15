@@ -41,6 +41,9 @@ void CANMsgRouter::init() {
 void CANMsgRouter::run() {
     can_frame can_msg;
 
+    // we don't want any nodes we don't know about on the bus, so reset everything
+    CANMsgRouter::resetAllNodes();
+
     while (1) {
         // Check for Messages
         // TODO add reconnection ability
@@ -289,11 +292,11 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             ROS_INFO("mode is PARAMETERS - unimplemented");
             break;
         }
-        case ROSCANConstants::Control::HEARTBEAT:
+        case ROSCANConstants::Control::CHANNEL_CONTROL:
         {
             //uint8_t nodeID = ROSCANConstants::Control::nid(msg.can_id);
             //roscan::RosCanNode::getNode(nodeID)->heartbeat(void);
-            ROS_INFO("mode is HEARTBEAT - unimplemented");
+            ROS_INFO("mode is CHANNEL_CONTROL - unimplemented");
             break;
         }
         case ROSCANConstants::Control::EXTENDED:
@@ -382,4 +385,22 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
         ROS_INFO("invalid topic/type data: %s null at %ld", std::string{buf.cbegin(), buf.cend()}.c_str(), (long int) null_char_it1.base());
         //TODO: throw an exception or something so we don't register an empty topic
     }
+}
+
+void CANMsgRouter::resetAllNodes() {
+    ROS_INFO("Reseting All Nodes");
+    canid_t header = 0;
+    header |= CAN_EFF_FLAG;
+    header |= (1 << ROSCANConstants::Common::bitshift_mode);
+    header |= (0x3 << ROSCANConstants::Common::bitshift_priority);
+    header |= (ROSCANConstants::Common::CONTROL << ROSCANConstants::Common::bitshift_func);
+    header |= (ROSCANConstants::Control::CHANNEL_CONTROL << ROSCANConstants::Control::bitshift_mode);
+    for(uint8_t i = 0; i < ROSCANConstants::Control::bitmask_nid; ++i) {
+        header |= (i << ROSCANConstants::Control::bitmask_nid);
+        header |= CAN_EFF_FLAG;
+        can_frame frame;
+        frame.can_id = header;
+        CANHelpers::send_frame(frame);
+    }
+    ROS_INFO("Reset Complete");
 }
