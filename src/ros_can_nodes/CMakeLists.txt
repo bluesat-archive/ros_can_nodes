@@ -7,13 +7,8 @@ add_compile_options(-std=c++17 -O2)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-set(MESSAGE_PACKAGES
-  std_msgs
-  owr_messages
-)
 find_package(catkin REQUIRED COMPONENTS
   ros_type_introspection
-  ${MESSAGE_PACKAGES}
 )
 
 ## System dependencies are found with CMake's conventions
@@ -89,7 +84,7 @@ find_package(Boost REQUIRED)
 catkin_package()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/generate_message_properties_map.cmake)
-generate_message_properties_map(${MESSAGE_PACKAGES})
+generate_message_properties_map()
 
 ###########
 ## Build ##
