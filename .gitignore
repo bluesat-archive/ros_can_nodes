@@ -17,6 +17,7 @@ nohup*
 #########################
 build
 devel
+src/CMakeLists.txt
 
 # gscam #
 #########
@@ -42,3 +43,10 @@ src/*/tags
 
 src/ros_can_nodes_old
 .vscode
+
+# clion #
+#########
+.idea/
+*.idea*
+cmake-build-debug/
+cmake-build-debug-ros/
