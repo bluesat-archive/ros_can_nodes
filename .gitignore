@@ -17,6 +17,7 @@ nohup*
 #########################
 build
 devel
+src/CMakeLists.txt
 
 # gscam #
 #########
