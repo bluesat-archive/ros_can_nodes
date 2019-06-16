@@ -389,18 +389,18 @@ void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std:
 
 void CANMsgRouter::resetAllNodes() {
     ROS_INFO("Reseting All Nodes");
+    can_frame frame;
+    frame.can_dlc = 0;
     canid_t header = 0;
     header |= CAN_EFF_FLAG;
     header |= (1 << ROSCANConstants::Common::bitshift_mode);
-    header |= (0x3 << ROSCANConstants::Common::bitshift_priority);
+    // reset should be high priority to break through any noise
+    header |= (0x2 << ROSCANConstants::Common::bitshift_priority);
     header |= (ROSCANConstants::Common::CONTROL << ROSCANConstants::Common::bitshift_func);
+    header |= (0 << ROSCANConstants::Common::bitshift_seq);
     header |= (ROSCANConstants::Control::CHANNEL_CONTROL << ROSCANConstants::Control::bitshift_mode);
-    for(uint8_t i = 0; i < ROSCANConstants::Control::bitmask_nid; ++i) {
-        header |= (i << ROSCANConstants::Control::bitmask_nid);
-        header |= CAN_EFF_FLAG;
-        can_frame frame;
-        frame.can_id = header;
-        CANHelpers::send_frame(frame);
-    }
+    header |= CAN_EFF_FLAG;
+    frame.can_id = header;
+    CANHelpers::send_frame(frame);
     ROS_INFO("Reset Complete");
 }
