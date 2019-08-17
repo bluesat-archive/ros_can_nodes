@@ -108,10 +108,10 @@ include_directories(
 ## Declare a C++ executable
 add_executable(ros_can_nodes
   src/RosCanNode.cpp
-  src/TopicBuffers.cpp
+  src/CANBuffers.cpp
   src/CANHelpers.cpp
   src/CANMsgRouter.cpp
-  src/MessageBuffer.cpp
+  src/CANSendQueue.cpp
   src/RosCanNodeManager.cpp
   src/IntrospectionHelpers.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/message_properties_map/src/message_properties_map.cpp

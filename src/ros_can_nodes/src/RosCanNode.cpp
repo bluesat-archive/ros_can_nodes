@@ -8,7 +8,7 @@
 #include <ros_type_introspection/utils/shape_shifter.hpp>
 #include "ROSCANConstants.hpp"
 #include <linux/can.h>
-#include "MessageBuffer.hpp"
+#include "CANSendQueue.hpp"
 #include "IntrospectionHelpers.hpp"
 #include "message_properties_map.hpp"
 
@@ -268,7 +268,7 @@ namespace roscan {
             const auto begin = buf.cbegin() + start_offset;
             const auto end = begin + frame.can_dlc;
             std::copy(begin, end, frame.data);
-            MessageBuffer::instance().push(frame);
+            CANSendQueue::instance().push(frame);
         }
     }
 
