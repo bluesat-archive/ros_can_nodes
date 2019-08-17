@@ -20,17 +20,17 @@ class CANBuffers {
     public:
         CANBuffers() {}
 
-        void reset(const uint16_t key, const uint8_t expected_frames);
+        void reset(const uint32_t key, const uint8_t expected_frames);
 
-        void append(const uint16_t key, const uint8_t data[CAN_MAX_DLEN], const uint8_t data_len);
+        void append(const uint32_t key, const uint8_t data[CAN_MAX_DLEN], const uint8_t data_len);
 
         /**
          * Returns whether the buffer for the given key is ready to be collected
          * ie. frames received equals expected frames
          */
-        bool ready(const uint16_t key);
+        bool ready(const uint32_t key);
 
-        const std::vector<uint8_t>& get(const uint16_t key);
+        const std::vector<uint8_t>& get(const uint32_t key);
 
     private:
         struct CANBuffer {
@@ -39,7 +39,7 @@ class CANBuffers {
             uint8_t received_frames;
         };
         
-        std::unordered_map<uint16_t, class CANBuffer> buffers;
+        std::unordered_map<uint32_t, class CANBuffer> buffers;
 
         CANBuffers(const CANBuffers&) = delete;
         void operator=(const CANBuffers&) = delete;

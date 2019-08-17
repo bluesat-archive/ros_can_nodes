@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 
 void CANMsgRouter::init() {
     // TODO: either fail on bad open_port OR have reconnect policy
-    int err = CANHelpers::open_port("can0");
+    int err = CANHelpers::open_port("vcan0");
 
     if (err) {
         throw std::runtime_error("Failed to acquire CAN socket, exiting");
@@ -297,7 +297,7 @@ void CANMsgRouter::routePublishMsg(const can_frame& msg) {
     ROS_INFO("publish frame: node id %d, topic id %d, message len %d, seq %d", nodeID, topicID, len, seq);
 
     // Key will be concatenation of topicid, and nid
-    const uint16_t key = (topicID << 4) | nodeID;
+    const uint32_t key = (topicID << 8) | nodeID;
 
     if (seq == 0) {
         publish_buffers.reset(key, len);
@@ -340,8 +340,8 @@ void CANMsgRouter::topicRegisterHelper(const uint8_t mode, const can_frame& msg)
     const uint8_t seq = ROSCANConstants::Control::seq(msg.can_id);
     ROS_INFO("registering topic for node id %d", nodeID);
 
-    // use both mode and node id to create a unique key
-    const uint16_t key = mode << 8 | nodeID;
+    // Key is the static bits of the header
+    const uint32_t key = msg.can_id & ~(ROSCANConstants::Common::bitmask_seq | ROSCANConstants::Control::bitmask_seq);
 
     if (seq == 0) {
         topic_register_buffers.reset(key, len);
@@ -349,12 +349,24 @@ void CANMsgRouter::topicRegisterHelper(const uint8_t mode, const can_frame& msg)
 
     topic_register_buffers.append(key, msg.data, msg.can_dlc);
 
+    #ifdef DEBUG
+    const auto& can_buf = topic_register_buffers.get(key);
+    char str[1000] = {0};
+    sprintf(str, "buffer contents for key %u:", key);
+    for (const auto b : can_buf) {
+        sprintf(str, "%s %02x", str, b);
+    }
+    ROS_INFO("%s", str);
+    #endif
+
     if (topic_register_buffers.ready(key)) {
         const auto& can_buf = topic_register_buffers.get(key);
         const auto extracted = extractTopic(can_buf);
         const auto& topic = extracted.first;
         const auto& topic_type = extracted.second;
-        const int topicID = RosCanNodeManager::instance().getNode(nodeID)->advertiseTopic(topic, topic_type);
+        const auto node = RosCanNodeManager::instance().getNode(nodeID);
+        const auto topicID = mode == ROSCANConstants::Control::SUBSCRIBE_TOPIC ? node->registerSubscriber(topic, topic_type) : node->advertiseTopic(topic, topic_type);
+
         if (topicID < 0) {
             ROS_INFO("topic register failed");
         } else {

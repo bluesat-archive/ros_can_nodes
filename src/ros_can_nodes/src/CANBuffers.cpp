@@ -14,26 +14,29 @@
 #include <iostream>
 #include <ros/console.h>
 
-void CANBuffers::reset(const uint16_t key, const uint8_t expected_frames) {
+void CANBuffers::reset(const uint32_t key, const uint8_t expected_frames) {
     auto& buffer = buffers[key];
-    ROS_INFO("CAN buffers: resetting for key %d", key);
+    ROS_INFO("CAN buffers: resetting for key %u", key);
     buffer.buf.clear();
     buffer.expected_frames = expected_frames;
     buffer.received_frames = 0;
 }
 
-void CANBuffers::append(const uint16_t key, const uint8_t data[CAN_MAX_DLEN], const uint8_t data_len) {
-    auto& buffer = buffers[key];
-    ROS_INFO("CAN buffers: appending %d bytes to key %d", data_len, key);
+void CANBuffers::append(const uint32_t key, const uint8_t data[CAN_MAX_DLEN], const uint8_t data_len) {
+    auto& buffer = buffers.at(key);
+    ROS_INFO("CAN buffers: appending %u bytes to key %u", data_len, key);
     buffer.buf.insert(buffer.buf.cend(), data, data + data_len);
     ++buffer.received_frames;
 }
 
-bool CANBuffers::ready(const uint16_t key) {
-    auto& buffer = buffers[key];
+bool CANBuffers::ready(const uint32_t key) {
+    if (buffers.count(key) == 0) {
+        return false;
+    }
+    auto& buffer = buffers.at(key);
     return buffer.expected_frames == buffer.received_frames;
 }
 
-const std::vector<uint8_t>& CANBuffers::get(const uint16_t key) {
-    return buffers[key].buf;
+const std::vector<uint8_t>& CANBuffers::get(const uint32_t key) {
+    return buffers.at(key).buf;
 }

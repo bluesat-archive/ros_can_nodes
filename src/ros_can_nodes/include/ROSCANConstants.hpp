@@ -53,6 +53,10 @@ namespace ROSCANConstants {
         constexpr auto priority = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_priority, bitmask_priority); };
         constexpr auto func = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_func, bitmask_func); };
         constexpr auto seq = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_seq, bitmask_seq); };
+        constexpr auto mode_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_mode, bitmask_mode); };
+        constexpr auto priority_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_priority, bitmask_priority); };
+        constexpr auto func_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_func, bitmask_func); };
+        constexpr auto seq_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_seq, bitmask_seq); };
     }
 
     namespace ROSTopic {
@@ -78,6 +82,10 @@ namespace ROSCANConstants {
         constexpr auto topic_id = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_topic_id, bitmask_topic_id); };
         constexpr auto len = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_len, bitmask_len); };
         constexpr auto nid = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_nid, bitmask_nid); };
+        constexpr auto msg_num_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_msg_num, bitmask_msg_num); };
+        constexpr auto topic_id_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_topic_id, bitmask_topic_id); };
+        constexpr auto len_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_len, bitmask_len); };
+        constexpr auto nid_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_nid, bitmask_nid); };
     }
 
     namespace Control {
