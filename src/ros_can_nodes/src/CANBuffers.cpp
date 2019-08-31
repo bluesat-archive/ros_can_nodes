@@ -4,8 +4,9 @@
  * Editors:
  * ROS Node Name:
  * ROS Package: ros_can_nodes
- * Purpose:
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
+ * Purpose: Byte buffer manager for CAN message frame data. Each buffer can be accessed
+ *          and modified using a unique key
+ * This code is released under the BSD License. Copyright BLUEsat UNSW, 2017
  */
 
 #include "CANBuffers.hpp"
@@ -13,6 +14,7 @@
 #include <cstdint>
 #include <iostream>
 #include <ros/console.h>
+#include <linux/can.h>
 
 void CANBuffers::reset(const uint32_t key, const uint8_t expected_frames) {
     auto& buffer = buffers[key];

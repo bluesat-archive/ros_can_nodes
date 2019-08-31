@@ -2,10 +2,12 @@
  * Date Started: 29/09/2017
  * Original Author: Simon Ireland
  * Editors:
- * ROS Node Name:
+ * ROS Node Name: ros_can_nodes
  * ROS Package: ros_can_nodes
- * Purpose:
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
+ * Purpose: Main entry point of ros_can_nodes. Run with:
+ *          - `rosrun ros_can_nodes ros_can_nodes` to use can0 as the CAN port
+ *          - `rosrun ros_can_nodes ros_can_nodes vcan0` to use vcan0 as the CAN port
+ * This code is released under the BSD License. Copyright BLUEsat UNSW, 2017
  */
 
 #include <linux/can.h>
@@ -22,11 +24,14 @@
 
 //#define DEBUG
 
+static constexpr auto DEFAULT_CAN_PORT = "can0";
+
 CANBuffers CANMsgRouter::topic_register_buffers{};
 CANBuffers CANMsgRouter::publish_buffers{};
 
 int main(int argc, char **argv) {
-    CANMsgRouter::init();
+    const auto can_port = argc > 1 ? argv[1] : DEFAULT_CAN_PORT;
+    CANMsgRouter::init(can_port);
 
     //CANMsgRouter::subscriberTest();
     //CANMsgRouter::publisherTest();
@@ -34,9 +39,10 @@ int main(int argc, char **argv) {
     CANMsgRouter::run();
 }
 
-void CANMsgRouter::init() {
+void CANMsgRouter::init(const std::string& can_port) {
     // TODO: either fail on bad open_port OR have reconnect policy
-    int err = CANHelpers::open_port("vcan0");
+    ROS_INFO_STREAM("opening CAN port " << can_port);
+    int err = CANHelpers::open_port(can_port);
 
     if (err) {
         throw std::runtime_error("Failed to acquire CAN socket, exiting");

@@ -1,3 +1,13 @@
+/*
+ * Date Started: 17/08/2019
+ * Original Author: Yiwei Han
+ * Editors:
+ * ROS Node Name: custom_message_sender
+ * ROS Package: custom_message_sender
+ * Purpose: Testing application to locally test the CAN message processing functionalities of ros_can_nodes
+ * This code is released under the BSD License. Copyright BLUEsat UNSW, 2019
+ */
+
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -5,31 +15,20 @@
 #include <thread>
 #include <chrono>
 #include <stdexcept>
+#include <linux/can.h>
 #include <ROSCANConstants.hpp>
 #include "can.hpp"
 #include "msg_builders.hpp"
 
-static void send(const can_frame& frame) {
-    if (send_can_frame(frame) < 0) {
-        throw new std::runtime_error("Frame send failed");
-    }
-}
+/**
+ * Sends the CAN frame over the CAN port
+ */
+static void send(const can_frame& frame);
 
-static std::vector<can_frame> zip(const std::vector<std::vector<can_frame>>& sequences) {
-    std::vector<uint32_t> sequence_lens;
-    std::transform(sequences.cbegin(), sequences.cend(), std::back_inserter(sequence_lens), [](const auto& s){ return s.size(); });
-    const auto max_len = *std::max_element(sequence_lens.cbegin(), sequence_lens.cend());
-
-    std::vector<can_frame> flat;
-    for (uint32_t i = 0;i < max_len;++i) {
-        for (uint32_t s = 0;s < sequences.size();++s) {
-            if (i < sequences[s].size()) {
-                flat.push_back(sequences[s][i]);
-            }
-        }
-    }
-    return flat;
-}
+/**
+ * Combines a series of CAN frame sequences into a single stream by zipping them together
+ */
+static std::vector<can_frame> zip(const std::vector<std::vector<can_frame>>& sequences);
 
 int main(int argc, char *argv[]) {
     if (open_can_port("vcan0") < 0) {
@@ -56,4 +55,26 @@ int main(int argc, char *argv[]) {
         send(msg);
     }
     return 0;
+}
+
+void send(const can_frame& frame) {
+    if (send_can_frame(frame) < 0) {
+        throw new std::runtime_error("Frame send failed");
+    }
+}
+
+std::vector<can_frame> zip(const std::vector<std::vector<can_frame>>& sequences) {
+    std::vector<uint32_t> sequence_lens;
+    std::transform(sequences.cbegin(), sequences.cend(), std::back_inserter(sequence_lens), [](const auto& s){ return s.size(); });
+    const auto max_len = *std::max_element(sequence_lens.cbegin(), sequence_lens.cend());
+
+    std::vector<can_frame> flat;
+    for (uint32_t i = 0;i < max_len;++i) {
+        for (uint32_t s = 0;s < sequences.size();++s) {
+            if (i < sequences[s].size()) {
+                flat.push_back(sequences[s][i]);
+            }
+        }
+    }
+    return flat;
 }

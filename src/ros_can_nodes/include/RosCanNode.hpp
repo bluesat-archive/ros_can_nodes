@@ -5,7 +5,7 @@
  * ROS Node Name:
  * ROS Package: ros_can_nodes
  * Purpose: Extension of RosNode with functions to interact with the CAN bus.
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2018
+ * This code is released under the BSD License. Copyright BLUEsat UNSW, 2018
  */
 
 #ifndef ROSCANNODE_H
