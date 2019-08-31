@@ -194,7 +194,7 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             const uint8_t step = ROSCANConstants::Control::mode0_step(msg.can_id);
             const uint8_t hashName = ROSCANConstants::Control::mode0_hash(msg.can_id);
 
-            ROS_INFO("step %u, hashname %X", step, hashName);
+            ROS_INFO("step %u, hashname 0x%x", step, hashName);
 
             const auto name = std::string{msg.data, msg.data + msg.can_dlc};
             ROS_INFO("registering \"%s\"", name.c_str());
@@ -208,7 +208,7 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             // send message back, everything is the same apart from the step
             can_frame response = msg;
             ROSCANConstants::Control::mode0_step_insert(response.can_id, step+1);
-            ROS_INFO("sending header %x", response.can_id);
+            ROS_INFO("sending header 0x%x", response.can_id);
             response.can_dlc = 4;
             response.data[0] = nodeID;
             CANHelpers::send_frame(response);
@@ -318,7 +318,7 @@ void CANMsgRouter::routePublishMsg(const can_frame& msg) {
         char str[1000] = {0};
         sprintf(str, "topic %d buf complete:", topicID);
         for (const auto b : can_buf) {
-            sprintf(str, "%s %02x", str, b);
+            sprintf(str, "%s 0x%02x", str, b);
         }
         ROS_INFO("%s", str);
         #endif
@@ -357,12 +357,14 @@ void CANMsgRouter::topicRegisterHelper(const uint8_t mode, const can_frame& msg)
 
     #ifdef DEBUG
     const auto& can_buf = topic_register_buffers.get(key);
-    char str[1000] = {0};
-    sprintf(str, "buffer contents for key %u:", key);
+    ROS_INFO("buffer contents for key 0x%x:", key);
     for (const auto b : can_buf) {
-        sprintf(str, "%s %02x", str, b);
+        if (b != 0) {
+            ROS_INFO("%c (0x%02x)", b, b);
+        } else {
+            ROS_INFO("\\0");
+        }
     }
-    ROS_INFO("%s", str);
     #endif
 
     if (topic_register_buffers.ready(key)) {
@@ -379,7 +381,7 @@ void CANMsgRouter::topicRegisterHelper(const uint8_t mode, const can_frame& msg)
             ROS_INFO("registered topic \"%s\" of type \"%s\" assigned to topic id %d of node id %d", topic.c_str(), topic_type.c_str(), topicID, nodeID);
             can_frame response = msg;
             ROSCANConstants::Control::step_insert(response.can_id, 1);
-            ROS_INFO("sending header %x", response.can_id);
+            ROS_INFO("sending header 0x%x", response.can_id);
             response.can_dlc = 4;
             response.data[0] = topicID;
             CANHelpers::send_frame(response);

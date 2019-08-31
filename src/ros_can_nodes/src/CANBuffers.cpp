@@ -18,7 +18,7 @@
 
 void CANBuffers::reset(const uint32_t key, const uint8_t expected_frames) {
     auto& buffer = buffers[key];
-    ROS_INFO("CAN buffers: resetting for key %u", key);
+    ROS_INFO("CAN buffers: resetting for key 0x%x", key);
     buffer.buf.clear();
     buffer.expected_frames = expected_frames;
     buffer.received_frames = 0;
@@ -26,7 +26,7 @@ void CANBuffers::reset(const uint32_t key, const uint8_t expected_frames) {
 
 void CANBuffers::append(const uint32_t key, const uint8_t data[CAN_MAX_DLEN], const uint8_t data_len) {
     auto& buffer = buffers.at(key);
-    ROS_INFO("CAN buffers: appending %u bytes to key %u", data_len, key);
+    ROS_INFO("CAN buffers: appending %u bytes to key 0x%x", data_len, key);
     buffer.buf.insert(buffer.buf.cend(), data, data + data_len);
     ++buffer.received_frames;
 }
