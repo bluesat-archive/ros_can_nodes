@@ -344,7 +344,11 @@ void CANMsgRouter::topicRegisterHelper(const uint8_t mode, const can_frame& msg)
     const uint8_t nodeID = ROSCANConstants::Control::nid(msg.can_id);
     const uint8_t len = ROSCANConstants::Control::len(msg.can_id);
     const uint8_t seq = ROSCANConstants::Control::seq(msg.can_id);
+    const uint8_t step = ROSCANConstants::Control::step(msg.can_id);
     ROS_INFO("registering topic for node id %d", nodeID);
+    ROS_INFO("len %d", len);
+    ROS_INFO("seq %d", seq);
+    ROS_INFO("step %d", step);
 
     // Key is the static bits of the header
     const uint32_t key = msg.can_id & ~(ROSCANConstants::Common::bitmask_seq | ROSCANConstants::Control::bitmask_seq);
@@ -381,6 +385,7 @@ void CANMsgRouter::topicRegisterHelper(const uint8_t mode, const can_frame& msg)
             ROS_INFO("registered topic \"%s\" of type \"%s\" assigned to topic id %d of node id %d", topic.c_str(), topic_type.c_str(), topicID, nodeID);
             can_frame response = msg;
             ROSCANConstants::Control::step_insert(response.can_id, 1);
+            ROSCANConstants::Control::seq_insert(response.can_id, 0);
             ROS_INFO("sending header 0x%x", response.can_id);
             response.can_dlc = 4;
             response.data[0] = topicID;
