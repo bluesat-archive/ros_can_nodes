@@ -5,7 +5,7 @@
  * ROS Node Name:
  * ROS Package: ros_can_nodes
  * Purpose:
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
+ * This code is released under the BSD License. Copyright BLUEsat UNSW, 2017
  */
 #ifndef ROSCANCONSTANTS_H
 #define ROSCANCONSTANTS_H
@@ -21,7 +21,7 @@ namespace ROSCANConstants {
     
     /** Generic value inserter **/
     constexpr auto inserter = [](uint32_t & frame_header, const uint32_t value, const uint32_t bitshift, const uint32_t bitmask) -> uint32_t {
-        return frame_header |= (value << bitshift) & bitmask;
+        frame_header = (frame_header & ~bitmask) | ((value << bitshift) & bitmask);
     };
 
     namespace Common {
@@ -53,6 +53,10 @@ namespace ROSCANConstants {
         constexpr auto priority = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_priority, bitmask_priority); };
         constexpr auto func = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_func, bitmask_func); };
         constexpr auto seq = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_seq, bitmask_seq); };
+        constexpr auto mode_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_mode, bitmask_mode); };
+        constexpr auto priority_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_priority, bitmask_priority); };
+        constexpr auto func_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_func, bitmask_func); };
+        constexpr auto seq_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_seq, bitmask_seq); };
     }
 
     namespace ROSTopic {
@@ -78,6 +82,10 @@ namespace ROSCANConstants {
         constexpr auto topic_id = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_topic_id, bitmask_topic_id); };
         constexpr auto len = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_len, bitmask_len); };
         constexpr auto nid = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_nid, bitmask_nid); };
+        constexpr auto msg_num_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_msg_num, bitmask_msg_num); };
+        constexpr auto topic_id_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_topic_id, bitmask_topic_id); };
+        constexpr auto len_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_len, bitmask_len); };
+        constexpr auto nid_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_nid, bitmask_nid); };
     }
 
     namespace Control {
@@ -154,15 +162,15 @@ namespace ROSCANConstants {
         constexpr auto seq = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_seq, bitmask_seq); };
         constexpr auto len = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_len, bitmask_len); };
         constexpr auto topic_id = [](const auto header) { return ROSCANConstants::extractor(header, bitshift_topic_id, bitmask_topic_id); };
-        constexpr auto mode_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_mode, bitmask_mode); };
-        constexpr auto mode0_step_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_mode0_step, bitmask_mode0_step); };
-        constexpr auto mode0_hash_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_mode0_hash, bitmask_mode0_hash); };
-        constexpr auto nid_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_nid, bitmask_nid); };
-        constexpr auto step_insert = [&](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_step, bitmask_step); };
-        constexpr auto hash_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_hash, bitmask_hash); };
-        constexpr auto seq_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_seq, bitmask_seq); };
-        constexpr auto len_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_len, bitmask_len); };
-        constexpr auto topic_id_insert = [](uint32_t & header, const uint32_t value) { return ROSCANConstants::inserter(header, value, bitshift_topic_id, bitmask_topic_id); };
+        constexpr auto mode_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_mode, bitmask_mode); };
+        constexpr auto mode0_step_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_mode0_step, bitmask_mode0_step); };
+        constexpr auto mode0_hash_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_mode0_hash, bitmask_mode0_hash); };
+        constexpr auto nid_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_nid, bitmask_nid); };
+        constexpr auto step_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_step, bitmask_step); };
+        constexpr auto hash_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_hash, bitmask_hash); };
+        constexpr auto seq_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_seq, bitmask_seq); };
+        constexpr auto len_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_len, bitmask_len); };
+        constexpr auto topic_id_insert = [](uint32_t & header, const uint32_t value) { ROSCANConstants::inserter(header, value, bitshift_topic_id, bitmask_topic_id); };
     }
 }
 

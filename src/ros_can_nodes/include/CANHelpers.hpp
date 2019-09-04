@@ -5,7 +5,7 @@
  * ROS Node Name:
  * ROS Package: ros_can_nodes
  * Purpose:
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
+ * This code is released under the BSD License. Copyright BLUEsat UNSW, 2017
  */
 
 #ifndef CANHELPERS_HPP

@@ -5,7 +5,7 @@
  * ROS Node Name:
  * ROS Package: ros_can_nodes
  * Purpose:
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
+ * This code is released under the BSD License. Copyright BLUEsat UNSW, 2017
  */
 
 
@@ -58,7 +58,7 @@ int CANHelpers::send_frame(const can_frame& frame) {
         return -1;
     }
     ROS_INFO("Sent !!");
-    ROS_INFO("Header %x", frame.can_id);
+    ROS_INFO("Header 0x%x", frame.can_id);
     return 0;
 }
 

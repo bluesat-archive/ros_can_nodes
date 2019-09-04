@@ -2,10 +2,12 @@
  * Date Started: 29/09/2017
  * Original Author: Simon Ireland
  * Editors:
- * ROS Node Name:
+ * ROS Node Name: ros_can_nodes
  * ROS Package: ros_can_nodes
- * Purpose:
- * This code is released under the MIT  License. Copyright BLUEsat UNSW, 2017
+ * Purpose: Main entry point of ros_can_nodes. Run with:
+ *          - `rosrun ros_can_nodes ros_can_nodes` to use can0 as the CAN port
+ *          - `rosrun ros_can_nodes ros_can_nodes vcan0` to use vcan0 as the CAN port
+ * This code is released under the BSD License. Copyright BLUEsat UNSW, 2017
  */
 
 #include <linux/can.h>
@@ -15,13 +17,21 @@
 #include <stdexcept>
 #include "CANMsgRouter.hpp"
 #include "ROSCANConstants.hpp"
-#include "TopicBuffers.hpp"
+#include "CANBuffers.hpp"
 #include "CANHelpers.hpp"
 #include "RosCanNode.hpp"
 #include "RosCanNodeManager.hpp"
 
+//#define DEBUG
+
+static constexpr auto DEFAULT_CAN_PORT = "can0";
+
+CANBuffers CANMsgRouter::topic_register_buffers{};
+CANBuffers CANMsgRouter::publish_buffers{};
+
 int main(int argc, char **argv) {
-    CANMsgRouter::init();
+    const auto can_port = argc > 1 ? argv[1] : DEFAULT_CAN_PORT;
+    CANMsgRouter::init(can_port);
 
     //CANMsgRouter::subscriberTest();
     //CANMsgRouter::publisherTest();
@@ -29,9 +39,10 @@ int main(int argc, char **argv) {
     CANMsgRouter::run();
 }
 
-void CANMsgRouter::init() {
+void CANMsgRouter::init(const std::string& can_port) {
     // TODO: either fail on bad open_port OR have reconnect policy
-    int err = CANHelpers::open_port("can0");
+    ROS_INFO_STREAM("opening CAN port " << can_port);
+    int err = CANHelpers::open_port(can_port);
 
     if (err) {
         throw std::runtime_error("Failed to acquire CAN socket, exiting");
@@ -174,24 +185,21 @@ void CANMsgRouter::processCANMsg(const can_frame& msg) {
 // Function to cut the control msg into its components, and then call the
 // appropriate Node function.
 void CANMsgRouter::routeControlMsg(const can_frame& msg) {
-    uint8_t mode = ROSCANConstants::Control::mode(msg.can_id);
+    const uint8_t mode = ROSCANConstants::Control::mode(msg.can_id);
     ROS_INFO("mode = %d", mode);
 
     switch (mode) {
         case ROSCANConstants::Control::REGISTER_NODE:
         {
-            uint8_t step = ROSCANConstants::Control::mode0_step(msg.can_id);
-            uint8_t hashName = ROSCANConstants::Control::mode0_hash(msg.can_id);
+            const uint8_t step = ROSCANConstants::Control::mode0_step(msg.can_id);
+            const uint8_t hashName = ROSCANConstants::Control::mode0_hash(msg.can_id);
 
-            ROS_INFO("step %u, hashname %X", step, hashName);
+            ROS_INFO("step %u, hashname 0x%x", step, hashName);
 
-            char *name_buf[CAN_MAX_DLEN + 1] = {0};
-            memcpy(name_buf, msg.data, msg.can_dlc);
-
-            std::string name{(const char *)name_buf};
+            const auto name = std::string{msg.data, msg.data + msg.can_dlc};
             ROS_INFO("registering \"%s\"", name.c_str());
 
-            int nodeID = RosCanNodeManager::instance().registerNode(name, hashName);
+            const int nodeID = RosCanNodeManager::instance().registerNode(name, hashName);
             if (nodeID < 0) {
                 ROS_INFO("no available node ids");
             } else {
@@ -200,10 +208,9 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
             // send message back, everything is the same apart from the step
             can_frame response = msg;
             ROSCANConstants::Control::mode0_step_insert(response.can_id, step+1);
-            ROS_INFO("sending header %x", response.can_id);
+            ROS_INFO("sending header 0x%x", response.can_id);
             response.can_dlc = 4;
             response.data[0] = nodeID;
-
             CANHelpers::send_frame(response);
             break;
         }
@@ -216,25 +223,8 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
         }
         case ROSCANConstants::Control::SUBSCRIBE_TOPIC:
         {
-            //TODO: get data content for function call
-            uint8_t nodeID = ROSCANConstants::Control::nid(msg.can_id);
-            ROS_INFO("subscribing for node id %d", nodeID);
-
-            std::string topic, topic_type;
-            extractTopic(msg, topic, topic_type);
-            int topicID = RosCanNodeManager::instance().getNode(nodeID)->registerSubscriber(topic, topic_type);
-            if (topicID < 0) {
-                ROS_INFO("subscribe register failed");
-            } else {
-                ROS_INFO("subscription of topic \"%s\" assigned to topic id %d of node id %d", topic.c_str(), topicID, nodeID);
-                can_frame response = msg;
-                ROSCANConstants::Control::step_insert(response.can_id, 1);
-                ROS_INFO("sending header %x", response.can_id);
-                response.can_dlc = 4;
-                response.data[0] = topicID;
-
-                CANHelpers::send_frame(response);
-            }
+            ROS_INFO("mode is SUBSCRIBE_TOPIC");
+            topicRegisterHelper(mode, msg);
             break;
         }
         case ROSCANConstants::Control::UNREGISTER_TOPIC:
@@ -246,24 +236,8 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
         }
         case ROSCANConstants::Control::ADVERTISE_TOPIC:
         {
-            uint8_t nodeID = ROSCANConstants::Control::nid(msg.can_id);
-            ROS_INFO("advertising for node id %d", nodeID);
-
-            std::string topic, topic_type;
-            extractTopic(msg, topic, topic_type);
-            int topicID = RosCanNodeManager::instance().getNode(nodeID)->advertiseTopic(topic, topic_type);
-            if (topicID < 0) {
-                ROS_INFO("advertise register failed");
-            } else {
-                ROS_INFO("advertisement of topic \"%s\" assigned to topic id %d of node id %d", topic.c_str(), topicID, nodeID);
-                can_frame response = msg;
-                ROSCANConstants::Control::step_insert(response.can_id, 1);
-                ROS_INFO("sending header %x", response.can_id);
-                response.can_dlc = 4;
-                response.data[0] = topicID;
-
-                CANHelpers::send_frame(response);
-            }
+            ROS_INFO("mode is ADVERTISE_TOPIC");
+            topicRegisterHelper(mode, msg);
             break;
         }
         case ROSCANConstants::Control::UNREGISTER_PUBLISHER:
@@ -313,12 +287,12 @@ void CANMsgRouter::routeControlMsg(const can_frame& msg) {
 }
 
 void CANMsgRouter::routePublishMsg(const can_frame& msg) {
-    uint32_t header = msg.can_id & CAN_ERR_MASK;
+    const uint32_t header = msg.can_id & CAN_ERR_MASK;
 
     // Grab attributes needed for accessing the buffer
-    uint8_t nodeID = ROSCANConstants::ROSTopic::nid(header);
-    uint8_t topicID = ROSCANConstants::ROSTopic::topic_id(header);
-    uint8_t len = ROSCANConstants::ROSTopic::len(header);
+    const uint8_t nodeID = ROSCANConstants::ROSTopic::nid(header);
+    const uint8_t topicID = ROSCANConstants::ROSTopic::topic_id(header);
+    const uint8_t len = ROSCANConstants::ROSTopic::len(header);
     uint8_t seq = ROSCANConstants::Common::seq(header);
 
     // Special case for messages that are made up of 7 or more can packets
@@ -329,61 +303,94 @@ void CANMsgRouter::routePublishMsg(const can_frame& msg) {
     ROS_INFO("publish frame: node id %d, topic id %d, message len %d, seq %d", nodeID, topicID, len, seq);
 
     // Key will be concatenation of topicid, and nid
-    short key = (topicID << 4) | nodeID;
+    const uint32_t key = (topicID << 8) | nodeID;
 
     if (seq == 0) {
-        TopicBuffers::instance().reset(key, len);
+        publish_buffers.reset(key, len);
     }
 
-    if (TopicBuffers::instance().append(key, msg.data, msg.can_dlc)) {
-        const auto& can_buf = TopicBuffers::instance().get(key);
+    publish_buffers.append(key, msg.data, msg.can_dlc);
+
+    if (publish_buffers.ready(key)) {
+        const auto& can_buf = publish_buffers.get(key);
+
+        #ifdef DEBUG
         char str[1000] = {0};
         sprintf(str, "topic %d buf complete:", topicID);
         for (const auto b : can_buf) {
-            sprintf(str, "%s %02x", str, b);
+            sprintf(str, "%s 0x%02x", str, b);
         }
         ROS_INFO("%s", str);
+        #endif
+
         RosCanNodeManager::instance().getNode(nodeID)->publish(topicID, can_buf);
     }
 }
 
-void CANMsgRouter::extractTopic(const can_frame& first, std::string& topic, std::string& topic_type) {
-    std::vector<uint8_t> buf;
-    ROS_INFO("entered topic buffering area");
-
-    // extract total number of frames to wait for
-    uint8_t len = ROSCANConstants::Control::len(first.can_id);
-    ROS_INFO("waiting for %d total frames", len);
-    buf.insert(buf.end(), first.data, first.data + first.can_dlc);
-
-    // read until we have 'len' frames worth of data
-    // TODO: this doesn't work with multiple nodes
-    can_frame msg;
-    for (int i = 1;i < len;++i) {
-        while (1) {
-            if (CANHelpers::read_frame(msg) >= 0) {
-                buf.insert(buf.end(), msg.data, msg.data + msg.can_dlc);
-                ROS_INFO("read packet at i = %d size %d", i, msg.can_dlc);
-                ROS_INFO("buffer contents:");
-                for (const auto c : buf) {
-                    ROS_INFO("%c (%d)", c, c);
-                }
-                break;
-            }
-        }
-    }
-
-    // extract topic and topic type by finding the position of the middle null char
-    ROS_INFO("%ld %ld", (long int) buf.cbegin().base(), (long int) buf.cend().base());
+std::pair<std::string, std::string> CANMsgRouter::extractTopic(const std::vector<uint8_t>& buf) {
     const auto null_char_it1 = std::find(buf.cbegin(), buf.cend(), '\0');
     const auto null_char_it2 = std::find(null_char_it1 + 1, buf.cend(), '\0');
-    if (null_char_it1 != buf.cend() && null_char_it2 <= buf.cend()) {
-        topic = std::string{buf.cbegin(), null_char_it1};
-        topic_type = std::string{null_char_it1 + 1, null_char_it2};
-        ROS_INFO("received topic \"%s\" with type \"%s\"", topic.c_str(), topic_type.c_str());
-    } else {
-        ROS_INFO("invalid topic/type data: %s null at %ld", std::string{buf.cbegin(), buf.cend()}.c_str(), (long int) null_char_it1.base());
-        //TODO: throw an exception or something so we don't register an empty topic
+    if (null_char_it1 != buf.cend() && null_char_it2 != buf.cend()) {
+        const auto topic = std::string{buf.cbegin(), null_char_it1};
+        const auto topic_type = std::string{null_char_it1 + 1, null_char_it2};
+        ROS_INFO("extracted topic \"%s\" with type \"%s\"", topic.c_str(), topic_type.c_str());
+        return std::make_pair(topic, topic_type);
+    }
+    ROS_INFO("invalid topic/type data - buffer: \"%s\"", std::string{buf.cbegin(), buf.cend()}.c_str());
+    return std::make_pair("", "");
+}
+
+void CANMsgRouter::topicRegisterHelper(const uint8_t mode, const can_frame& msg) {
+    const uint8_t nodeID = ROSCANConstants::Control::nid(msg.can_id);
+    const uint8_t len = ROSCANConstants::Control::len(msg.can_id);
+    const uint8_t seq = ROSCANConstants::Control::seq(msg.can_id);
+    const uint8_t step = ROSCANConstants::Control::step(msg.can_id);
+    ROS_INFO("registering topic for node id %d", nodeID);
+    ROS_INFO("len %d", len);
+    ROS_INFO("seq %d", seq);
+    ROS_INFO("step %d", step);
+
+    // Key is the static bits of the header
+    const uint32_t key = msg.can_id & ~(ROSCANConstants::Common::bitmask_seq | ROSCANConstants::Control::bitmask_seq);
+
+    if (seq == 0) {
+        topic_register_buffers.reset(key, len);
+    }
+
+    topic_register_buffers.append(key, msg.data, msg.can_dlc);
+
+    #ifdef DEBUG
+    const auto& can_buf = topic_register_buffers.get(key);
+    ROS_INFO("buffer contents for key 0x%x:", key);
+    for (const auto b : can_buf) {
+        if (b != 0) {
+            ROS_INFO("%c (0x%02x)", b, b);
+        } else {
+            ROS_INFO("\\0");
+        }
+    }
+    #endif
+
+    if (topic_register_buffers.ready(key)) {
+        const auto& can_buf = topic_register_buffers.get(key);
+        const auto extracted = extractTopic(can_buf);
+        const auto& topic = extracted.first;
+        const auto& topic_type = extracted.second;
+        const auto node = RosCanNodeManager::instance().getNode(nodeID);
+        const auto topicID = mode == ROSCANConstants::Control::SUBSCRIBE_TOPIC ? node->registerSubscriber(topic, topic_type) : node->advertiseTopic(topic, topic_type);
+
+        if (topicID < 0) {
+            ROS_INFO("topic register failed");
+        } else {
+            ROS_INFO("registered topic \"%s\" of type \"%s\" assigned to topic id %d of node id %d", topic.c_str(), topic_type.c_str(), topicID, nodeID);
+            can_frame response = msg;
+            ROSCANConstants::Control::step_insert(response.can_id, 1);
+            ROSCANConstants::Control::seq_insert(response.can_id, 0);
+            ROS_INFO("sending header 0x%x", response.can_id);
+            response.can_dlc = 4;
+            response.data[0] = topicID;
+            CANHelpers::send_frame(response);
+        }
     }
 }
 

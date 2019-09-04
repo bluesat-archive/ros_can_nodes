@@ -5,7 +5,7 @@
  * ROS Node Name:
  * ROS Package: ros_can_nodes
  * Purpose: Helper module for manipulating raw ROS message data
- * This code is released under the MIT License. Copyright BLUEsat UNSW, 2019
+ * This code is released under the BSD License. Copyright BLUEsat UNSW, 2019
  */
 
 #ifndef INTROSPECTIONHELPERS_HPP

@@ -1,18 +1,18 @@
-#include "MessageBuffer.hpp"
+#include "CANSendQueue.hpp"
 #include "CANHelpers.hpp"
-#include <iostream>
-#include <vector>
 #include <mutex>
 #include <condition_variable>
 #include <thread>
 #include <ros/console.h>
 
-MessageBuffer& MessageBuffer::instance() {
-    static MessageBuffer instance;
+//#define DEBUG
+
+CANSendQueue& CANSendQueue::instance() {
+    static CANSendQueue instance;
     return instance;
 }
 
-void MessageBuffer::push(const can_frame& frame) {
+void CANSendQueue::push(const can_frame& frame) {
     std::unique_lock<std::mutex> lock{mutex};
 
     q.push(frame);
@@ -21,7 +21,7 @@ void MessageBuffer::push(const can_frame& frame) {
     cv.notify_one();
 }
 
-MessageBuffer::MessageBuffer() {
+CANSendQueue::CANSendQueue() {
     std::thread sender{[this]() {
         while (true) {
             std::unique_lock<std::mutex> lock{mutex};
@@ -31,6 +31,8 @@ MessageBuffer::MessageBuffer() {
             q.pop();
             
             lock.unlock();
+
+            #ifdef DEBUG
             
             // debug exit condition
             if (frame.__res0 == 8) {
@@ -44,6 +46,8 @@ MessageBuffer::MessageBuffer() {
                 sprintf(str, "%s %02x", str, frame.data[i]);
             }
             ROS_DEBUG("%s", str);
+
+            #endif // DEBUG
 
             // CAN port is assumed to be open
             if (CANHelpers::send_frame(frame) < 0) {

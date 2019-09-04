@@ -1,29 +1,28 @@
-#ifndef MESSAGE_BUFFER_HPP
-#define MESSAGE_BUFFER_HPP
+#ifndef CAN_SEND_QUEUE_HPP
+#define CAN_SEND_QUEUE_HPP
 
-#include <vector>
 #include <queue>
 #include <condition_variable>
 #include <mutex>
 #include <linux/can.h>
 
-class MessageBuffer {
+class CANSendQueue {
     public:
-        static MessageBuffer& instance();
+        static CANSendQueue& instance();
 
         // thread-safe frame push
         void push(const can_frame& frame);
 
-        MessageBuffer(const MessageBuffer&) = delete;
-        void operator=(const MessageBuffer&) = delete;
+        CANSendQueue(const CANSendQueue&) = delete;
+        void operator=(const CANSendQueue&) = delete;
     
     private:
         // starts the sender thread
-        MessageBuffer();
+        CANSendQueue();
 
         std::queue<can_frame> q;
         std::condition_variable cv;
         std::mutex mutex;
 };
 
-#endif // MESSAGE_BUFFER_HPP
+#endif // CAN_SEND_QUEUE_HPP
