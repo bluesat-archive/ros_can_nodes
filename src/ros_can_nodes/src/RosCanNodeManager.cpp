@@ -79,6 +79,6 @@ int RosCanNodeManager::getTopicIdAvailability(const int i) {
     return topicIds[i];
 }
 
-void RosCanNodeManager::claimTopicId(const int i) {
-    topicIds[i] = 1;
+void RosCanNodeManager::claimTopicId(const int id) {
+    topicIds[id] = 1;
 }
