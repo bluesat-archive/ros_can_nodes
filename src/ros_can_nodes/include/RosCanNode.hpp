@@ -21,6 +21,7 @@
 #include <ros_type_introspection/utils/shape_shifter.hpp>
 
 #define MAX_TOPICS 128
+class RosCanNodeManager;
 
 namespace roscan {
 
@@ -62,12 +63,11 @@ namespace roscan {
             void rosCanCallback(const RosIntrospection::ShapeShifter::ConstPtr& msg, const uint8_t topic_num, const std::string& topic_name);
 
             std::mutex topicLock;
-            std::bitset<MAX_TOPICS> topicIds;
 
             uint8_t msg_num = 0;
 
-            int getFirstFreeTopic();
             std::unordered_map<uint8_t, PublisherPtr> publishers;
+            RosCanNodeManager * const nodeManager;
     };
 
 } // namespace roscan
