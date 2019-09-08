@@ -11,11 +11,12 @@
 #include "CANSendQueue.hpp"
 #include "IntrospectionHelpers.hpp"
 #include "message_properties_map.hpp"
+#include "RosCanNodeManager.hpp"
 
 namespace roscan {
     using RosIntrospection::ShapeShifter;
 
-    RosCanNode::RosCanNode(const std::string& name, const uint8_t id) : RosNode{"can_node/" + name}, id_{id} {
+    RosCanNode::RosCanNode(const std::string& name, const uint8_t id) : RosNode{"can_node/" + name}, id_{id}, nodeManager(&RosCanNodeManager::instance()) {
         ROS_INFO("CAN node name: %s", name_.c_str());
         ROS_INFO("Node id: %d", id_);
     }
@@ -37,11 +38,11 @@ namespace roscan {
         IntrospectionHelpers::register_message(topic_type, message_properties_map.at(topic_type).definition);
 
         int topicID;
-        if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
-            topicIds[request_tid] = 1;
+        if (request_tid >= 0 && request_tid < nodeManager->getTopicsSize() && !nodeManager->getTopicIdAvailability(request_tid)) {
+            nodeManager->claimTopicId(request_tid);
             topicID = request_tid;
         } else {
-            topicID = getFirstFreeTopic();
+            topicID = nodeManager->getFirstFreeTopic();
         }
         ROS_INFO("got topic_id %d", topicID);
 
@@ -87,11 +88,11 @@ namespace roscan {
         IntrospectionHelpers::register_message(topic_type, message_properties_map.at(topic_type).definition);
 
         int topicID;
-        if (request_tid >= 0 && request_tid < topicIds.size() && !topicIds[request_tid]) {
-            topicIds[request_tid] = 1;
+        if (request_tid >= 0 && request_tid < nodeManager->getTopicsSize() && !nodeManager->getTopicIdAvailability(request_tid)) {
+            nodeManager->claimTopicId(request_tid);
             topicID = request_tid;
         } else {
-            topicID = getFirstFreeTopic();
+            topicID = nodeManager->getFirstFreeTopic();
         }
         ROS_INFO("got topic_id %d", topicID);
 
@@ -272,15 +273,5 @@ namespace roscan {
         }
     }
 
-    int RosCanNode::getFirstFreeTopic() {
-        // return the position of the first unset bit
-        int id = ffs(~topicIds.to_ulong()) - 1;
-
-        if (id >= 0) {
-            topicIds[id] = 1;
-        }
-
-        return id;
-    }
 
 } // namespace roscan

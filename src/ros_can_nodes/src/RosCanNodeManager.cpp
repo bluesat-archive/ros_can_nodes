@@ -59,3 +59,26 @@ void RosCanNodeManager::deregisterNode(const uint8_t id) {
 
     //TODO send response, will need to store nodeid if so.
 }
+
+int RosCanNodeManager::getFirstFreeTopic() {
+    // return the position of the first unset bit
+    int id = ffs(~topicIds.to_ulong()) - 1;
+
+    if (id >= 0) {
+        topicIds[id] = 1;
+    }
+
+    return id;
+}
+
+int RosCanNodeManager::getTopicsSize() const {
+    return topicIds.size();
+}
+
+int RosCanNodeManager::getTopicIdAvailability(const int i) {
+    return topicIds[i];
+}
+
+void RosCanNodeManager::claimTopicId(const int id) {
+    topicIds[id] = 1;
+}
